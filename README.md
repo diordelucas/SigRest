@@ -10,7 +10,7 @@ O projeto adota uma arquitetura moderna dividida em 3 camadas independentes:
 
 1.  **Banco de Dados (PostgreSQL 15):** Gerenciado localmente de forma isolada dentro de um container Docker, com volume persistente para manter a integridade dos dados durante reinicializações.
 2.  **Backend (Java 17 + Spring Boot):** Uma API REST robusta que concentra as regras de negócio, persistência via Hibernate/Spring Data JPA, segurança via Spring Security e mapeamento de dados utilizando DTOs.
-3.  **Frontend (React 19 + Material-UI):** Uma interface rica (SPA) que consome a API REST, oferecendo uma experiência dinâmica, responsiva e alinhada à identidade visual da marca (Maju's Assados e Congelados).
+3.  **Frontend (React 19 + Tailwind):** Uma interface rica (SPA) que consome a API REST, oferecendo uma experiência dinâmica, responsiva e alinhada à identidade visual da marca (Maju's Assados e Congelados).
 
 ---
 

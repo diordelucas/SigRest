@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import UserForm from "../components/UserForm";
 import UserList from "../components/UserList";
 
-export default function Usuarios() {
+export default function Users() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [editingUser, setEditingUser] = useState(null);

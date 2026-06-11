@@ -1,38 +1,38 @@
 import React, { useState } from "react";
-import SupplierForm from "../components/SupplierForm";
-import SupplierList from "../components/SupplierList";
+import PersonForm from "../components/PersonForm";
+import PersonList from "../components/PersonList";
 import { useAuth } from "../contexts/AuthContext";
 
-export default function Fornecedores() {
+export default function People() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [editingPerson, setEditingPerson] = useState(null);
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN';
 
-  const handleEditSupplier = (supplier) => {
-    setEditingSupplier(supplier);
+  const handleEditPerson = (person) => {
+    setEditingPerson(person);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEditComplete = () => {
-    setEditingSupplier(null);
+    setEditingPerson(null);
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
     <div className="space-y-6">
       {isAdmin && (
-        <SupplierForm 
-          onSupplierAdded={() => setUpdateList(!updateList)}
-          editingSupplier={editingSupplier}
+        <PersonForm 
+          onUserAdded={() => setUpdateList(!updateList)}
+          editingPerson={editingPerson}
           onEditComplete={handleEditComplete}
         />
       )}
-      <SupplierList 
+      <PersonList 
         key={updateList} 
         refreshTrigger={refreshTrigger}
-        onEditSupplier={handleEditSupplier}
+        onEditPerson={handleEditPerson}
         isReadOnly={!isAdmin}
       />
     </div>

@@ -33,11 +33,11 @@ import TechnicalSheetForm from '../components/TechnicalSheetForm';
 import ProductionOrderForm from '../components/ProductionOrderForm';
 
 // Page Wrappers
-import Pessoas from '../pages/Pessoas';
-import Produtos from '../pages/Produtos';
-import Categorias from '../pages/Categorias';
-import Fornecedores from '../pages/Fornecedores';
-import Usuarios from '../pages/Usuarios';
+import People from '../pages/People';
+import Products from '../pages/Products';
+import Categories from '../pages/Categories';
+import Suppliers from '../pages/Suppliers';
+import Users from '../pages/Users';
 import TechnicalSheets from '../pages/TechnicalSheets';
 import ProductionOrders from '../pages/ProductionOrders';
 
@@ -112,26 +112,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'pessoa',
-        element: <Pessoas />,
+        path: 'people',
+        element: <People />,
       },
       {
-        path: 'produto',
-        element: <Produtos />,
+        path: 'products',
+        element: <Products />,
       },
       {
-        path: 'categoria',
-        element: <Categorias />,
+        path: 'categories',
+        element: <Categories />,
       },
       {
-        path: 'fornecedor',
-        element: <Fornecedores />,
+        path: 'suppliers',
+        element: <Suppliers />,
       },
       {
-        path: 'usuario',
+        path: 'users',
         element: (
           <AdminRoute>
-            <Usuarios />
+            <Users />
           </AdminRoute>
         ),
       },

@@ -34,11 +34,11 @@ const Sidebar = () => {
     {
       title: 'Cadastros',
       items: [
-        { icon: <Users size={20} />, label: 'Pessoas', path: '/pessoa' },
-        { icon: <Package size={20} />, label: 'Produtos', path: '/produto' },
-        { icon: <Tags size={20} />, label: 'Categorias', path: '/categoria' },
-        { icon: <Truck size={20} />, label: 'Fornecedores', path: '/fornecedor' },
-        { icon: <ShieldCheck size={20} />, label: 'Usuários', path: '/usuario', adminOnly: true },
+        { icon: <Users size={20} />, label: 'Pessoas', path: '/people' },
+        { icon: <Package size={20} />, label: 'Produtos', path: '/products' },
+        { icon: <Tags size={20} />, label: 'Categorias', path: '/categories' },
+        { icon: <Truck size={20} />, label: 'Fornecedores', path: '/suppliers' },
+        { icon: <ShieldCheck size={20} />, label: 'Usuários', path: '/users', adminOnly: true },
       ]
     },
     {

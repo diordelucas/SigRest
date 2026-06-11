@@ -33,6 +33,13 @@ public class ProductController {
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @GetMapping("/low-stock")
+    public List<ProductResponseDTO> getLowStock(){
+        List<ProductResponseDTO> lowStockList = repository.findLowStockProducts().stream().map(ProductResponseDTO::new).toList();
+        return lowStockList;
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public ProductResponseDTO getProductById(@PathVariable Long id){
         Product product = repository.findById(id).orElseThrow(() -> new RuntimeException("Produto nÃ£o encontrada"));

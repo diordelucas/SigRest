@@ -1,38 +1,38 @@
 import React, { useState } from "react";
-import ProductForm from "../components/ProductForm";
-import ProductList from "../components/ProductList";
+import SupplierForm from "../components/SupplierForm";
+import SupplierList from "../components/SupplierList";
 import { useAuth } from "../contexts/AuthContext";
 
-export default function Produtos() {
+export default function Suppliers() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingSupplier, setEditingSupplier] = useState(null);
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN';
 
-  const handleEditProduct = (product) => {
-    setEditingProduct(product);
+  const handleEditSupplier = (supplier) => {
+    setEditingSupplier(supplier);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEditComplete = () => {
-    setEditingProduct(null);
+    setEditingSupplier(null);
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
     <div className="space-y-6">
       {isAdmin && (
-        <ProductForm 
-          onUserAdded={() => setUpdateList(!updateList)}
-          editingPerson={editingProduct}
+        <SupplierForm 
+          onSupplierAdded={() => setUpdateList(!updateList)}
+          editingSupplier={editingSupplier}
           onEditComplete={handleEditComplete}
         />
       )}
-      <ProductList 
+      <SupplierList 
         key={updateList} 
         refreshTrigger={refreshTrigger}
-        onEditPerson={handleEditProduct}
+        onEditSupplier={handleEditSupplier}
         isReadOnly={!isAdmin}
       />
     </div>

@@ -1,38 +1,38 @@
 import React, { useState } from "react";
-import PersonForm from "../components/PersonForm";
-import PersonList from "../components/PersonList";
+import ProductForm from "../components/ProductForm";
+import ProductList from "../components/ProductList";
 import { useAuth } from "../contexts/AuthContext";
 
-export default function Pessoas() {
+export default function Products() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [editingPerson, setEditingPerson] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN';
 
-  const handleEditPerson = (person) => {
-    setEditingPerson(person);
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEditComplete = () => {
-    setEditingPerson(null);
+    setEditingProduct(null);
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
     <div className="space-y-6">
       {isAdmin && (
-        <PersonForm 
+        <ProductForm 
           onUserAdded={() => setUpdateList(!updateList)}
-          editingPerson={editingPerson}
+          editingPerson={editingProduct}
           onEditComplete={handleEditComplete}
         />
       )}
-      <PersonList 
+      <ProductList 
         key={updateList} 
         refreshTrigger={refreshTrigger}
-        onEditPerson={handleEditPerson}
+        onEditPerson={handleEditProduct}
         isReadOnly={!isAdmin}
       />
     </div>

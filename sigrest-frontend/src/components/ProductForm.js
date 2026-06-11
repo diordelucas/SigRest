@@ -8,6 +8,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   const [price, setPrice] = useState("");
   const [sellPrice, setSellPrice] = useState("");
   const [storage, setStorage] = useState("");
+  const [minStorage, setMinStorage] = useState("");
   const [error, setError] = useState("");
 
   // Preencher formulário quando editingPerson mudar
@@ -18,6 +19,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       setPrice(editingPerson.price || "");
       setSellPrice(editingPerson.sellPrice || "");
       setStorage(editingPerson.storage || "");
+      setMinStorage(editingPerson.minStorage || "");
       setError("");
     }
   }, [editingPerson]);
@@ -28,7 +30,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
     setPrice("");
     setSellPrice("");
     setStorage("");
-
+    setMinStorage("");
   };
 
   const handleSubmit = async (e) => {
@@ -38,7 +40,8 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       code,
       price,
       sellPrice,
-      storage
+      storage,
+      minStorage
     };
 
     try {
@@ -74,7 +77,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
-        {/* Linha 1: Nome e CPF */}
+        {/* Linha 1: Nome e Código */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
             fullWidth
@@ -90,7 +93,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           />
         </Box>
 
-        {/* Linha 2: Telefone e Email */}
+        {/* Linha 2: Preço de Compra e Venda */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
             fullWidth
@@ -105,15 +108,23 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             onChange={(e) => setSellPrice(e.target.value)}
           />
         </Box>
+        
+        {/* Linha 3: Estoque e Estoque Mínimo */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-
-        <TextField
+          <TextField
             fullWidth
             label="Estoque"
             value={storage}
             onChange={(e) => setStorage(e.target.value)}
           />
-</Box>
+          <TextField
+            fullWidth
+            label="Estoque Mínimo"
+            value={minStorage}
+            onChange={(e) => setMinStorage(e.target.value)}
+          />
+        </Box>
+        
         {/* Botões */}
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button type="submit" variant="contained" color="primary" fullWidth>
