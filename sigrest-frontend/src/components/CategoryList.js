@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Alert, Box, CircularProgress, Button } from "@mui/material";
 import axios from "axios";
 
-const CategoryList = ({ refreshTrigger, onEditCategory }) => {
+const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +48,7 @@ const CategoryList = ({ refreshTrigger, onEditCategory }) => {
                 <TableCell><strong>ID</strong></TableCell>
                 <TableCell><strong>Nome</strong></TableCell>
                 <TableCell><strong>Descrição</strong></TableCell>
-                <TableCell><strong>Ações</strong></TableCell>
+                {!isReadOnly && <TableCell><strong>Ações</strong></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -57,12 +57,14 @@ const CategoryList = ({ refreshTrigger, onEditCategory }) => {
                   <TableCell>{c.id}</TableCell>
                   <TableCell>{c.name}</TableCell>
                   <TableCell>{c.description}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button variant="outlined" color="primary" size="small" onClick={() => onEditCategory(c)}>Editar</Button>
-                      <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(c.id)}>Excluir</Button>
-                    </Box>
-                  </TableCell>
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button variant="outlined" color="primary" size="small" onClick={() => onEditCategory(c)}>Editar</Button>
+                        <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(c.id)}>Excluir</Button>
+                      </Box>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

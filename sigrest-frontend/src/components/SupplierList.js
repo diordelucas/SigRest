@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Alert, Box, CircularProgress, Button } from "@mui/material";
 import axios from "axios";
 
-const SupplierList = ({ refreshTrigger, onEditSupplier }) => {
+const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }) => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,7 +49,7 @@ const SupplierList = ({ refreshTrigger, onEditSupplier }) => {
                 <TableCell><strong>Nome</strong></TableCell>
                 <TableCell><strong>CNPJ</strong></TableCell>
                 <TableCell><strong>Email</strong></TableCell>
-                <TableCell><strong>Ações</strong></TableCell>
+                {!isReadOnly && <TableCell><strong>Ações</strong></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -59,12 +59,14 @@ const SupplierList = ({ refreshTrigger, onEditSupplier }) => {
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.cnpj}</TableCell>
                   <TableCell>{s.email}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button variant="outlined" color="primary" size="small" onClick={() => onEditSupplier(s)}>Editar</Button>
-                      <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(s.id)}>Excluir</Button>
-                    </Box>
-                  </TableCell>
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button variant="outlined" color="primary" size="small" onClick={() => onEditSupplier(s)}>Editar</Button>
+                        <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(s.id)}>Excluir</Button>
+                      </Box>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

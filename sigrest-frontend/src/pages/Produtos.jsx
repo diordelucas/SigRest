@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import ProductForm from "../components/ProductForm";
 import ProductList from "../components/ProductList";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Produtos() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [editingProduct, setEditingProduct] = useState(null);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   const handleEditProduct = (product) => {
     setEditingProduct(product);
@@ -19,15 +22,18 @@ export default function Produtos() {
 
   return (
     <div className="space-y-6">
-      <ProductForm 
-        onUserAdded={() => setUpdateList(!updateList)}
-        editingPerson={editingProduct} // Note: keeping Prop name 'editingPerson' as in App.js
-        onEditComplete={handleEditComplete}
-      />
+      {isAdmin && (
+        <ProductForm 
+          onUserAdded={() => setUpdateList(!updateList)}
+          editingPerson={editingProduct}
+          onEditComplete={handleEditComplete}
+        />
+      )}
       <ProductList 
         key={updateList} 
         refreshTrigger={refreshTrigger}
-        onEditPerson={handleEditProduct} // Note: keeping Prop name 'onEditPerson' as in App.js
+        onEditPerson={handleEditProduct}
+        isReadOnly={!isAdmin}
       />
     </div>
   );

@@ -8,7 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import api from "../services/api";
 
-const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet }) => {
+const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnly }) => {
   const [sheets, setSheets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -58,15 +58,17 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet }) => {
           <Typography variant="h5" fontWeight="600" color="primary">
             Fichas Técnicas (Receitas)
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={onNewSheet}
-            sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
-          >
-            Nova Ficha Técnica
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={onNewSheet}
+              sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+            >
+              Nova Ficha Técnica
+            </Button>
+          )}
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
@@ -84,7 +86,7 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet }) => {
                   <TableCell sx={{ fontWeight: 'bold' }}>Nome da Receita</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Produto Final</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Qtd. de Insumos</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Ações</TableCell>
+                  {!isReadOnly && <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Ações</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -96,20 +98,22 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet }) => {
                     <TableCell sx={{ textAlign: 'center' }}>
                       {sheet.items ? sheet.items.length : 0}
                     </TableCell>
-                    <TableCell sx={{ textAlign: 'center' }}>
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        <Tooltip title="Editar Ficha">
-                          <IconButton color="primary" onClick={() => onEditSheet(sheet)} size="small">
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Excluir Ficha">
-                          <IconButton color="error" onClick={() => handleDelete(sheet.id)} size="small">
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
+                    {!isReadOnly && (
+                      <TableCell sx={{ textAlign: 'center' }}>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          <Tooltip title="Editar Ficha">
+                            <IconButton color="primary" onClick={() => onEditSheet(sheet)} size="small">
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Excluir Ficha">
+                            <IconButton color="error" onClick={() => handleDelete(sheet.id)} size="small">
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

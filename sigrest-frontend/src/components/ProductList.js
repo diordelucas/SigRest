@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-const ProductList = ({ refreshTrigger, onEditPerson }) => {
+const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const [products, setProducts] = useState([]); // Changed setPersons to setProducts
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -87,8 +87,7 @@ const ProductList = ({ refreshTrigger, onEditPerson }) => {
                 <TableCell><strong>Preço Compra</strong></TableCell>
                 <TableCell><strong>Preço Venda</strong></TableCell>
                 <TableCell><strong>Estoque</strong></TableCell>
-
-                <TableCell><strong>Ações</strong></TableCell>
+                {!isReadOnly && <TableCell><strong>Ações</strong></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -100,27 +99,28 @@ const ProductList = ({ refreshTrigger, onEditPerson }) => {
                   <TableCell>{product.price}</TableCell>
                   <TableCell>{product.sellPrice}</TableCell>
                   <TableCell>{product.storage}</TableCell>
-
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        onClick={() => handleEdit(product)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(product.id)}
-                      >
-                        Excluir
-                      </Button>
-                    </Box>
-                  </TableCell>
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleEdit(product)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          Excluir
+                        </Button>
+                      </Box>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

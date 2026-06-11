@@ -7,6 +7,8 @@ import AuthLayout from '../layouts/AuthLayout';
 
 // Guard
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { AdminRoute } from '../components/AdminRoute';
+import { useAuth } from '../contexts/AuthContext';
 
 // Components / Forms / Lists
 import LoginForm from '../components/LoginForm';
@@ -61,6 +63,15 @@ const NewProductionOrderWrapper = () => {
   );
 };
 
+// Dynamic landing page redirect based on role
+const LandingRedirect = () => {
+  const { currentUser } = useAuth();
+  if (currentUser?.role === 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Navigate to="/sales/new" replace />;
+};
+
 export const router = createBrowserRouter([
   {
     path: '/login',
@@ -82,15 +93,23 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        element: <LandingRedirect />,
       },
       {
         path: 'dashboard',
-        element: <Dashboard />,
+        element: (
+          <AdminRoute>
+            <Dashboard />
+          </AdminRoute>
+        ),
       },
       {
         path: 'reports',
-        element: <ReportPage />,
+        element: (
+          <AdminRoute>
+            <ReportPage />
+          </AdminRoute>
+        ),
       },
       {
         path: 'pessoa',
@@ -110,7 +129,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'usuario',
-        element: <Usuarios />,
+        element: (
+          <AdminRoute>
+            <Usuarios />
+          </AdminRoute>
+        ),
       },
       {
         path: 'sales',
@@ -150,31 +173,55 @@ export const router = createBrowserRouter([
       },
       {
         path: 'cash-registers',
-        element: <CashRegisterForm />,
+        element: (
+          <AdminRoute>
+            <CashRegisterForm />
+          </AdminRoute>
+        ),
       },
       {
         path: 'cash-registers/history',
-        element: <CashRegisterList />,
+        element: (
+          <AdminRoute>
+            <CashRegisterList />
+          </AdminRoute>
+        ),
       },
       {
         path: 'accounts-payable',
-        element: <AccountPayableList />,
+        element: (
+          <AdminRoute>
+            <AccountPayableList />
+          </AdminRoute>
+        ),
       },
       {
         path: 'accounts-payable/new',
-        element: <AccountPayableForm />,
+        element: (
+          <AdminRoute>
+            <AccountPayableForm />
+          </AdminRoute>
+        ),
       },
       {
         path: 'accounts-receivable',
-        element: <AccountReceivableList />,
+        element: (
+          <AdminRoute>
+            <AccountReceivableList />
+          </AdminRoute>
+        ),
       },
       {
         path: 'accounts-receivable/new',
-        element: <AccountReceivableForm />,
+        element: (
+          <AdminRoute>
+            <AccountReceivableForm />
+          </AdminRoute>
+        ),
       },
       {
         path: '*',
-        element: <Navigate to="/dashboard" replace />,
+        element: <LandingRedirect />,
       },
     ],
   },

@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import CategoryForm from "../components/CategoryForm";
 import CategoryList from "../components/CategoryList";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Categorias() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [editingCategory, setEditingCategory] = useState(null);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   const handleEditCategory = (category) => {
     setEditingCategory(category);
@@ -19,15 +22,18 @@ export default function Categorias() {
 
   return (
     <div className="space-y-6">
-      <CategoryForm 
-        onCategoryAdded={() => setUpdateList(!updateList)}
-        editingCategory={editingCategory}
-        onEditComplete={handleEditComplete}
-      />
+      {isAdmin && (
+        <CategoryForm 
+          onCategoryAdded={() => setUpdateList(!updateList)}
+          editingCategory={editingCategory}
+          onEditComplete={handleEditComplete}
+        />
+      )}
       <CategoryList 
         key={updateList} 
         refreshTrigger={refreshTrigger}
         onEditCategory={handleEditCategory}
+        isReadOnly={!isAdmin}
       />
     </div>
   );

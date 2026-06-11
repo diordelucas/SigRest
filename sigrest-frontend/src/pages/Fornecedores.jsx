@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import SupplierForm from "../components/SupplierForm";
 import SupplierList from "../components/SupplierList";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Fornecedores() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [editingSupplier, setEditingSupplier] = useState(null);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   const handleEditSupplier = (supplier) => {
     setEditingSupplier(supplier);
@@ -19,15 +22,18 @@ export default function Fornecedores() {
 
   return (
     <div className="space-y-6">
-      <SupplierForm 
-        onSupplierAdded={() => setUpdateList(!updateList)}
-        editingSupplier={editingSupplier}
-        onEditComplete={handleEditComplete}
-      />
+      {isAdmin && (
+        <SupplierForm 
+          onSupplierAdded={() => setUpdateList(!updateList)}
+          editingSupplier={editingSupplier}
+          onEditComplete={handleEditComplete}
+        />
+      )}
       <SupplierList 
         key={updateList} 
         refreshTrigger={refreshTrigger}
         onEditSupplier={handleEditSupplier}
+        isReadOnly={!isAdmin}
       />
     </div>
   );

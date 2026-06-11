@@ -20,14 +20,15 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = () => {
-  const { signOut } = useAuth();
+  const { signOut, currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
   
   const menuSections = [
     {
       title: 'Principal',
       items: [
-        { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/dashboard' },
-        { icon: <BarChart3 size={20} />, label: 'Relatórios', path: '/reports' },
+        { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/dashboard', adminOnly: true },
+        { icon: <BarChart3 size={20} />, label: 'Relatórios', path: '/reports', adminOnly: true },
       ]
     },
     {
@@ -37,7 +38,7 @@ const Sidebar = () => {
         { icon: <Package size={20} />, label: 'Produtos', path: '/produto' },
         { icon: <Tags size={20} />, label: 'Categorias', path: '/categoria' },
         { icon: <Truck size={20} />, label: 'Fornecedores', path: '/fornecedor' },
-        { icon: <ShieldCheck size={20} />, label: 'Usuários', path: '/usuario' },
+        { icon: <ShieldCheck size={20} />, label: 'Usuários', path: '/usuario', adminOnly: true },
       ]
     },
     {
@@ -59,16 +60,24 @@ const Sidebar = () => {
     {
       title: 'Financeiro',
       items: [
-        { icon: <Wallet size={20} />, label: 'Controle de Caixa', path: '/cash-registers' },
-        { icon: <Wallet size={20} />, label: 'Histórico de Caixa', path: '/cash-registers/history' },
-        { icon: <DollarSign size={20} />, label: 'Contas a Pagar', path: '/accounts-payable' },
-        { icon: <DollarSign size={20} />, label: 'Contas a Receber', path: '/accounts-receivable' },
+        { icon: <Wallet size={20} />, label: 'Controle de Caixa', path: '/cash-registers', adminOnly: true },
+        { icon: <Wallet size={20} />, label: 'Histórico de Caixa', path: '/cash-registers/history', adminOnly: true },
+        { icon: <DollarSign size={20} />, label: 'Contas a Pagar', path: '/accounts-payable', adminOnly: true },
+        { icon: <DollarSign size={20} />, label: 'Contas a Receber', path: '/accounts-receivable', adminOnly: true },
       ]
     }
   ];
 
+  // Filter sections and their items based on user role
+  const visibleSections = menuSections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.adminOnly || isAdmin)
+    }))
+    .filter(section => section.items.length > 0);
+
   return (
-    <aside className="flex flex-col h-full bg-dark-lighter border-r border-dark-border w-64 select-none">
+    <aside className="flex flex-col h-full bg-dark-lighter border-r border-dark-border w-64 select-none shrink-0">
       {/* Brand Logo */}
       <div className="h-16 flex items-center gap-3 px-6 border-b border-dark-border/50 shrink-0">
         <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
@@ -79,7 +88,7 @@ const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-dark-border">
-        {menuSections.map((section, idx) => (
+        {visibleSections.map((section, idx) => (
           <div key={idx} className="space-y-1">
             <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
               {section.title}

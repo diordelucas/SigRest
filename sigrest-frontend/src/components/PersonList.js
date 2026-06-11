@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-const PersonList = ({ refreshTrigger, onEditPerson }) => {
+const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const [persons, setPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -89,7 +89,7 @@ const PersonList = ({ refreshTrigger, onEditPerson }) => {
                 <TableCell><strong>Endereço</strong></TableCell>
                 <TableCell><strong>Cidade</strong></TableCell>
                 <TableCell><strong>UF</strong></TableCell>
-                <TableCell><strong>Ações</strong></TableCell>
+                {!isReadOnly && <TableCell><strong>Ações</strong></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -108,26 +108,28 @@ const PersonList = ({ refreshTrigger, onEditPerson }) => {
                   </TableCell>
                   <TableCell>{person.city || "Não informado"}</TableCell>
                   <TableCell>{person.uf || "Não informado"}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        onClick={() => handleEdit(person)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(person.id)}
-                      >
-                        Excluir
-                      </Button>
-                    </Box>
-                  </TableCell>
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleEdit(person)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => handleDelete(person.id)}
+                        >
+                          Excluir
+                        </Button>
+                      </Box>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
