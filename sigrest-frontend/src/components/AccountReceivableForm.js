@@ -6,15 +6,16 @@ import {
     Typography,
     Box,
     Paper,
-    Alert,
     CircularProgress,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    Grid
+    Grid,
+    InputAdornment,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const AccountReceivableForm = () => {
@@ -27,21 +28,13 @@ const AccountReceivableForm = () => {
     });
     const [people, setPeople] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        const fetchPeople = async () => {
-            try {
-                const response = await api.get('/person');
-                setPeople(response.data);
-            } catch (err) {
-                setError('Erro ao carregar clientes: ' + err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPeople();
+        api.get('/person')
+            .then((r) => setPeople(r.data))
+            .catch((err) => toast.error('Erro ao carregar clientes: ' + err.message))
+            .finally(() => setLoading(false));
     }, []);
 
     const handleChange = (e) => {
@@ -50,47 +43,33 @@ const AccountReceivableForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
+        setSubmitting(true);
         try {
-            const dataToSubmit = {
+            await api.post('/accounts-receivable', {
                 ...accountReceivable,
                 amount: parseFloat(accountReceivable.amount),
-                dueDate: accountReceivable.dueDate // Already in YYYY-MM-DD format
-            };
-            await api.post('/accounts-receivable', dataToSubmit);
-            setSuccessMessage('Conta a receber registrada com sucesso!');
-            setAccountReceivable({
-                description: '',
-                amount: '',
-                dueDate: '',
-                personId: ''
             });
+            toast.success('Conta a receber registrada com sucesso!');
+            setAccountReceivable({ description: '', amount: '', dueDate: '', personId: '' });
         } catch (err) {
-            setError('Erro ao registrar conta a receber: ' + (err.response?.data?.message || err.message));
+            toast.error('Erro ao registrar: ' + (err.response?.data?.message || err.message));
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
-    if (loading && people.length === 0) {
-        return (
-            <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-            </Container>
-        );
-    }
+    if (loading) return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+        </Box>
+    );
 
     return (
         <Container maxWidth="md">
             <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
+                <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
                     Registrar Conta a Receber
                 </Typography>
-
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
 
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
@@ -113,6 +92,9 @@ const AccountReceivableForm = () => {
                                 value={accountReceivable.amount}
                                 onChange={handleChange}
                                 inputProps={{ step: "0.01", min: 0 }}
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                                }}
                                 required
                             />
                         </Grid>
@@ -152,15 +134,16 @@ const AccountReceivableForm = () => {
                             variant="contained"
                             color="primary"
                             type="submit"
-                            disabled={loading}
+                            disabled={submitting}
+                            startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
                         >
-                            Registrar
+                            {submitting ? 'Registrando...' : 'Registrar'}
                         </Button>
                         <Button
                             variant="outlined"
                             color="secondary"
                             onClick={() => navigate('/accounts-receivable')}
-                            disabled={loading}
+                            disabled={submitting}
                         >
                             Cancelar
                         </Button>

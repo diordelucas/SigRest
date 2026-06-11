@@ -6,15 +6,16 @@ import {
     Typography,
     Box,
     Paper,
-    Alert,
     CircularProgress,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    Grid
+    Grid,
+    InputAdornment,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const AccountPayableForm = () => {
@@ -27,21 +28,13 @@ const AccountPayableForm = () => {
     });
     const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        const fetchSuppliers = async () => {
-            try {
-                const response = await api.get('/supplier');
-                setSuppliers(response.data);
-            } catch (err) {
-                setError('Erro ao carregar fornecedores: ' + err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSuppliers();
+        api.get('/supplier')
+            .then((r) => setSuppliers(r.data))
+            .catch((err) => toast.error('Erro ao carregar fornecedores: ' + err.message))
+            .finally(() => setLoading(false));
     }, []);
 
     const handleChange = (e) => {
@@ -50,47 +43,33 @@ const AccountPayableForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
+        setSubmitting(true);
         try {
-            const dataToSubmit = {
+            await api.post('/accounts-payable', {
                 ...accountPayable,
                 amount: parseFloat(accountPayable.amount),
-                dueDate: accountPayable.dueDate // Already in YYYY-MM-DD format
-            };
-            await api.post('/accounts-payable', dataToSubmit);
-            setSuccessMessage('Conta a pagar registrada com sucesso!');
-            setAccountPayable({
-                description: '',
-                amount: '',
-                dueDate: '',
-                supplierId: ''
             });
+            toast.success('Conta a pagar registrada com sucesso!');
+            setAccountPayable({ description: '', amount: '', dueDate: '', supplierId: '' });
         } catch (err) {
-            setError('Erro ao registrar conta a pagar: ' + (err.response?.data?.message || err.message));
+            toast.error('Erro ao registrar: ' + (err.response?.data?.message || err.message));
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
-    if (loading && suppliers.length === 0) {
-        return (
-            <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-            </Container>
-        );
-    }
+    if (loading) return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+        </Box>
+    );
 
     return (
         <Container maxWidth="md">
             <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
+                <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
                     Registrar Conta a Pagar
                 </Typography>
-
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
 
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
@@ -113,6 +92,9 @@ const AccountPayableForm = () => {
                                 value={accountPayable.amount}
                                 onChange={handleChange}
                                 inputProps={{ step: "0.01", min: 0 }}
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                                }}
                                 required
                             />
                         </Grid>
@@ -152,15 +134,16 @@ const AccountPayableForm = () => {
                             variant="contained"
                             color="primary"
                             type="submit"
-                            disabled={loading}
+                            disabled={submitting}
+                            startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
                         >
-                            Registrar
+                            {submitting ? 'Registrando...' : 'Registrar'}
                         </Button>
                         <Button
                             variant="outlined"
                             color="secondary"
                             onClick={() => navigate('/accounts-payable')}
-                            disabled={loading}
+                            disabled={submitting}
                         >
                             Cancelar
                         </Button>
