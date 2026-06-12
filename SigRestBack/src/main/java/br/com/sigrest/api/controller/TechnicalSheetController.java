@@ -19,19 +19,19 @@ public class TechnicalSheetController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public TechnicalSheetResponseDTO save(@RequestBody TechnicalSheetRequestDTO data) {
-        return new TechnicalSheetResponseDTO(service.save(data));
+        return service.save(data);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<TechnicalSheetResponseDTO> getAll() {
-        return service.findAll().stream().map(TechnicalSheetResponseDTO::new).toList();
+        return service.findAll();
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public TechnicalSheetResponseDTO getById(@PathVariable Long id) {
-        return new TechnicalSheetResponseDTO(service.findById(id));
+        return service.getSheet(id);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -47,7 +47,7 @@ public class TechnicalSheetController {
                 id, data.name(), data.finalProductId(), data.items(),
                 data.rendimento(), data.labourCostPercent(),
                 data.variableExpensesPercent(), data.desiredMarginPercent());
-        return new TechnicalSheetResponseDTO(service.save(dto));
+        return service.save(dto);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")

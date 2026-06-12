@@ -3,6 +3,7 @@ package br.com.sigrest.api.service;
 import br.com.sigrest.api.dto.CostCalculationResponseDTO;
 import br.com.sigrest.api.dto.TechnicalSheetItemRequestDTO;
 import br.com.sigrest.api.dto.TechnicalSheetRequestDTO;
+import br.com.sigrest.api.dto.TechnicalSheetResponseDTO;
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.TechnicalSheet;
 import br.com.sigrest.api.entity.TechnicalSheetItem;
@@ -26,19 +27,25 @@ public class TechnicalSheetService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<TechnicalSheet> findAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<TechnicalSheetResponseDTO> findAll() {
+        return repository.findAll().stream().map(TechnicalSheetResponseDTO::new).toList();
     }
 
-    public TechnicalSheet findById(Long id) {
+    @Transactional(readOnly = true)
+    public TechnicalSheetResponseDTO getSheet(Long id) {
+        return new TechnicalSheetResponseDTO(loadById(id));
+    }
+
+    private TechnicalSheet loadById(Long id) {
         return repository.findById(id).orElseThrow(() -> new RuntimeException("Ficha técnica não encontrada"));
     }
 
     @Transactional
-    public TechnicalSheet save(TechnicalSheetRequestDTO dto) {
+    public TechnicalSheetResponseDTO save(TechnicalSheetRequestDTO dto) {
         TechnicalSheet sheet = new TechnicalSheet();
         if (dto.id() != null) {
-            sheet = findById(dto.id());
+            sheet = loadById(dto.id());
         }
 
         sheet.setName(dto.name());
@@ -69,7 +76,7 @@ public class TechnicalSheetService {
             }
         }
 
-        return repository.save(sheet);
+        return new TechnicalSheetResponseDTO(repository.save(sheet));
     }
 
     @Transactional
@@ -79,7 +86,7 @@ public class TechnicalSheetService {
 
     @Transactional(readOnly = true)
     public CostCalculationResponseDTO calculateCost(Long sheetId) {
-        TechnicalSheet sheet = findById(sheetId);
+        TechnicalSheet sheet = loadById(sheetId);
 
         List<CostCalculationResponseDTO.ItemCostDTO> itemCosts = new ArrayList<>();
         BigDecimal ingredientsTotalCost = BigDecimal.ZERO;
