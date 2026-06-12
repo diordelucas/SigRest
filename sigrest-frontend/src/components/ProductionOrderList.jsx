@@ -45,7 +45,8 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
         fetchOrders();
       } catch (err) {
         console.error(err);
-        alert("Erro ao finalizar ordem: " + (err.response?.data?.message || "Erro de conexão ou insumos insuficientes."));
+        const msg = err.response?.data?.message || err.response?.data?.error || err.message || "Erro de conexão com o servidor.";
+        alert("Erro ao finalizar ordem:\n" + msg);
       }
     }
   };
