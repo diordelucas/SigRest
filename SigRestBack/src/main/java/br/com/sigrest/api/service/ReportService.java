@@ -12,6 +12,7 @@ import br.com.sigrest.api.repository.SaleRepository;
 import br.com.sigrest.api.repository.StockMovementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,6 +38,7 @@ public class ReportService {
     @Autowired
     private PurchaseRepository purchaseRepository;
 
+    @Transactional(readOnly = true)
     public List<SalesByPeriodDTO> getSalesByPeriod(LocalDate startDate, LocalDate endDate) {
         List<Sale> sales = saleRepository.findAll().stream()
                 .filter(sale -> {
@@ -58,6 +60,7 @@ public class ReportService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ProductSalesDTO> getTopSellingProducts(int limit) {
         List<Sale> sales = saleRepository.findAll();
 
@@ -82,6 +85,7 @@ public class ReportService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<MonthlyRevenueDTO> getMonthlyRevenue(LocalDate startMonth, LocalDate endMonth) {
         List<Sale> sales = saleRepository.findAll().stream()
                 .filter(sale -> {

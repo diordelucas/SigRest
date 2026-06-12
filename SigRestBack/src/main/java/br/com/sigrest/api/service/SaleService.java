@@ -74,12 +74,14 @@ public class SaleService {
         return convertToResponseDTO(savedSale);
     }
 
+    @Transactional(readOnly = true)
     public List<SaleResponseDTO> getAllSales() {
         return saleRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public SaleResponseDTO getSaleById(Long id) {
         Sale sale = saleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
