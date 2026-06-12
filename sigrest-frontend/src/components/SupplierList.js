@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Alert, Box, CircularProgress, Button } from "@mui/material";
+import { Pencil, Trash2 } from "lucide-react";
 import axios from "axios";
 
 const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }) => {
@@ -23,57 +23,86 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }) => {
     if (window.confirm("Deseja excluir este fornecedor?")) {
       try {
         await axios.delete(`http://localhost:8080/supplier/${id}`);
-        setSuppliers(suppliers.filter(s => s.id !== id));
+        setSuppliers(suppliers.filter((s) => s.id !== id));
       } catch (error) {
         setError("Erro ao excluir fornecedor.");
       }
     }
   };
 
-  useEffect(() => { fetchSuppliers(); }, [refreshTrigger]);
+  useEffect(() => {
+    fetchSuppliers();
+  }, [refreshTrigger]);
 
-  if (loading) return <Paper sx={{ p: 3, mb: 2 }}><Box display="flex" justifyContent="center"><CircularProgress /></Box></Paper>;
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+        <div className="flex items-center justify-center h-40">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Paper sx={{ p: 3, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>Lista de Fornecedores</Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {suppliers.length === 0 ? (
-        <Typography color="textSecondary">Nenhum fornecedor cadastrado.</Typography>
-      ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>ID</strong></TableCell>
-                <TableCell><strong>Nome</strong></TableCell>
-                <TableCell><strong>CNPJ</strong></TableCell>
-                <TableCell><strong>Email</strong></TableCell>
-                {!isReadOnly && <TableCell><strong>Ações</strong></TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {suppliers.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>{s.id}</TableCell>
-                  <TableCell>{s.name}</TableCell>
-                  <TableCell>{s.cnpj}</TableCell>
-                  <TableCell>{s.email}</TableCell>
-                  {!isReadOnly && (
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button variant="outlined" color="primary" size="small" onClick={() => onEditSupplier(s)}>Editar</Button>
-                        <Button variant="outlined" color="error" size="small" onClick={() => handleDelete(s.id)}>Excluir</Button>
-                      </Box>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+      <h2 className="text-lg font-semibold text-slate-800 mb-4">Lista de Fornecedores</h2>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
       )}
-    </Paper>
+
+      {suppliers.length === 0 ? (
+        <p className="text-center text-slate-400 py-8 text-sm">Nenhum fornecedor cadastrado.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CNPJ</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                {!isReadOnly && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {suppliers.map((s) => (
+                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3 text-sm text-slate-700">{s.id}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{s.name}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{s.cnpj}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{s.email}</td>
+                  {!isReadOnly && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1"
+                          onClick={() => onEditSupplier(s)}
+                        >
+                          <Pencil size={12} /> Editar
+                        </button>
+                        <button
+                          className="px-3 py-1.5 text-xs bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1"
+                          onClick={() => handleDelete(s.id)}
+                        >
+                          <Trash2 size={12} /> Excluir
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 };
+
 export default SupplierList;

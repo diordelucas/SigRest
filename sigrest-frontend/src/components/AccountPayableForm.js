@@ -1,22 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-    TextField,
-    Button,
-    Container,
-    Typography,
-    Box,
-    Paper,
-    CircularProgress,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Grid,
-    InputAdornment,
-} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+
+const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const AccountPayableForm = () => {
     const navigate = useNavigate();
@@ -58,99 +46,104 @@ const AccountPayableForm = () => {
         }
     };
 
-    if (loading) return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-            <CircularProgress />
-        </Box>
-    );
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-40">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <Container maxWidth="md">
-            <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
-                    Registrar Conta a Pagar
-                </Typography>
+        <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-6">Registrar Conta a Pagar</h2>
 
                 <form onSubmit={handleSubmit}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Descrição"
-                                name="description"
-                                value={accountPayable.description}
-                                onChange={handleChange}
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Valor"
-                                type="number"
-                                name="amount"
-                                value={accountPayable.amount}
-                                onChange={handleChange}
-                                inputProps={{ step: "0.01", min: 0 }}
-                                InputProps={{
-                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                                }}
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Data de Vencimento"
+                    <div className="flex flex-col gap-1 mb-4">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Descrição</label>
+                        <input
+                            className={inputCls}
+                            name="description"
+                            value={accountPayable.description}
+                            onChange={handleChange}
+                            required
+                            placeholder="Descrição da conta"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Valor</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
+                                <input
+                                    type="number"
+                                    name="amount"
+                                    step="0.01"
+                                    min="0"
+                                    className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                    value={accountPayable.amount}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="0.00"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Data de Vencimento</label>
+                            <input
                                 type="date"
                                 name="dueDate"
+                                className={inputCls}
                                 value={accountPayable.dueDate}
                                 onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
                                 required
                             />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Fornecedor</InputLabel>
-                                <Select
-                                    name="supplierId"
-                                    value={accountPayable.supplierId}
-                                    onChange={handleChange}
-                                    label="Fornecedor"
-                                >
-                                    {suppliers.map((supplier) => (
-                                        <MenuItem key={supplier.id} value={supplier.id}>
-                                            {supplier.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
+                        </div>
+                    </div>
 
-                    <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
+                    <div className="flex flex-col gap-1 mb-6">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fornecedor</label>
+                        <select
+                            name="supplierId"
+                            className={selectCls}
+                            value={accountPayable.supplierId}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Selecione o fornecedor...</option>
+                            {suppliers.map((supplier) => (
+                                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <button
                             type="submit"
                             disabled={submitting}
-                            startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
+                            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                            {submitting ? 'Registrando...' : 'Registrar'}
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
+                            {submitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Registrando...
+                                </>
+                            ) : 'Registrar'}
+                        </button>
+                        <button
+                            type="button"
+                            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
                             onClick={() => navigate('/accounts-payable')}
                             disabled={submitting}
                         >
                             Cancelar
-                        </Button>
-                    </Box>
+                        </button>
+                    </div>
                 </form>
-            </Paper>
-        </Container>
+            </div>
+        </div>
     );
 };
 

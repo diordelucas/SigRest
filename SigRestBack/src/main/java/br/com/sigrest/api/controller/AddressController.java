@@ -37,14 +37,14 @@ public class AddressController {
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public AddressResponseDTO getAddressById(@PathVariable Long id){
-        Address address = repository.findById(id).orElseThrow(() -> new RuntimeException("EndereÃ§o nÃ£o encontrado"));
+        Address address = repository.findById(id).orElseThrow(() -> new RuntimeException("Endereço não encontrado"));
         return new AddressResponseDTO(address);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public AddressResponseDTO updateAddress(@PathVariable Long id, @RequestBody AddressRequestDTO data) {
-        Address address = repository.findById(id).orElseThrow(() -> new RuntimeException("EndereÃ§o nÃ£o encontrado"));
+        Address address = repository.findById(id).orElseThrow(() -> new RuntimeException("Endereço não encontrado"));
         address.setStreet(data.street());
         address.setNumber(data.number());
         address.setNbhd(data.nbhd());

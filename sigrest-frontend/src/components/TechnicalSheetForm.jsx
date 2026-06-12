@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  Paper, Typography, TextField, Button, Box, Alert, Select, MenuItem,
-  FormControl, InputLabel, Grid, IconButton, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Tooltip, Zoom
-} from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import SaveIcon from '@mui/icons-material/Save';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import api from "../services/api";
+
+const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
   const [name, setName] = useState("");
@@ -23,7 +18,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
     if (sheetToEdit) {
       setName(sheetToEdit.name || "");
       setFinalProductId(sheetToEdit.finalProduct?.id || "");
-      setItems(sheetToEdit.items ? sheetToEdit.items.map(i => ({
+      setItems(sheetToEdit.items ? sheetToEdit.items.map((i) => ({
         rawMaterialId: i.rawMaterial?.id || "",
         quantity: i.quantity || ""
       })) : []);
@@ -66,14 +61,12 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
       setLoading(false);
       return;
     }
-
     if (items.length === 0) {
       setError("Adicione pelo menos um insumo na ficha técnica.");
       setLoading(false);
       return;
     }
 
-    // Check for empty items or duplicate ingredients
     const seenIngredients = new Set();
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -103,7 +96,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
     const data = {
       name,
       finalProductId,
-      items: items.map(i => ({
+      items: items.map((i) => ({
         rawMaterialId: i.rawMaterialId,
         quantity: parseFloat(i.quantity)
       }))
@@ -125,156 +118,150 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
   };
 
   return (
-    <Zoom in={true}>
-      <Paper sx={{ p: 4, mb: 2, borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <IconButton color="secondary" onClick={onCancel} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h5" fontWeight="600" color="primary">
-            {sheetToEdit ? "Editar Ficha Técnica" : "Nova Ficha Técnica"}
-          </Typography>
-        </Box>
+    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          className="p-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+          onClick={onCancel}
+        >
+          <ArrowLeft size={16} />
+        </button>
+        <h2 className="text-lg font-semibold text-slate-800">
+          {sheetToEdit ? "Editar Ficha Técnica" : "Nova Ficha Técnica"}
+        </h2>
+      </div>
 
-        {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
-        
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Nome da Receita / Ficha"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
-                required
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required variant="outlined">
-                <InputLabel>Produto Final (Marmita / Acabado)</InputLabel>
-                <Select
-                  value={finalProductId}
-                  onChange={(e) => setFinalProductId(e.target.value)}
-                  label="Produto Final (Marmita / Acabado)"
-                >
-                  {products.map(p => (
-                    <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
+      )}
 
-          <Box sx={{ mt: 4, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" fontWeight="600" color="textSecondary">
-              Insumos / Ingredientes
-            </Typography>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<AddCircleOutlineIcon />}
-              onClick={addItem}
-              sx={{ borderRadius: 2, textTransform: 'none' }}
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome da Receita / Ficha</label>
+            <input
+              className={inputCls}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Nome da receita"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto Final (Marmita / Acabado)</label>
+            <select
+              className={selectCls}
+              value={finalProductId}
+              onChange={(e) => setFinalProductId(e.target.value)}
+              required
             >
-              Adicionar Insumo
-            </Button>
-          </Box>
+              <option value="">Selecione o produto final...</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-          {items.length === 0 ? (
-            <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', mb: 3, borderStyle: 'dashed', borderRadius: 2 }}>
-              <Typography color="textSecondary">
-                Nenhum ingrediente adicionado. Clique em "Adicionar Insumo" para começar.
-              </Typography>
-            </Paper>
-          ) : (
-            <TableContainer component={Paper} variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
-              <Table>
-                <TableHead sx={{ backgroundColor: 'action.hover' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Insumo / Ingrediente</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '200px' }}>Quantidade</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '80px', textAlign: 'center' }}>Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {items.map((item, index) => (
-                    <TableRow key={index} hover>
-                      <TableCell>
-                        <FormControl fullWidth required size="small">
-                          <Select
-                            value={item.rawMaterialId}
-                            onChange={(e) => updateItem(index, 'rawMaterialId', e.target.value)}
-                            displayEmpty
-                            renderValue={(selected) => {
-                              if (!selected) return <span style={{ color: '#aaa' }}>Selecione o insumo...</span>;
-                              const prod = products.find(p => p.id === selected);
-                              return prod ? prod.name : '';
-                            }}
-                          >
-                            <MenuItem disabled value="">
-                              <em>Selecione o insumo...</em>
-                            </MenuItem>
-                            {products
-                              .filter(p => p.id !== finalProductId)
-                              .map(p => (
-                                <MenuItem key={p.id} value={p.id}>
-                                  {p.name} (Estoque: {p.storage || 0})
-                                </MenuItem>
-                              ))}
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          placeholder="Ex: 0.250"
-                          type="number"
-                          size="small"
-                          inputProps={{ step: "any", min: "0" }}
-                          value={item.quantity}
-                          onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                          fullWidth
-                          required
-                        />
-                      </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
-                        <Tooltip title="Remover Insumo">
-                          <IconButton color="error" onClick={() => removeItem(index)} size="small">
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Insumos / Ingredientes</h3>
+          <button
+            type="button"
+            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
+            onClick={addItem}
+          >
+            <Plus size={14} /> Adicionar Insumo
+          </button>
+        </div>
 
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 4 }}>
-            <Button
-              variant="outlined"
-              color="inherit"
-              onClick={onCancel}
-              disabled={loading}
-              sx={{ borderRadius: 2, textTransform: 'none' }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={loading}
-              startIcon={<SaveIcon />}
-              sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
-            >
-              {loading ? "Salvando..." : "Salvar Ficha Técnica"}
-            </Button>
-          </Box>
-        </form>
-      </Paper>
-    </Zoom>
+        {items.length === 0 ? (
+          <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center mb-4">
+            <p className="text-slate-400 text-sm">
+              Nenhum ingrediente adicionado. Clique em "Adicionar Insumo" para começar.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto mb-4">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Insumo / Ingrediente</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style={{ width: "200px" }}>Quantidade</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider" style={{ width: "80px" }}>Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {items.map((item, index) => (
+                  <tr key={index} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <select
+                        className={selectCls}
+                        value={item.rawMaterialId}
+                        onChange={(e) => updateItem(index, 'rawMaterialId', e.target.value)}
+                        required
+                      >
+                        <option value="">Selecione o insumo...</option>
+                        {products
+                          .filter((p) => p.id !== finalProductId)
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} (Estoque: {p.storage || 0})
+                            </option>
+                          ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        className={inputCls}
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                        placeholder="Ex: 0.250"
+                        required
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        onClick={() => removeItem(index)}
+                        title="Remover Insumo"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            type="button"
+            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Save size={14} />
+            {loading ? "Salvando..." : "Salvar Ficha Técnica"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 

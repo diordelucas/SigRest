@@ -1,22 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-    TextField,
-    Button,
-    Container,
-    Typography,
-    Box,
-    MenuItem,
-    Select,
-    InputLabel,
-    FormControl,
-    IconButton,
-    Paper,
-    Grid
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+
+const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const PurchaseForm = () => {
     const navigate = useNavigate();
@@ -92,141 +80,165 @@ const PurchaseForm = () => {
                 }))
             };
             await api.post('/purchases', purchaseToSubmit);
-            navigate('/purchases'); // Navigate to purchase list after successful creation
+            navigate('/purchases');
         } catch (err) {
             setError('Erro ao registrar compra: ' + err.message);
         }
     };
 
-    if (loading) return <Typography>Carregando...</Typography>;
-    if (error) return <Typography color="error">{error}</Typography>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-40">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+        );
+    }
 
     return (
-        <Container maxWidth="md">
-            <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    Registrar Nova Compra
-                </Typography>
+        <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <button
+                        type="button"
+                        className="p-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                        onClick={() => navigate('/purchases')}
+                    >
+                        <ArrowLeft size={16} />
+                    </button>
+                    <h2 className="text-lg font-semibold text-slate-800">Registrar Nova Compra</h2>
+                </div>
+
                 <form onSubmit={handleSubmit}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Data da Compra"
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Data da Compra</label>
+                            <input
                                 type="date"
                                 name="date"
+                                className={inputCls}
                                 value={purchase.date}
                                 onChange={handlePurchaseChange}
-                                InputLabelProps={{ shrink: true }}
                                 required
                             />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Fornecedor</InputLabel>
-                                <Select
-                                    name="supplierId"
-                                    value={purchase.supplierId}
-                                    onChange={handlePurchaseChange}
-                                    label="Fornecedor"
-                                >
-                                    {suppliers.map((supplier) => (
-                                        <MenuItem key={supplier.id} value={supplier.id}>
-                                            {supplier.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    </Grid>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fornecedor</label>
+                            <select
+                                name="supplierId"
+                                className={selectCls}
+                                value={purchase.supplierId}
+                                onChange={handlePurchaseChange}
+                                required
+                            >
+                                <option value="">Selecione...</option>
+                                {suppliers.map((supplier) => (
+                                    <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
-                    <Box sx={{ mt: 4, mb: 2 }}>
-                        <Typography variant="h6" gutterBottom>Itens da Compra</Typography>
-                        {purchase.items.map((item, index) => (
-                            <Paper key={index} elevation={1} sx={{ p: 2, mb: 2, border: '1px solid #ddd' }}>
-                                <Grid container spacing={2} alignItems="center">
-                                    <Grid item xs={12} sm={5}>
-                                        <FormControl fullWidth required>
-                                            <InputLabel>Produto</InputLabel>
-                                            <Select
-                                                name="productId"
-                                                value={item.productId}
-                                                onChange={(e) => handleItemChange(index, e)}
-                                                label="Produto"
-                                            >
-                                                {products.map((product) => (
-                                                    <MenuItem key={product.id} value={product.id}>
-                                                        {product.name}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12} sm={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Quantidade"
-                                            type="number"
-                                            name="quantity"
-                                            value={item.quantity}
-                                            onChange={(e) => handleItemChange(index, e)}
-                                            inputProps={{ min: 1 }}
-                                            required
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Preço Unitário"
+                    <div className="border-t border-slate-200 my-4 flex items-center gap-3">
+                        <span className="text-xs text-slate-400 font-medium">ITENS DA COMPRA</span>
+                    </div>
+
+                    {purchase.items.map((item, index) => (
+                        <div key={index} className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-3">
+                            <div className="grid grid-cols-5 gap-3 items-end">
+                                <div className="col-span-2 flex flex-col gap-1">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto</label>
+                                    <select
+                                        name="productId"
+                                        className={selectCls}
+                                        value={item.productId}
+                                        onChange={(e) => handleItemChange(index, e)}
+                                        required
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {products.map((product) => (
+                                            <option key={product.id} value={product.id}>{product.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Quantidade</label>
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        min="1"
+                                        className={inputCls}
+                                        value={item.quantity}
+                                        onChange={(e) => handleItemChange(index, e)}
+                                        required
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço Unit.</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
+                                        <input
                                             type="number"
                                             name="unitPrice"
+                                            step="0.01"
+                                            min="0"
+                                            className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                                             value={item.unitPrice}
                                             onChange={(e) => handleItemChange(index, e)}
-                                            inputProps={{ step: "0.01", min: 0 }}
                                             required
                                         />
-                                    </Grid>
-                                    <Grid item xs={12} sm={1}>
-                                        <IconButton color="error" onClick={() => handleRemoveItem(index)}>
-                                            <RemoveIcon />
-                                        </IconButton>
-                                    </Grid>
-                                </Grid>
-                            </Paper>
-                        ))}
-                        <Button
-                            variant="outlined"
-                            startIcon={<AddIcon />}
-                            onClick={handleAddItem}
-                            sx={{ mt: 2 }}
-                        >
-                            Adicionar Item
-                        </Button>
-                    </Box>
+                                    </div>
+                                </div>
+                                <div className="flex items-end pb-0.5">
+                                    <button
+                                        type="button"
+                                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                                        onClick={() => handleRemoveItem(index)}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
 
-                    <Box sx={{ mt: 4, textAlign: 'right' }}>
-                        <Typography variant="h6">Total da Compra: R$ {calculateTotal()}</Typography>
-                    </Box>
+                    <button
+                        type="button"
+                        className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 mt-2"
+                        onClick={handleAddItem}
+                    >
+                        <Plus size={14} /> Adicionar Item
+                    </button>
 
-                    <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
+                    <div className="mt-6 text-right">
+                        <p className="text-base font-semibold text-slate-700">
+                            Total da Compra: <span className="text-primary-500">R$ {calculateTotal()}</span>
+                        </p>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-2">
+                        <button
                             type="submit"
+                            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors"
                         >
                             Registrar Compra
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
+                        </button>
+                        <button
+                            type="button"
+                            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
                             onClick={() => navigate('/purchases')}
                         >
                             Cancelar
-                        </Button>
-                    </Box>
+                        </button>
+                    </div>
                 </form>
-            </Paper>
-        </Container>
+            </div>
+        </div>
     );
 };
 

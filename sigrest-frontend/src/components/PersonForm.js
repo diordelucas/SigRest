@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import {
-  TextField, Button, Paper, Typography, Box,
-  InputAdornment, CircularProgress, Divider,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Search } from "lucide-react";
+import { IMaskInput } from "react-imask";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { MaskedInput, CPF_MASK, PHONE_MASK, CEP_MASK } from "../utils/masks";
+import { CPF_MASK, PHONE_MASK, CEP_MASK } from "../utils/masks";
+
+const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
 
 const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   const [name, setName] = useState("");
@@ -115,128 +114,153 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   };
 
   return (
-    <Paper sx={{ p: 3, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
+    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+      <h2 className="text-lg font-semibold text-slate-800 mb-4">
         {editingPerson ? "Editar Pessoa" : "Cadastro de Pessoa"}
-      </Typography>
+      </h2>
 
       <form onSubmit={handleSubmit}>
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Nome Completo"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <TextField
-            fullWidth
-            label="CPF"
-            value={cpf}
-            onChange={(e) => setCpf(e.target.value)}
-            placeholder="000.000.000-00"
-            InputProps={{
-              inputComponent: MaskedInput,
-              inputProps: { mask: CPF_MASK, name: "cpf" },
-            }}
-          />
-        </Box>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome Completo</label>
+            <input
+              className={inputCls}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Nome completo"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">CPF</label>
+            <IMaskInput
+              mask={CPF_MASK}
+              value={cpf}
+              onAccept={(value) => setCpf(value)}
+              className={inputCls}
+              placeholder="000.000.000-00"
+            />
+          </div>
+        </div>
 
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Telefone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="(00) 00000-0000"
-            InputProps={{
-              inputComponent: MaskedInput,
-              inputProps: { mask: PHONE_MASK, name: "phone" },
-            }}
-          />
-          <TextField
-            fullWidth
-            label="E-mail"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </Box>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Telefone</label>
+            <IMaskInput
+              mask={PHONE_MASK}
+              value={phone}
+              onAccept={(value) => setPhone(value)}
+              className={inputCls}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
+            <input
+              type="email"
+              className={inputCls}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email@exemplo.com"
+            />
+          </div>
+        </div>
 
-        <Divider sx={{ my: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            Endereço
-          </Typography>
-        </Divider>
+        <div className="border-t border-slate-200 my-4 flex items-center gap-3">
+          <span className="text-xs text-slate-400 font-medium">ENDEREÇO</span>
+        </div>
 
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <TextField
-            sx={{ width: "180px" }}
-            label="CEP"
-            value={cep}
-            onChange={(e) => setCep(e.target.value)}
-            onBlur={handleCepBlur}
-            placeholder="00000-000"
-            InputProps={{
-              inputComponent: MaskedInput,
-              inputProps: { mask: CEP_MASK, name: "cep" },
-              endAdornment: (
-                <InputAdornment position="end">
-                  {cepLoading
-                    ? <CircularProgress size={18} />
-                    : <SearchIcon fontSize="small" color="action" />}
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            fullWidth
-            label="Rua / Logradouro"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-          />
-          <TextField
-            sx={{ width: "110px" }}
-            label="Número"
-            value={number}
-            onChange={(e) => setNumber(e.target.value)}
-          />
-        </Box>
+        <div className="flex gap-4 mb-4">
+          <div className="flex flex-col gap-1" style={{ width: "180px" }}>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">CEP</label>
+            <div className="relative">
+              <IMaskInput
+                mask={CEP_MASK}
+                value={cep}
+                onAccept={(value) => setCep(value)}
+                onBlur={handleCepBlur}
+                className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                placeholder="00000-000"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                {cepLoading ? (
+                  <div className="w-4 h-4 border-2 border-slate-300 border-t-primary-500 rounded-full animate-spin" />
+                ) : (
+                  <Search size={14} />
+                )}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rua / Logradouro</label>
+            <input
+              className={inputCls}
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              placeholder="Rua, Avenida..."
+            />
+          </div>
+          <div className="flex flex-col gap-1" style={{ width: "110px" }}>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Número</label>
+            <input
+              className={inputCls}
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+              placeholder="Nº"
+            />
+          </div>
+        </div>
 
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Bairro"
-            value={nbhd}
-            onChange={(e) => setNbhd(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Cidade"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-          />
-          <TextField
-            sx={{ width: "80px" }}
-            label="UF"
-            value={uf}
-            onChange={(e) => setUf(e.target.value.toUpperCase())}
-            inputProps={{ maxLength: 2 }}
-          />
-        </Box>
+        <div className="flex gap-4 mb-6">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bairro</label>
+            <input
+              className={inputCls}
+              value={nbhd}
+              onChange={(e) => setNbhd(e.target.value)}
+              placeholder="Bairro"
+            />
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cidade</label>
+            <input
+              className={inputCls}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Cidade"
+            />
+          </div>
+          <div className="flex flex-col gap-1" style={{ width: "80px" }}>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">UF</label>
+            <input
+              className={inputCls}
+              value={uf}
+              onChange={(e) => setUf(e.target.value.toUpperCase())}
+              maxLength={2}
+              placeholder="UF"
+            />
+          </div>
+        </div>
 
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button type="submit" variant="contained" color="primary" fullWidth>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors"
+          >
             {editingPerson ? "Atualizar" : "Cadastrar"}
-          </Button>
+          </button>
           {editingPerson && (
-            <Button type="button" variant="outlined" color="secondary" fullWidth onClick={handleCancel}>
+            <button
+              type="button"
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              onClick={handleCancel}
+            >
               Cancelar
-            </Button>
+            </button>
           )}
-        </Box>
+        </div>
       </form>
-    </Paper>
+    </div>
   );
 };
 

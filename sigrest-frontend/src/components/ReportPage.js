@@ -1,30 +1,10 @@
 import React, { useState } from 'react';
-import {
-    Container,
-    Typography,
-    Box,
-    Paper,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    TextField,
-    Button,
-    Grid,
-    Alert,
-    CircularProgress,
-    // Added missing MUI components
-    TableContainer,
-    Table,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody, // TableBody was also missing
-    Chip
-} from '@mui/material';
 import api from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import moment from 'moment';
+
+const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const ReportPage = () => {
     const [reportType, setReportType] = useState('');
@@ -45,14 +25,14 @@ const ReportPage = () => {
                     response = await api.get('/reports/sales-by-period', {
                         params: { startDate, endDate }
                     });
-                    setReportData(response.data.map(item => ({
+                    setReportData(response.data.map((item) => ({
                         ...item,
                         date: moment(item.date).format('DD/MM/YYYY')
                     })));
                     break;
                 case 'top-selling-products':
                     response = await api.get('/reports/top-selling-products', {
-                        params: { limit: 10 } // Default limit for now
+                        params: { limit: 10 }
                     });
                     setReportData(response.data);
                     break;
@@ -63,7 +43,7 @@ const ReportPage = () => {
                             endMonth: moment(endDate).endOf('month').format('YYYY-MM-DD')
                         }
                     });
-                    setReportData(response.data.map(item => ({
+                    setReportData(response.data.map((item) => ({
                         ...item,
                         month: moment(item.month).format('MMM YYYY')
                     })));
@@ -72,7 +52,7 @@ const ReportPage = () => {
                     response = await api.get('/reports/stock-movement', {
                         params: { startDate, endDate }
                     });
-                    setReportData(response.data.map(item => ({
+                    setReportData(response.data.map((item) => ({
                         ...item,
                         date: moment(item.date).format('DD/MM/YYYY HH:mm')
                     })));
@@ -96,13 +76,13 @@ const ReportPage = () => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={reportData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#64748b' }} />
+                            <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
                             <Tooltip />
                             <Legend />
-                            <Line type="monotone" dataKey="totalRevenue" stroke="#8884d8" name="Receita Total (R$)" />
-                            <Line type="monotone" dataKey="totalSales" stroke="#82ca9d" name="Total de Vendas" />
+                            <Line type="monotone" dataKey="totalRevenue" stroke="#8884d8" name="Receita Total (R$)" strokeWidth={2} />
+                            <Line type="monotone" dataKey="totalSales" stroke="#82ca9d" name="Total de Vendas" strokeWidth={2} />
                         </LineChart>
                     </ResponsiveContainer>
                 );
@@ -110,9 +90,9 @@ const ReportPage = () => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <BarChart data={reportData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="productName" />
-                            <YAxis />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="productName" tick={{ fontSize: 12, fill: '#64748b' }} />
+                            <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
                             <Tooltip />
                             <Legend />
                             <Bar dataKey="totalQuantitySold" fill="#8884d8" name="Quantidade Vendida" />
@@ -124,47 +104,49 @@ const ReportPage = () => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={reportData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" />
-                            <YAxis />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748b' }} />
+                            <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
                             <Tooltip />
                             <Legend />
-                            <Line type="monotone" dataKey="totalRevenue" stroke="#8884d8" name="Faturamento (R$)" />
+                            <Line type="monotone" dataKey="totalRevenue" stroke="#f97316" name="Faturamento (R$)" strokeWidth={2} />
                         </LineChart>
                     </ResponsiveContainer>
                 );
             case 'stock-movement':
                 return (
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Data/Hora</TableCell>
-                                    <TableCell>Produto</TableCell>
-                                    <TableCell>Tipo</TableCell>
-                                    <TableCell align="right">Quantidade</TableCell>
-                                    <TableCell>Descrição</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data/Hora</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Quantidade</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
                                 {reportData.map((movement, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{movement.date}</TableCell>
-                                        <TableCell>{movement.productName}</TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                label={movement.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA'}
-                                                color={movement.type === 'ENTRY' ? 'success' : 'error'}
-                                                size="small"
-                                            />
-                                        </TableCell>
-                                        <TableCell align="right">{movement.quantity}</TableCell>
-                                        <TableCell>{movement.description}</TableCell>
-                                    </TableRow>
+                                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-3 text-sm text-slate-700">{movement.date}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">{movement.productName}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                movement.type === 'ENTRY'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                            }`}>
+                                                {movement.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">{movement.quantity}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">{movement.description}</td>
+                                    </tr>
                                 ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                            </tbody>
+                        </table>
+                    </div>
                 );
             default:
                 return null;
@@ -172,73 +154,73 @@ const ReportPage = () => {
     };
 
     return (
-        <Container maxWidth="lg">
-            <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    Relatórios Gerenciais
-                </Typography>
+        <div>
+            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-6">Relatórios Gerenciais</h2>
 
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
 
-                <Grid container spacing={3} alignItems="center" sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth>
-                            <InputLabel>Tipo de Relatório</InputLabel>
-                            <Select
-                                value={reportType}
-                                label="Tipo de Relatório"
-                                onChange={(e) => setReportType(e.target.value)}
-                            >
-                                <MenuItem value=""><em>Nenhum</em></MenuItem>
-                                <MenuItem value="sales-by-period">Vendas por Período</MenuItem>
-                                <MenuItem value="top-selling-products">Produtos Mais Vendidos</MenuItem>
-                                <MenuItem value="monthly-revenue">Faturamento Mensal</MenuItem>
-                                <MenuItem value="stock-movement">Movimentação de Estoque</MenuItem>
-                                {/* <MenuItem value="financial-flow">Fluxo Financeiro</MenuItem> */}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <TextField
-                            fullWidth
-                            label="Data Inicial"
+                <div className="grid grid-cols-4 gap-4 items-end mb-6">
+                    <div className="flex flex-col gap-1">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tipo de Relatório</label>
+                        <select
+                            className={selectCls}
+                            value={reportType}
+                            onChange={(e) => setReportType(e.target.value)}
+                        >
+                            <option value="">Nenhum</option>
+                            <option value="sales-by-period">Vendas por Período</option>
+                            <option value="top-selling-products">Produtos Mais Vendidos</option>
+                            <option value="monthly-revenue">Faturamento Mensal</option>
+                            <option value="stock-movement">Movimentação de Estoque</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Data Inicial</label>
+                        <input
                             type="date"
+                            className={inputCls}
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <TextField
-                            fullWidth
-                            label="Data Final"
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Data Final</label>
+                        <input
                             type="date"
+                            className={inputCls}
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={2}>
-                        <Button
-                            variant="contained"
-                            color="primary"
+                    </div>
+                    <div>
+                        <button
+                            className="w-full px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             onClick={handleGenerateReport}
                             disabled={loading || !reportType}
-                            fullWidth
                         >
-                            {loading ? <CircularProgress size={24} /> : 'Gerar'}
-                        </Button>
-                    </Grid>
-                </Grid>
+                            {loading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Gerando...
+                                </>
+                            ) : 'Gerar'}
+                        </button>
+                    </div>
+                </div>
 
                 {reportData && (
-                    <Box sx={{ mt: 4 }}>
-                        <Typography variant="h5" gutterBottom>Resultado do Relatório</Typography>
+                    <div className="mt-4">
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Resultado do Relatório</h3>
                         {renderReportContent()}
-                    </Box>
+                    </div>
                 )}
-            </Paper>
-        </Container>
+            </div>
+        </div>
     );
 };
 

@@ -1,16 +1,3 @@
-import React from 'react';
-import { IMaskInput } from 'react-imask';
-
-export const MaskedInput = React.forwardRef(function MaskedInput({ onChange, ...other }, ref) {
-  return (
-    <IMaskInput
-      {...other}
-      inputRef={ref}
-      onAccept={(value) => onChange({ target: { name: other.name, value } })}
-    />
-  );
-});
-
 export const CPF_MASK = '000.000.000-00';
 export const CNPJ_MASK = '00.000.000/0000-00';
 export const PHONE_MASK = [

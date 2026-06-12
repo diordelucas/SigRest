@@ -1,33 +1,20 @@
 import React, { useState, useEffect } from "react";
-import {
-  Paper,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Alert,
-  Box,
-  CircularProgress,
-  Button
-} from "@mui/material";
+import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import axios from "axios";
 
 const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
-  const [products, setProducts] = useState([]); // Changed setPersons to setProducts
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchProducts = async () => { // Changed fetchPersons to fetchProducts
+  const fetchProducts = async () => {
     try {
       setLoading(true);
       setError("");
       const response = await axios.get("http://localhost:8080/product");
-      setProducts(response.data); // Changed setPersons to setProducts
+      setProducts(response.data);
     } catch (error) {
-      setError("Erro ao carregar a lista de produtos. Verifique o servidor."); // Changed message
+      setError("Erro ao carregar a lista de produtos. Verifique o servidor.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -35,109 +22,111 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir este produto?")) { // Changed message
+    if (window.confirm("Tem certeza que deseja excluir este produto?")) {
       try {
         await axios.delete(`http://localhost:8080/product/${id}`);
-        setProducts(products.filter(product => product.id !== id)); // Changed persons to products
+        setProducts(products.filter((product) => product.id !== id));
       } catch (error) {
-        setError("Erro ao excluir produto. Verifique o servidor."); // Changed message
+        setError("Erro ao excluir produto. Verifique o servidor.");
         console.error(error);
       }
     }
   };
 
-  const handleEdit = (product) => { // Changed person to product
-    onEditPerson(product);
-  };
-
   useEffect(() => {
-    fetchProducts(); // Changed fetchPersons to fetchProducts
+    fetchProducts();
   }, [refreshTrigger]);
 
   if (loading) {
     return (
-      <Paper sx={{ p: 3, mb: 2 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
-        </Box>
-      </Paper>
+      <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+        <div className="flex items-center justify-center h-40">
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+        </div>
+      </div>
     );
   }
 
   return (
-    <Paper sx={{ p: 3, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Lista de Produtos
-      </Typography>
+    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+      <h2 className="text-lg font-semibold text-slate-800 mb-4">Lista de Produtos</h2>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-      {products.length === 0 ? (
-        <Typography color="textSecondary">
-          Nenhum produto cadastrado.
-        </Typography>
-      ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell><strong>ID</strong></TableCell>
-                <TableCell><strong>Nome</strong></TableCell>
-                <TableCell><strong>Código</strong></TableCell>
-                <TableCell><strong>Preço Compra</strong></TableCell>
-                <TableCell><strong>Preço Venda</strong></TableCell>
-                <TableCell><strong>Estoque</strong></TableCell>
-                {!isReadOnly && <TableCell><strong>Ações</strong></TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>{product.id}</TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.code}</TableCell>
-                  <TableCell>{product.price}</TableCell>
-                  <TableCell>{product.sellPrice}</TableCell>
-                  <TableCell>{product.storage}</TableCell>
-                  {!isReadOnly && (
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          size="small"
-                          onClick={() => handleEdit(product)}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          Excluir
-                        </Button>
-                      </Box>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
       )}
 
-      <Box mt={2}>
-        <Button
-          variant="outlined"
-          onClick={fetchProducts} // Changed fetchPersons to fetchProducts
+      {products.length === 0 ? (
+        <p className="text-center text-slate-400 py-8 text-sm">Nenhum produto cadastrado.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Código</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço Compra</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço Venda</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estoque</th>
+                {!isReadOnly && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {products.map((product) => (
+                <tr key={product.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3 text-sm text-slate-700">{product.id}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{product.name}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{product.code}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{product.price}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{product.sellPrice}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      product.storage <= product.minStorage
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {product.storage} un.
+                    </span>
+                  </td>
+                  {!isReadOnly && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1"
+                          onClick={() => onEditPerson(product)}
+                        >
+                          <Pencil size={12} /> Editar
+                        </button>
+                        <button
+                          className="px-3 py-1.5 text-xs bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors flex items-center gap-1"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 size={12} /> Excluir
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="mt-4">
+        <button
+          className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={fetchProducts}
           disabled={loading}
         >
-          Atualizar Lista
-        </Button>
-      </Box>
-    </Paper>
+          <RefreshCw size={14} /> Atualizar Lista
+        </button>
+      </div>
+    </div>
   );
 };
 

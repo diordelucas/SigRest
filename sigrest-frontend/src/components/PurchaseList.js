@@ -1,19 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Container,
-    Typography,
-    Button,
-    Box,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    CircularProgress,
-    Alert
-} from '@mui/material';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -39,72 +25,68 @@ const PurchaseList = () => {
 
     if (loading) {
         return (
-            <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-            </Container>
+            <div className="flex items-center justify-center h-40">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+            </div>
         );
     }
 
     if (error) {
         return (
-            <Container maxWidth="md" sx={{ mt: 4 }}>
-                <Alert severity="error">{error}</Alert>
-            </Container>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
         );
     }
 
     return (
-        <Container maxWidth="lg">
-            <Box sx={{ mt: 4, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h4" component="h1">
-                    Lista de Compras
-                </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
+        <div>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-slate-800">Lista de Compras</h2>
+                <button
+                    className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
                     onClick={() => navigate('/purchases/new')}
                 >
-                    Nova Compra
-                </Button>
-            </Box>
+                    <Plus size={14} /> Nova Compra
+                </button>
+            </div>
 
-            {purchases.length === 0 ? (
-                <Alert severity="info">Nenhuma compra encontrada.</Alert>
-            ) : (
-                <TableContainer component={Paper} elevation={3}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>ID</TableCell>
-                                <TableCell>Data</TableCell>
-                                <TableCell>Fornecedor</TableCell>
-                                <TableCell align="right">Total</TableCell>
-                                <TableCell>Ações</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {purchases.map((purchase) => (
-                                <TableRow key={purchase.id}>
-                                    <TableCell>{purchase.id}</TableCell>
-                                    <TableCell>{new Date(purchase.date).toLocaleDateString()}</TableCell>
-                                    <TableCell>{purchase.supplier ? purchase.supplier.name : 'N/A'}</TableCell>
-                                    <TableCell align="right">R$ {purchase.total.toFixed(2)}</TableCell>
-                                    <TableCell>
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            onClick={() => navigate(`/purchases/${purchase.id}`)}
-                                        >
-                                            Ver Detalhes
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
-        </Container>
+            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
+                {purchases.length === 0 ? (
+                    <p className="text-center text-slate-400 py-8 text-sm">Nenhuma compra encontrada.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fornecedor</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {purchases.map((purchase) => (
+                                    <tr key={purchase.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-3 text-sm text-slate-700">{purchase.id}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">{new Date(purchase.date).toLocaleDateString()}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">{purchase.supplier ? purchase.supplier.name : 'N/A'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {purchase.total.toFixed(2)}</td>
+                                        <td className="px-4 py-3">
+                                            <button
+                                                className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+                                                onClick={() => navigate(`/purchases/${purchase.id}`)}
+                                            >
+                                                Ver Detalhes
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 };
 

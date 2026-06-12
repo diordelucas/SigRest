@@ -1,27 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-    TextField,
-    Button,
-    Container,
-    Typography,
-    Box,
-    MenuItem,
-    Select,
-    InputLabel,
-    FormControl,
-    IconButton,
-    Paper,
-    Grid,
-    InputAdornment,
-    Divider,
-    Chip,
-    CircularProgress,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+import { Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+
+const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const PAYMENT_METHODS = [
     { value: 'DINHEIRO', label: 'Dinheiro' },
@@ -126,185 +110,182 @@ const SaleForm = () => {
         }
     };
 
-    if (loading) return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-            <CircularProgress />
-        </Box>
-    );
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-40">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <Container maxWidth="md">
-            <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
-                    Registrar Nova Venda
-                </Typography>
+        <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-6">Registrar Nova Venda</h2>
 
                 <form onSubmit={handleSubmit}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Cliente</InputLabel>
-                                <Select
-                                    name="personId"
-                                    value={sale.personId}
-                                    onChange={handleSaleChange}
-                                    label="Cliente"
-                                >
-                                    {people.map((person) => (
-                                        <MenuItem key={person.id} value={person.id}>
-                                            {person.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Forma de Pagamento</InputLabel>
-                                <Select
-                                    name="paymentMethod"
-                                    value={sale.paymentMethod}
-                                    onChange={handleSaleChange}
-                                    label="Forma de Pagamento"
-                                >
-                                    {PAYMENT_METHODS.map(({ value, label }) => (
-                                        <MenuItem key={value} value={value}>
-                                            {label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField
-                                fullWidth
-                                label="Desconto"
-                                type="number"
-                                name="discount"
-                                value={sale.discount}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cliente</label>
+                            <select
+                                name="personId"
+                                className={selectCls}
+                                value={sale.personId}
                                 onChange={handleSaleChange}
-                                inputProps={{ step: "0.01", min: 0 }}
-                                InputProps={{
-                                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                                }}
-                            />
-                        </Grid>
-                    </Grid>
+                                required
+                            >
+                                <option value="">Selecione...</option>
+                                {people.map((person) => (
+                                    <option key={person.id} value={person.id}>{person.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Forma de Pagamento</label>
+                            <select
+                                name="paymentMethod"
+                                className={selectCls}
+                                value={sale.paymentMethod}
+                                onChange={handleSaleChange}
+                                required
+                            >
+                                <option value="">Selecione...</option>
+                                {PAYMENT_METHODS.map(({ value, label }) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Desconto</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
+                                <input
+                                    type="number"
+                                    name="discount"
+                                    step="0.01"
+                                    min="0"
+                                    className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                    value={sale.discount}
+                                    onChange={handleSaleChange}
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-                    <Divider sx={{ my: 3 }}>
-                        <Typography variant="caption" color="text.secondary">Itens da Venda</Typography>
-                    </Divider>
+                    <div className="border-t border-slate-200 my-4 flex items-center gap-3">
+                        <span className="text-xs text-slate-400 font-medium">ITENS DA VENDA</span>
+                    </div>
 
                     {sale.items.map((item, index) => (
-                        <Paper key={index} variant="outlined" sx={{ p: 2, mb: 2 }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} sm={5}>
-                                    <FormControl fullWidth required>
-                                        <InputLabel>Produto</InputLabel>
-                                        <Select
-                                            name="productId"
-                                            value={item.productId}
-                                            onChange={(e) => handleItemChange(index, e)}
-                                            label="Produto"
-                                        >
-                                            {products.map((product) => (
-                                                <MenuItem key={product.id} value={product.id}>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                                        <span>{product.name}</span>
-                                                        <Chip
-                                                            label={`${product.storage} un.`}
-                                                            size="small"
-                                                            color={product.storage <= product.minStorage ? 'warning' : 'default'}
-                                                            sx={{ ml: 1 }}
-                                                        />
-                                                    </Box>
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={3}>
-                                    <TextField
-                                        fullWidth
-                                        label="Quantidade"
+                        <div key={index} className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-3">
+                            <div className="grid grid-cols-5 gap-3 items-end">
+                                <div className="col-span-2 flex flex-col gap-1">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto</label>
+                                    <select
+                                        name="productId"
+                                        className={selectCls}
+                                        value={item.productId}
+                                        onChange={(e) => handleItemChange(index, e)}
+                                        required
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {products.map((product) => (
+                                            <option key={product.id} value={product.id}>
+                                                {product.name} ({product.storage} un.)
+                                                {product.storage <= product.minStorage ? ' ⚠' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Qtd</label>
+                                    <input
                                         type="number"
                                         name="quantity"
+                                        min="1"
+                                        className={inputCls}
                                         value={item.quantity}
                                         onChange={(e) => handleItemChange(index, e)}
-                                        inputProps={{ min: 1 }}
                                         required
                                     />
-                                </Grid>
-                                <Grid item xs={12} sm={3}>
-                                    <TextField
-                                        fullWidth
-                                        label="Preço Unit."
-                                        type="number"
-                                        name="unitPrice"
-                                        value={item.unitPrice}
-                                        onChange={(e) => handleItemChange(index, e)}
-                                        inputProps={{ step: "0.01", min: 0 }}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                                        }}
-                                        required
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={1}>
-                                    <IconButton color="error" onClick={() => handleRemoveItem(index)}>
-                                        <RemoveIcon />
-                                    </IconButton>
-                                </Grid>
-                            </Grid>
-                        </Paper>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço Unit.</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
+                                        <input
+                                            type="number"
+                                            name="unitPrice"
+                                            step="0.01"
+                                            min="0"
+                                            className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                            value={item.unitPrice}
+                                            onChange={(e) => handleItemChange(index, e)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-end pb-0.5">
+                                    <button
+                                        type="button"
+                                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                                        onClick={() => handleRemoveItem(index)}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     ))}
 
-                    <Button
-                        variant="outlined"
-                        startIcon={<AddIcon />}
+                    <button
+                        type="button"
+                        className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 mt-1"
                         onClick={handleAddItem}
-                        sx={{ mt: 1 }}
                     >
-                        Adicionar Item
-                    </Button>
+                        <Plus size={14} /> Adicionar Item
+                    </button>
 
-                    <Paper variant="outlined" sx={{ mt: 3, p: 2, bgcolor: 'grey.50' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
-                            <Typography variant="body1" color="text.secondary">
+                    <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-4">
+                        <div className="flex flex-col items-end gap-1">
+                            <p className="text-sm text-slate-600">
                                 Subtotal: <strong>R$ {calculateSubtotal().toFixed(2)}</strong>
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
+                            </p>
+                            <p className="text-sm text-slate-600">
                                 Desconto: <strong>R$ {parseFloat(sale.discount || 0).toFixed(2)}</strong>
-                            </Typography>
-                            <Divider sx={{ width: '200px', my: 0.5 }} />
-                            <Typography variant="h6" color="primary" fontWeight={700}>
+                            </p>
+                            <div className="w-48 border-t border-slate-300 my-1" />
+                            <p className="text-base font-bold text-primary-500">
                                 Total: R$ {calculateTotal()}
-                            </Typography>
-                        </Box>
-                    </Paper>
+                            </p>
+                        </div>
+                    </div>
 
-                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
+                    <div className="mt-4 flex justify-end gap-2">
+                        <button
                             type="submit"
                             disabled={submitting}
-                            startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
+                            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                            {submitting ? 'Registrando...' : 'Registrar Venda'}
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
+                            {submitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Registrando...
+                                </>
+                            ) : 'Registrar Venda'}
+                        </button>
+                        <button
+                            type="button"
+                            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
                             onClick={() => navigate('/sales')}
                             disabled={submitting}
                         >
                             Cancelar
-                        </Button>
-                    </Box>
+                        </button>
+                    </div>
                 </form>
-            </Paper>
-        </Container>
+            </div>
+        </div>
     );
 };
 
