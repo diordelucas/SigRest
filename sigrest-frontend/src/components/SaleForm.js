@@ -69,8 +69,9 @@ const SaleForm = () => {
         const newItems = [...sale.items];
         newItems[index] = { ...newItems[index], [e.target.name]: e.target.value };
         if (e.target.name === 'productId') {
-            const product = products.find(p => p.id === parseInt(e.target.value));
-            if (product) newItems[index].unitPrice = product.sellPrice || 0;
+            // eslint-disable-next-line eqeqeq
+            const product = products.find(p => p.id == e.target.value);
+            if (product) newItems[index].unitPrice = product.sellPrice ?? 0;
         }
         setSale({ ...sale, items: newItems });
     };

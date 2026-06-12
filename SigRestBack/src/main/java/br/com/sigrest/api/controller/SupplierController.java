@@ -2,6 +2,9 @@ package br.com.sigrest.api.controller;
 
 import br.com.sigrest.api.dto.SupplierRequestDTO;
 import br.com.sigrest.api.dto.SupplierResponseDTO;
+import br.com.sigrest.api.entity.Address;
+import br.com.sigrest.api.entity.City;
+import br.com.sigrest.api.entity.State;
 import br.com.sigrest.api.entity.Supplier;
 import br.com.sigrest.api.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,40 +21,74 @@ public class SupplierController {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
-    public void saveSupplier(@RequestBody SupplierRequestDTO data){
-        Supplier supplierData = new Supplier(data);
-        repository.save(supplierData);
-        return;
+    public void saveSupplier(@RequestBody SupplierRequestDTO data) {
+        Supplier supplier = new Supplier(data);
+
+        if (data.street() != null || data.city() != null || data.uf() != null) {
+            State state = new State();
+            state.setUf(data.uf());
+
+            City city = new City();
+            city.setName(data.city());
+            city.setState(state);
+
+            Address address = new Address();
+            address.setStreet(data.street());
+            address.setNumber(data.number());
+            address.setNbhd(data.nbhd());
+            address.setCity(city);
+
+            supplier.setAddress(address);
+        }
+
+        repository.save(supplier);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
-    public List<SupplierResponseDTO> getAll(){
-
-        List<SupplierResponseDTO> supplierList = repository.findAll().stream().map(SupplierResponseDTO::new).toList();
-            return supplierList;
-        }
+    public List<SupplierResponseDTO> getAll() {
+        return repository.findAll().stream().map(SupplierResponseDTO::new).toList();
+    }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
-    public SupplierResponseDTO getSupplierById(@PathVariable Long id){
-        Supplier supplier = repository.findById(id).orElseThrow(() -> new RuntimeException("Fornecedor nÃ£o encontrada"));
+    public SupplierResponseDTO getSupplierById(@PathVariable Long id) {
+        Supplier supplier = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Fornecedor não encontrado"));
         return new SupplierResponseDTO(supplier);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public SupplierResponseDTO updateSupplier(@PathVariable Long id, @RequestBody SupplierRequestDTO data) {
-        Supplier supplier = repository.findById(id).orElseThrow(() -> new RuntimeException("Product nÃ£o encontrada"));
+        Supplier supplier = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Fornecedor não encontrado"));
+
         supplier.setName(data.name());
         supplier.setCnpj(data.cnpj());
         supplier.setRegistration(data.registration());
         supplier.setPhone(data.phone());
         supplier.setEmail(data.email());
 
-        Supplier updatedSupplier = repository.save(supplier);
+        Address address = supplier.getAddress();
+        if (address == null) address = new Address();
+        address.setStreet(data.street());
+        address.setNumber(data.number());
+        address.setNbhd(data.nbhd());
 
-        return new SupplierResponseDTO(updatedSupplier);
+        City city = address.getCity();
+        if (city == null) city = new City();
+        city.setName(data.city());
+
+        State state = city.getState();
+        if (state == null) state = new State();
+        state.setUf(data.uf());
+
+        city.setState(state);
+        address.setCity(city);
+        supplier.setAddress(address);
+
+        return new SupplierResponseDTO(repository.save(supplier));
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -59,5 +96,4 @@ public class SupplierController {
     public void deleteSupplier(@PathVariable Long id) {
         repository.deleteById(id);
     }
-    }
-
+}

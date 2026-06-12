@@ -24,9 +24,9 @@ public class Supplier {
     private String cnpj;
     private String email;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id")
-    public Address address;
+    private Address address;
 
     public Supplier(SupplierRequestDTO data){
         this.name = data.name();
