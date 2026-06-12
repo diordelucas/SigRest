@@ -1,28 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import CurrencyInput from './CurrencyInput';
+import { formatBRL } from '../utils/currency';
 
 const CashRegisterForm = () => {
+    const { currentUser } = useAuth();
     const [currentCashRegister, setCurrentCashRegister] = useState(null);
     const [openingBalance, setOpeningBalance] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
     const [dialogAction, setDialogAction] = useState(null);
-
-    const currentUserId = 1;
 
     useEffect(() => {
         const fetchCurrentCashRegister = async () => {
             try {
                 const response = await api.get('/cash-registers/current-open');
-                setCurrentCashRegister(response.data);
+                // 204 No Content resolves with empty data -> treat as "no open register".
+                setCurrentCashRegister(response.data || null);
             } catch (err) {
-                if (err.response && err.response.status === 204) {
-                    setCurrentCashRegister(null);
-                } else {
-                    setError('Erro ao carregar status do caixa: ' + err.message);
-                }
+                toast.error('Erro ao carregar status do caixa: ' + (err.response?.data?.message || err.message));
             } finally {
                 setLoading(false);
             }
@@ -43,25 +41,29 @@ const CashRegisterForm = () => {
     const confirmAction = async () => {
         setOpenDialog(false);
         setLoading(true);
-        setError(null);
-        setSuccessMessage(null);
 
         try {
             if (dialogAction === 'open') {
+                if (!currentUser?.id) {
+                    toast.error('Sessão inválida. Faça login novamente para abrir o caixa.');
+                    return;
+                }
                 const response = await api.post('/cash-registers/open', {
-                    openingBalance: parseFloat(openingBalance),
-                    openedByUserId: currentUserId
+                    openingBalance: Number(openingBalance),
+                    openedByUserId: currentUser.id,
                 });
                 setCurrentCashRegister(response.data);
-                setSuccessMessage('Caixa aberto com sucesso!');
                 setOpeningBalance('');
+                toast.success('Caixa aberto com sucesso!');
             } else if (dialogAction === 'close') {
-                const response = await api.post(`/cash-registers/close/${currentCashRegister.id}?closedByUserId=${currentUserId}`);
+                const response = await api.post(
+                    `/cash-registers/close/${currentCashRegister.id}?closedByUserId=${currentUser.id}`
+                );
                 setCurrentCashRegister(response.data);
-                setSuccessMessage('Caixa fechado com sucesso!');
+                toast.success('Caixa fechado com sucesso!');
             }
         } catch (err) {
-            setError('Erro: ' + (err.response?.data?.message || err.message));
+            toast.error(err.response?.data?.message || 'Erro ao processar a operação de caixa.');
         } finally {
             setLoading(false);
         }
@@ -80,27 +82,25 @@ const CashRegisterForm = () => {
             <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
                 <h2 className="text-lg font-semibold text-slate-800 mb-4">Controle de Caixa</h2>
 
-                {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                        {error}
-                    </div>
-                )}
-                {successMessage && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                        {successMessage}
-                    </div>
-                )}
-
-                {currentCashRegister && currentCashRegister.isOpen ? (
+                {currentCashRegister && currentCashRegister.open ? (
                     <div>
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
                             Caixa atualmente aberto.
                         </div>
-                        <div className="space-y-2 mb-6">
-                            <p className="text-sm text-slate-700"><span className="font-semibold">ID do Caixa:</span> {currentCashRegister.id}</p>
-                            <p className="text-sm text-slate-700"><span className="font-semibold">Aberto em:</span> {new Date(currentCashRegister.openingTime).toLocaleString()}</p>
-                            <p className="text-sm text-slate-700"><span className="font-semibold">Saldo Inicial:</span> R$ {currentCashRegister.openingBalance.toFixed(2)}</p>
-                            <p className="text-sm text-slate-700"><span className="font-semibold">Aberto por:</span> {currentCashRegister.openedBy?.name || 'N/A'}</p>
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Saldo Inicial</p>
+                                <p className="text-lg font-bold text-slate-800">R$ {formatBRL(currentCashRegister.openingBalance ?? 0)}</p>
+                            </div>
+                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-xs font-semibold text-green-600 uppercase tracking-wider">Saldo Atual</p>
+                                <p className="text-lg font-bold text-green-700">R$ {formatBRL(currentCashRegister.currentBalance ?? currentCashRegister.openingBalance ?? 0)}</p>
+                            </div>
+                            <div className="col-span-2 space-y-1">
+                                <p className="text-sm text-slate-700"><span className="font-semibold">ID do Caixa:</span> {currentCashRegister.id}</p>
+                                <p className="text-sm text-slate-700"><span className="font-semibold">Aberto em:</span> {new Date(currentCashRegister.openingTime).toLocaleString()}</p>
+                                <p className="text-sm text-slate-700"><span className="font-semibold">Operador:</span> {currentCashRegister.openedBy?.name || 'N/A'}</p>
+                            </div>
                         </div>
                         <button
                             className="px-4 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-colors"
@@ -118,22 +118,18 @@ const CashRegisterForm = () => {
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Saldo Inicial</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
+                                <CurrencyInput
+                                    data-testid="cash-opening-balance"
                                     className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                                     value={openingBalance}
-                                    onChange={(e) => setOpeningBalance(e.target.value)}
-                                    required
-                                    placeholder="0.00"
+                                    onChange={setOpeningBalance}
                                 />
                             </div>
                         </div>
                         <button
                             className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleOpenCashRegister}
-                            disabled={!openingBalance}
+                            disabled={openingBalance === '' || openingBalance === null}
                         >
                             Abrir Caixa
                         </button>
@@ -150,7 +146,7 @@ const CashRegisterForm = () => {
                         </h3>
                         <p className="text-sm text-slate-600 mb-6">
                             {dialogAction === 'open'
-                                ? `Deseja realmente abrir o caixa com saldo inicial de R$ ${parseFloat(openingBalance).toFixed(2)}?`
+                                ? `Deseja realmente abrir o caixa com saldo inicial de R$ ${formatBRL(openingBalance)}?`
                                 : `Deseja realmente fechar o caixa ${currentCashRegister?.id}?`}
                         </p>
                         <div className="flex justify-end gap-2">

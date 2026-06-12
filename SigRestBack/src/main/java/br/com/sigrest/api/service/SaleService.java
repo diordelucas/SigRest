@@ -41,9 +41,11 @@ public class SaleService {
         sale.setDiscount(saleRequestDTO.discount());
         sale.setPaymentMethod(saleRequestDTO.paymentMethod());
 
-        Person person = personRepository.findById(saleRequestDTO.personId())
-                .orElseThrow(() -> new RuntimeException("Person (client) not found"));
-        sale.setPerson(person);
+        if (saleRequestDTO.personId() != null) {
+            Person person = personRepository.findById(saleRequestDTO.personId())
+                    .orElseThrow(() -> new RuntimeException("Cliente não encontrado."));
+            sale.setPerson(person);
+        }
 
         BigDecimal total = BigDecimal.ZERO;
         for (var itemDTO : saleRequestDTO.items()) {

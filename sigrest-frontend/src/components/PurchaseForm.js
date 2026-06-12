@@ -162,7 +162,10 @@ const PurchaseForm = () => {
                                     >
                                         <option value="">Selecione...</option>
                                         {products.map((product) => (
-                                            <option key={product.id} value={product.id}>{product.name}</option>
+                                            <option key={product.id} value={product.id}>
+                                                {product.name}
+                                                {product.categoryName ? ` · ${product.categoryName}` : ''}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>

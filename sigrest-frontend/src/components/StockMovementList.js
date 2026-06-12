@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import CategoryTag from './CategoryTag';
 
 const StockMovementList = () => {
     const [movements, setMovements] = useState([]);
@@ -59,7 +60,12 @@ const StockMovementList = () => {
                                     <tr key={movement.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3 text-sm text-slate-700">{movement.id}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{new Date(movement.date).toLocaleString()}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-700">{movement.product ? movement.product.name : 'N/A'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">
+                                            <div className="flex items-center gap-2">
+                                                <span>{movement.product ? movement.product.name : 'N/A'}</span>
+                                                {movement.product?.categoryName && <CategoryTag name={movement.product.categoryName} />}
+                                            </div>
+                                        </td>
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                 movement.type === 'ENTRY'

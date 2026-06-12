@@ -45,8 +45,9 @@ export default function LoginForm() {
 
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-slate-300">E-mail</label>
-          <input 
-            type="email" 
+          <input
+            type="email"
+            data-testid="login-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-white/5 border-white/10 text-white px-4 py-3 rounded-xl border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none"
@@ -60,8 +61,9 @@ export default function LoginForm() {
             <label className="text-sm font-semibold text-slate-300">Senha</label>
           </div>
           <div className="relative">
-            <input 
-              type={showPassword ? 'text' : 'password'} 
+            <input
+              type={showPassword ? 'text' : 'password'}
+              data-testid="login-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-white/5 border-white/10 text-white px-4 py-3 rounded-xl border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none pr-12"
@@ -78,8 +80,9 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
+          data-testid="login-submit"
           disabled={loading}
           className="w-full py-4 bg-gradient-to-r from-primary-500 to-amber-600 text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
         >

@@ -5,9 +5,11 @@ import br.com.sigrest.api.dto.CashRegisterResponseDTO;
 import br.com.sigrest.api.dto.UserResponseDTO;
 import br.com.sigrest.api.entity.CashRegister;
 import br.com.sigrest.api.entity.User;
+import br.com.sigrest.api.exception.BusinessException;
 import br.com.sigrest.api.repository.CashRegisterRepository;
 import br.com.sigrest.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +33,15 @@ public class CashRegisterService {
     @Transactional
     public CashRegisterResponseDTO openCashRegister(CashRegisterRequestDTO requestDTO) {
         if (cashRegisterRepository.findByIsOpenTrue().isPresent()) {
-            throw new RuntimeException("JÃ¡ existe um caixa aberto.");
+            throw new BusinessException("Já existe um caixa aberto. Feche o caixa atual antes de abrir um novo.", HttpStatus.CONFLICT);
+        }
+
+        if (requestDTO.getOpenedByUserId() == null) {
+            throw new BusinessException("Usuário responsável pela abertura não informado.", HttpStatus.BAD_REQUEST);
         }
 
         User openedBy = userRepository.findById(requestDTO.getOpenedByUserId())
-                .orElseThrow(() -> new RuntimeException("UsuÃ¡rio nÃ£o encontrado."));
+                .orElseThrow(() -> new BusinessException("Usuário responsável não encontrado.", HttpStatus.NOT_FOUND));
 
         CashRegister cashRegister = new CashRegister();
         cashRegister.setOpeningTime(LocalDateTime.now());
@@ -50,14 +56,14 @@ public class CashRegisterService {
     @Transactional
     public CashRegisterResponseDTO closeCashRegister(Long cashRegisterId, Long closedByUserId) {
         CashRegister cashRegister = cashRegisterRepository.findById(cashRegisterId)
-                .orElseThrow(() -> new RuntimeException("Caixa nÃ£o encontrado."));
+                .orElseThrow(() -> new BusinessException("Caixa não encontrado.", HttpStatus.NOT_FOUND));
 
         if (!cashRegister.isOpen()) {
-            throw new RuntimeException("O caixa jÃ¡ estÃ¡ fechado.");
+            throw new BusinessException("O caixa já está fechado.", HttpStatus.CONFLICT);
         }
 
         User closedBy = userRepository.findById(closedByUserId)
-                .orElseThrow(() -> new RuntimeException("UsuÃ¡rio nÃ£o encontrado."));
+                .orElseThrow(() -> new BusinessException("Usuário responsável não encontrado.", HttpStatus.NOT_FOUND));
 
         cashRegister.setClosingTime(LocalDateTime.now());
         // Calculate closing balance based on opening balance and all movements
@@ -84,7 +90,7 @@ public class CashRegisterService {
 
     public CashRegisterResponseDTO getCashRegisterById(Long id) {
         CashRegister cashRegister = cashRegisterRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Caixa nÃ£o encontrado."));
+                .orElseThrow(() -> new BusinessException("Caixa não encontrado.", HttpStatus.NOT_FOUND));
         return convertToResponseDTO(cashRegister);
     }
 
@@ -96,6 +102,14 @@ public class CashRegisterService {
         dto.setOpeningBalance(cashRegister.getOpeningBalance());
         dto.setClosingBalance(cashRegister.getClosingBalance());
         dto.setOpen(cashRegister.isOpen());
+
+        // Saldo atual calculado = saldo inicial + soma das movimentações do caixa.
+        BigDecimal opening = cashRegister.getOpeningBalance() != null
+                ? cashRegister.getOpeningBalance() : BigDecimal.ZERO;
+        BigDecimal movements = cashRegister.getId() != null
+                ? cashMovementService.getTotalMovementsForCashRegister(cashRegister.getId())
+                : BigDecimal.ZERO;
+        dto.setCurrentBalance(opening.add(movements));
         if (cashRegister.getOpenedBy() != null) {
             dto.setOpenedBy(new UserResponseDTO(cashRegister.getOpenedBy().getId(), cashRegister.getOpenedBy().getName(), cashRegister.getOpenedBy().getEmail(), cashRegister.getOpenedBy().getRole()));
         }

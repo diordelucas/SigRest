@@ -64,6 +64,21 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Selenium WebDriver for E2E tests (version managed by Spring Boot BOM) -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- WebDriverManager: auto-resolves the matching browser driver binary -->
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>5.9.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -88,6 +103,18 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                        E2E tests are tagged @Tag("e2e") and require a running frontend + backend.
+                        They are excluded from the normal build so `mvn test` only runs unit/integration tests.
+                        Run them explicitly with the "e2e" profile: mvn test -Pe2e
+                    -->
+                    <excludedGroups>e2e</excludedGroups>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
@@ -101,5 +128,31 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            E2E profile: runs ONLY the Selenium tests tagged @Tag("e2e").
+            Requires the frontend (http://localhost:3000) and backend (http://localhost:8080) running.
+            Usage:
+              mvn test -Pe2e
+              mvn test -Pe2e -De2e.headless=true               (no visible browser window)
+              mvn test -Pe2e -De2e.baseUrl=http://localhost:3001 (custom frontend URL)
+        -->
+        <profile>
+            <id>e2e</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>e2e</groups>
+                            <excludedGroups></excludedGroups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

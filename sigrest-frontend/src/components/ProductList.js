@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import axios from "axios";
+import CategoryTag from "./CategoryTag";
 
 const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const [products, setProducts] = useState([]);
@@ -66,6 +67,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Código</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço Compra</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço Venda</th>
@@ -80,6 +82,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{product.id}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.name}</td>
+                  <td className="px-4 py-3 text-sm"><CategoryTag name={product.categoryName} /></td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.code}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.price}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.sellPrice}</td>

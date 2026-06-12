@@ -92,6 +92,7 @@ const SaleForm = () => {
         try {
             const saleToSubmit = {
                 ...sale,
+                personId: sale.personId !== '' ? Number(sale.personId) : null,
                 total: parseFloat(calculateTotal()),
                 discount: parseFloat(sale.discount) || 0,
                 items: sale.items.map(item => ({
@@ -126,13 +127,13 @@ const SaleForm = () => {
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-3 gap-4 mb-4">
                         <div className="flex flex-col gap-1">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cliente</label>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cliente <span className="normal-case font-normal text-slate-400">(opcional)</span></label>
                             <select
                                 name="personId"
+                                data-testid="sale-person"
                                 className={selectCls}
                                 value={sale.personId}
                                 onChange={handleSaleChange}
-                                required
                             >
                                 <option value="">Selecione...</option>
                                 {people.map((person) => (
@@ -144,6 +145,7 @@ const SaleForm = () => {
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Forma de Pagamento</label>
                             <select
                                 name="paymentMethod"
+                                data-testid="sale-payment"
                                 className={selectCls}
                                 value={sale.paymentMethod}
                                 onChange={handleSaleChange}
@@ -162,6 +164,7 @@ const SaleForm = () => {
                                 <input
                                     type="number"
                                     name="discount"
+                                    data-testid="sale-discount"
                                     step="0.01"
                                     min="0"
                                     className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
@@ -183,6 +186,7 @@ const SaleForm = () => {
                                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto</label>
                                     <select
                                         name="productId"
+                                        data-testid="sale-item-product"
                                         className={selectCls}
                                         value={item.productId}
                                         onChange={(e) => handleItemChange(index, e)}
@@ -191,7 +195,9 @@ const SaleForm = () => {
                                         <option value="">Selecione...</option>
                                         {products.map((product) => (
                                             <option key={product.id} value={product.id}>
-                                                {product.name} ({product.storage} un.)
+                                                {product.name}
+                                                {product.categoryName ? ` · ${product.categoryName}` : ''}
+                                                {' '}({product.storage} un.)
                                                 {product.storage <= product.minStorage ? ' ⚠' : ''}
                                             </option>
                                         ))}
@@ -202,6 +208,7 @@ const SaleForm = () => {
                                     <input
                                         type="number"
                                         name="quantity"
+                                        data-testid="sale-item-qty"
                                         min="1"
                                         className={inputCls}
                                         value={item.quantity}
@@ -240,6 +247,7 @@ const SaleForm = () => {
 
                     <button
                         type="button"
+                        data-testid="sale-add-item"
                         className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 mt-1"
                         onClick={handleAddItem}
                     >
@@ -264,6 +272,7 @@ const SaleForm = () => {
                     <div className="mt-4 flex justify-end gap-2">
                         <button
                             type="submit"
+                            data-testid="sale-submit"
                             disabled={submitting}
                             className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >

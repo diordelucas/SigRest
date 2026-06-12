@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import CurrencyInput from "./CurrencyInput";
 
 const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
 
@@ -11,6 +12,15 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   const [sellPrice, setSellPrice] = useState("");
   const [storage, setStorage] = useState("");
   const [minStorage, setMinStorage] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/category")
+      .then((res) => setCategories(res.data))
+      .catch(() => toast.error("Erro ao carregar categorias."));
+  }, []);
 
   useEffect(() => {
     if (editingPerson) {
@@ -20,11 +30,12 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       setSellPrice(editingPerson.sellPrice || "");
       setStorage(editingPerson.storage || "");
       setMinStorage(editingPerson.minStorage || "");
+      setCategoryId(editingPerson.categoryId || "");
     }
   }, [editingPerson]);
 
   const clearForm = () => {
-    setName(""); setCode(""); setPrice(""); setSellPrice(""); setStorage(""); setMinStorage("");
+    setName(""); setCode(""); setPrice(""); setSellPrice(""); setStorage(""); setMinStorage(""); setCategoryId("");
   };
 
   const handleSubmit = async (e) => {
@@ -33,7 +44,11 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       toast.error("Nome e código são obrigatórios.");
       return;
     }
-    const personData = { name, code, price, sellPrice, storage, minStorage };
+    if (!categoryId) {
+      toast.error("Selecione a categoria do produto.");
+      return;
+    }
+    const personData = { name, code, price, sellPrice, storage, minStorage, categoryId: Number(categoryId) };
     try {
       if (editingPerson) {
         await axios.put(`http://localhost:8080/product/${editingPerson.id}`, personData);
@@ -67,6 +82,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           <div className="flex flex-col gap-1">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome do Produto</label>
             <input
+              data-testid="product-name"
               className={inputCls}
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -77,6 +93,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           <div className="flex flex-col gap-1">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Código</label>
             <input
+              data-testid="product-code"
               className={inputCls}
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -84,6 +101,22 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
               placeholder="Código"
             />
           </div>
+        </div>
+
+        <div className="flex flex-col gap-1 mb-4">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Categoria (Tipo de Produto)</label>
+          <select
+            data-testid="product-category"
+            className={`${inputCls} appearance-none`}
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            required
+          >
+            <option value="">Selecione a categoria...</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="border-t border-slate-200 my-4 flex items-center gap-3">
@@ -95,14 +128,11 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço de Custo</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
+              <CurrencyInput
+                data-testid="product-price"
                 className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
+                onChange={setPrice}
               />
             </div>
           </div>
@@ -110,14 +140,11 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço de Venda</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
+              <CurrencyInput
+                data-testid="product-sellprice"
                 className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 value={sellPrice}
-                onChange={(e) => setSellPrice(e.target.value)}
-                placeholder="0.00"
+                onChange={setSellPrice}
               />
             </div>
           </div>
@@ -132,6 +159,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Estoque Atual</label>
             <div className="relative">
               <input
+                data-testid="product-storage"
                 type="number"
                 min="0"
                 className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
@@ -146,6 +174,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Estoque Mínimo</label>
             <div className="relative">
               <input
+                data-testid="product-minstorage"
                 type="number"
                 min="0"
                 className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
@@ -162,6 +191,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
         <div className="flex gap-2">
           <button
             type="submit"
+            data-testid="product-submit"
             className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors"
           >
             {editingPerson ? "Atualizar" : "Cadastrar"}

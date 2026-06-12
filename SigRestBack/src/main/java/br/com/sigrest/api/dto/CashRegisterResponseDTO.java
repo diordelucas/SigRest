@@ -12,6 +12,7 @@ public class CashRegisterResponseDTO {
     private LocalDateTime closingTime;
     private BigDecimal openingBalance;
     private BigDecimal closingBalance;
+    private BigDecimal currentBalance; // saldo inicial + movimentações (calculado)
     private UserResponseDTO openedBy;
     private UserResponseDTO closedBy;
     private boolean isOpen;
