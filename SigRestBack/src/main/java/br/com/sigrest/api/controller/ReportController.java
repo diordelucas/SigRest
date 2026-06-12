@@ -1,5 +1,6 @@
 package br.com.sigrest.api.controller;
 
+import br.com.sigrest.api.dto.report.FinancialFlowDTO;
 import br.com.sigrest.api.dto.report.MonthlyRevenueDTO;
 import br.com.sigrest.api.dto.report.ProductSalesDTO;
 import br.com.sigrest.api.dto.report.SalesByPeriodDTO;
@@ -54,10 +55,10 @@ public class ReportController {
         return ResponseEntity.ok(stockMovements);
     }
 
-    // TODO: Implement financial flow report
-    // @GetMapping("/financial-flow")
-    // public ResponseEntity<FinancialFlowDTO> getFinancialFlow(...) {
-    //     FinancialFlowDTO financialFlow = reportService.getFinancialFlow(...);
-    //     return ResponseEntity.ok(financialFlow);
-    // }
+    @GetMapping("/financial-flow")
+    public ResponseEntity<List<FinancialFlowDTO>> getFinancialFlow(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(reportService.getFinancialFlow(startDate, endDate));
+    }
 }

@@ -1,12 +1,13 @@
 package br.com.sigrest.api.service;
 
+import br.com.sigrest.api.dto.report.FinancialFlowDTO;
 import br.com.sigrest.api.dto.report.MonthlyRevenueDTO;
 import br.com.sigrest.api.dto.report.ProductSalesDTO;
 import br.com.sigrest.api.dto.report.SalesByPeriodDTO;
 import br.com.sigrest.api.dto.report.StockMovementReportDTO;
 import br.com.sigrest.api.entity.Sale;
 import br.com.sigrest.api.entity.SellItem;
-import br.com.sigrest.api.entity.StockMovement;
+import br.com.sigrest.api.repository.PurchaseRepository;
 import br.com.sigrest.api.repository.SaleRepository;
 import br.com.sigrest.api.repository.StockMovementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +33,9 @@ public class ReportService {
 
     @Autowired
     private StockMovementRepository stockMovementRepository;
+
+    @Autowired
+    private PurchaseRepository purchaseRepository;
 
     public List<SalesByPeriodDTO> getSalesByPeriod(LocalDate startDate, LocalDate endDate) {
         List<Sale> sales = saleRepository.findAll().stream()
@@ -118,6 +124,31 @@ public class ReportService {
                 .collect(Collectors.toList());
     }
 
-    // TODO: Implement getFinancialFlow
+    public List<FinancialFlowDTO> getFinancialFlow(LocalDate startDate, LocalDate endDate) {
+        List<FinancialFlowDTO> result = new ArrayList<>();
+        ZoneId zone = ZoneId.systemDefault();
+        YearMonth current = YearMonth.from(startDate);
+        YearMonth last = YearMonth.from(endDate);
+
+        while (!current.isAfter(last)) {
+            LocalDate firstDay = current.atDay(1);
+            LocalDate lastDay = current.atEndOfMonth();
+
+            Date startMs = Date.from(firstDay.atStartOfDay(zone).toInstant());
+            Date endMs = Date.from(lastDay.plusDays(1).atStartOfDay(zone).toInstant());
+
+            BigDecimal entradas = nullSafe(saleRepository.sumTotalBetween(startMs, endMs));
+            BigDecimal saidas = nullSafe(purchaseRepository.sumTotalBetween(firstDay, lastDay));
+            BigDecimal saldo = entradas.subtract(saidas);
+
+            result.add(new FinancialFlowDTO(current.toString(), entradas, saidas, saldo));
+            current = current.plusMonths(1);
+        }
+        return result;
+    }
+
+    private BigDecimal nullSafe(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
 }
 

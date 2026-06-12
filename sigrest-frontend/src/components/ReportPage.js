@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import api from '../services/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ComposedChart, Area } from 'recharts';
 import moment from 'moment';
+import { formatBRL } from '../utils/currency';
 
 const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
 const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
@@ -55,6 +56,24 @@ const ReportPage = () => {
                     setReportData(response.data.map((item) => ({
                         ...item,
                         date: moment(item.date).format('DD/MM/YYYY HH:mm')
+                    })));
+                    break;
+                case 'financial-flow':
+                    response = await api.get('/reports/financial-flow', {
+                        params: { startDate, endDate }
+                    });
+                    setReportData(response.data.map((item) => ({
+                        ...item,
+                        month: item.month,
+                    })));
+                    break;
+                case 'purchase-history':
+                    response = await api.get('/purchases');
+                    setReportData(response.data.map((item) => ({
+                        ...item,
+                        date: moment(item.date).format('DD/MM/YYYY'),
+                        supplierName: item.supplier?.name || '—',
+                        itemCount: item.items?.length ?? 0,
                     })));
                     break;
                 default:
@@ -148,6 +167,76 @@ const ReportPage = () => {
                         </table>
                     </div>
                 );
+            case 'financial-flow':
+                return (
+                    <div>
+                        <p className="text-xs text-slate-500 mb-4">Entradas = faturamento de vendas · Saídas = total de compras</p>
+                        <ResponsiveContainer width="100%" height={400}>
+                            <ComposedChart data={reportData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748b' }} />
+                                <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
+                                <Tooltip formatter={(v) => `R$ ${formatBRL(v)}`} />
+                                <Legend />
+                                <Bar dataKey="totalEntradas" fill="#10b981" name="Entradas (R$)" />
+                                <Bar dataKey="totalSaidas" fill="#f43f5e" name="Saídas (R$)" />
+                                <Line type="monotone" dataKey="saldo" stroke="#6366f1" name="Saldo (R$)" strokeWidth={2} dot={false} />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                        <div className="mt-4 overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mês</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Entradas</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Saídas</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {reportData.map((row, i) => (
+                                        <tr key={i} className="hover:bg-slate-50">
+                                            <td className="px-4 py-3 text-sm text-slate-700">{row.month}</td>
+                                            <td className="px-4 py-3 text-sm text-emerald-600 text-right font-medium">R$ {formatBRL(row.totalEntradas)}</td>
+                                            <td className="px-4 py-3 text-sm text-rose-600 text-right font-medium">R$ {formatBRL(row.totalSaidas)}</td>
+                                            <td className={`px-4 py-3 text-sm text-right font-bold ${row.saldo >= 0 ? 'text-slate-700' : 'text-orange-600'}`}>
+                                                R$ {formatBRL(row.saldo)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            case 'purchase-history':
+                return (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fornecedor</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Itens</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {reportData.map((purchase) => (
+                                    <tr key={purchase.id} className="hover:bg-slate-50">
+                                        <td className="px-4 py-3 text-sm text-slate-700">{purchase.date}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700">{purchase.supplierName}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">{purchase.itemCount}</td>
+                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800 text-right">R$ {formatBRL(purchase.total)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {reportData.length === 0 && (
+                            <p className="text-sm text-slate-400 text-center py-8">Nenhuma compra registrada.</p>
+                        )}
+                    </div>
+                );
             default:
                 return null;
         }
@@ -177,6 +266,8 @@ const ReportPage = () => {
                             <option value="top-selling-products">Produtos Mais Vendidos</option>
                             <option value="monthly-revenue">Faturamento Mensal</option>
                             <option value="stock-movement">Movimentação de Estoque</option>
+                            <option value="financial-flow">Fluxo Financeiro</option>
+                            <option value="purchase-history">Histórico de Compras</option>
                         </select>
                     </div>
                     <div className="flex flex-col gap-1">
