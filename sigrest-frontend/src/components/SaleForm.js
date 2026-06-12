@@ -125,7 +125,7 @@ const SaleForm = () => {
                 <h2 className="text-lg font-semibold text-slate-800 mb-6">Registrar Nova Venda</h2>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div className="flex flex-col gap-1">
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cliente <span className="normal-case font-normal text-slate-400">(opcional)</span></label>
                             <select
@@ -181,7 +181,7 @@ const SaleForm = () => {
 
                     {sale.items.map((item, index) => (
                         <div key={index} className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-3">
-                            <div className="grid grid-cols-5 gap-3 items-end">
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
                                 <div className="col-span-2 flex flex-col gap-1">
                                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto</label>
                                     <select

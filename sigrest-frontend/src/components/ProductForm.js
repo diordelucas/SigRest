@@ -78,7 +78,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       </h2>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome do Produto</label>
             <input
@@ -123,7 +123,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           <span className="text-xs text-slate-400 font-medium">PREÇOS</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço de Custo</label>
             <div className="relative">
@@ -154,7 +154,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           <span className="text-xs text-slate-400 font-medium">ESTOQUE</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="flex flex-col gap-1">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Estoque Atual</label>
             <div className="relative">

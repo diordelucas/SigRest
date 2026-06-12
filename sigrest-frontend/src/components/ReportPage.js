@@ -253,7 +253,7 @@ const ReportPage = () => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-4 gap-4 items-end mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-6">
                     <div className="flex flex-col gap-1">
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tipo de Relatório</label>
                         <select
