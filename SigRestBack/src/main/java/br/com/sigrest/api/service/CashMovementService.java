@@ -33,14 +33,14 @@ public class CashMovementService {
     @Transactional
     public CashMovementResponseDTO createCashMovement(CashMovementRequestDTO requestDTO) {
         CashRegister cashRegister = cashRegisterRepository.findById(requestDTO.getCashRegisterId())
-                .orElseThrow(() -> new RuntimeException("Caixa nÃ£o encontrado."));
+                .orElseThrow(() -> new RuntimeException("Caixa não encontrado."));
 
         if (!cashRegister.isOpen()) {
-            throw new RuntimeException("O caixa nÃ£o estÃ¡ aberto para registrar movimentaÃ§Ãµes.");
+            throw new RuntimeException("O caixa não está aberto para registrar movimentações.");
         }
 
         User user = userRepository.findById(requestDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("UsuÃ¡rio nÃ£o encontrado."));
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
         CashMovement cashMovement = new CashMovement();
         cashMovement.setCashRegister(cashRegister);

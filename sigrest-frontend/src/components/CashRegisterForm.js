@@ -141,20 +141,37 @@ const CashRegisterForm = () => {
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
                             Caixa atualmente aberto.
                         </div>
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        {/* Info do caixa */}
+                        <div className="text-sm text-slate-600 space-y-0.5 mb-5">
+                            <p><span className="font-semibold">ID:</span> {currentCashRegister.id} &nbsp;|&nbsp; <span className="font-semibold">Aberto em:</span> {new Date(currentCashRegister.openingTime).toLocaleString()} &nbsp;|&nbsp; <span className="font-semibold">Operador:</span> {currentCashRegister.openedBy?.name || 'N/A'}</p>
+                        </div>
+
+                        {/* Breakdown do saldo */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Saldo Inicial</p>
-                                <p className="text-lg font-bold text-slate-800">R$ {formatBRL(currentCashRegister.openingBalance ?? 0)}</p>
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Saldo Inicial</p>
+                                <p className="text-base font-bold text-slate-800">R$ {formatBRL(currentCashRegister.openingBalance ?? 0)}</p>
                             </div>
-                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-xs font-semibold text-green-600 uppercase tracking-wider">Saldo Atual</p>
-                                <p className="text-lg font-bold text-green-700">R$ {formatBRL(currentCashRegister.currentBalance ?? currentCashRegister.openingBalance ?? 0)}</p>
+                            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">+ Vendas</p>
+                                <p className="text-base font-bold text-emerald-700">R$ {formatBRL(currentCashRegister.salesTotal ?? 0)}</p>
                             </div>
-                            <div className="col-span-2 space-y-1">
-                                <p className="text-sm text-slate-700"><span className="font-semibold">ID do Caixa:</span> {currentCashRegister.id}</p>
-                                <p className="text-sm text-slate-700"><span className="font-semibold">Aberto em:</span> {new Date(currentCashRegister.openingTime).toLocaleString()}</p>
-                                <p className="text-sm text-slate-700"><span className="font-semibold">Operador:</span> {currentCashRegister.openedBy?.name || 'N/A'}</p>
+                            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                                <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">− Compras</p>
+                                <p className="text-base font-bold text-rose-700">R$ {formatBRL(currentCashRegister.purchasesTotal ?? 0)}</p>
                             </div>
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">± Mov. Manuais</p>
+                                <p className="text-base font-bold text-blue-700">
+                                    {(currentCashRegister.movementsTotal ?? 0) >= 0 ? '+' : ''}R$ {formatBRL(currentCashRegister.movementsTotal ?? 0)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Saldo atual destacado */}
+                        <div className="p-4 bg-green-50 border-2 border-green-300 rounded-xl mb-5 flex items-center justify-between">
+                            <p className="text-sm font-semibold text-green-700 uppercase tracking-wider">Saldo Atual do Caixa</p>
+                            <p className="text-2xl font-extrabold text-green-700">R$ {formatBRL(currentCashRegister.currentBalance ?? 0)}</p>
                         </div>
 
                         {/* Registrar Movimentação */}
