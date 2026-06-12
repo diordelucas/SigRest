@@ -52,8 +52,9 @@ public class SaleService {
             Product product = productRepository.findById(itemDTO.productId())
                     .orElseThrow(() -> new RuntimeException("Product not found: " + itemDTO.productId()));
 
-            if (product.getStorage() < itemDTO.quantity().intValue()) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName());
+            BigDecimal currentStock = product.getStorage() != null ? product.getStorage() : java.math.BigDecimal.ZERO;
+            if (currentStock.compareTo(itemDTO.quantity()) < 0) {
+                throw new RuntimeException("Estoque insuficiente para o produto: " + product.getName());
             }
 
             SellItem sellItem = new SellItem();
@@ -65,8 +66,8 @@ public class SaleService {
 
             total = total.add(itemDTO.unitPrice().multiply(itemDTO.quantity()));
 
-            // Deduct stock
-            stockMovementService.createStockExit(product, itemDTO.quantity().intValue(), "Sale " + sale.getId());
+            // Deduct stock (vendas de PRODUTO_FINAL são descontadas em UN)
+            stockMovementService.createStockExit(product, itemDTO.quantity(), "Venda #" + sale.getId());
         }
         sale.setTotal(total.subtract(BigDecimal.valueOf(sale.getDiscount()))); // Apply discount to total
 

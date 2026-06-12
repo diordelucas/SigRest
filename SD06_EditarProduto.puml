@@ -1,0 +1,49 @@
+@startuml SD06_EditarProduto
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD06 — Editar Produto
+
+actor "Usuário" as U
+participant "ProductList\n(React)" as LIST
+participant "ProductForm\n(React)" as FORM
+participant "ProductController\n(Spring)" as CTRL
+participant "ProductService\n(Spring)" as SVC
+participant "ProductRepository\n(JPA)" as REPO
+database "PostgreSQL" as DB
+
+U -> LIST : Clica "Editar" no produto desejado
+LIST -> FORM : onEditPerson(product)\n{ id, name, code, price, sellPrice,\n  storage, minStorage, categoryId,\n  tipo, purchaseUnit, packageQuantity }
+
+FORM -> FORM : useEffect([editingPerson])\nPopula todos os campos incluindo\ntipo, purchaseUnit, packageQuantity
+
+note right of FORM
+  Se tipo == INSUMO:
+    mostra campos UDM e Qtde/Embalagem
+  Caso contrário:
+    oculta campos de UDM/embalagem
+end note
+
+U -> FORM : Altera campos desejados\n(incluindo tipo, UDM, packageQty)
+U -> FORM : Clica "Atualizar"
+
+FORM -> CTRL : PUT /product/{id}\n{ name, code, price, sellPrice,\n  storage, minStorage, categoryId,\n  tipo, purchaseUnit, packageQuantity }
+
+CTRL -> SVC : update(id, ProductRequestDTO)
+SVC -> REPO : findById(id)
+REPO -> DB : SELECT FROM product WHERE id=?
+DB --> REPO : Product existente
+REPO --> SVC : Product
+
+SVC -> SVC : product.setTipo(data.tipo())\nproduct.setPurchaseUnit(data.purchaseUnit())\nproduct.setPackageQuantity(data.packageQuantity())\n... demais campos
+SVC -> REPO : save(product)
+REPO -> DB : UPDATE product SET ... WHERE id=?
+DB --> REPO : Product atualizado
+REPO --> SVC : Product
+SVC --> CTRL : ProductResponseDTO
+CTRL --> FORM : 200 OK
+
+FORM -> FORM : clearForm() / onEditComplete()
+FORM --> U : Toast "Produto atualizado com sucesso!"
+
+@enduml

@@ -3,6 +3,13 @@ import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import axios from "axios";
 import CategoryTag from "./CategoryTag";
 
+const baseUnitOf = (purchaseUnit) => {
+  if (!purchaseUnit) return "un.";
+  if (["G", "KG"].includes(purchaseUnit)) return "g";
+  if (["ML", "L"].includes(purchaseUnit)) return "ml";
+  return "un";
+};
+
 const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,11 +95,11 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
                   <td className="px-4 py-3 text-sm text-slate-700">{product.sellPrice}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      product.storage <= product.minStorage
+                      (product.storage ?? 0) <= (product.minStorage ?? 0)
                         ? 'bg-red-100 text-red-800'
                         : 'bg-green-100 text-green-800'
                     }`}>
-                      {product.storage} un.
+                      {product.storage ?? 0} {baseUnitOf(product.purchaseUnit)}
                     </span>
                   </td>
                   {!isReadOnly && (

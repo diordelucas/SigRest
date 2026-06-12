@@ -1,0 +1,63 @@
+@startuml SD11_NovaCompra
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD11 — Registrar Nova Compra (com Conversão UDM p/ Unidade Base)
+
+actor "Usuário" as U
+participant "PurchasePage\n(React)" as FE
+participant "PurchaseController\n(Spring)" as CTRL
+participant "PurchaseService\n(Spring)" as SVC
+participant "StockMovementService\n(Spring)" as STOCK
+participant "ProductRepository\n(JPA)" as PROD_REPO
+participant "PurchaseRepository\n(JPA)" as PUR_REPO
+database "PostgreSQL" as DB
+
+U -> FE : Preenche compra:\nFornecedor, Data, Itens\n(produto, qtde pacotes, preço/pacote)
+U -> FE : Clica "Salvar Compra"
+
+FE -> CTRL : POST /purchase\n{ supplierId, date,\n  items: [{ productId, quantity (pacotes), unitPrice }] }
+
+CTRL -> SVC : createPurchase(PurchaseRequestDTO)
+
+SVC -> SVC : Cria entidade Purchase\nassociando Supplier
+
+loop Para cada item da compra
+    SVC -> PROD_REPO : findById(productId)
+    PROD_REPO -> DB : SELECT FROM product WHERE id=?
+    DB --> PROD_REPO : Product\n{ purchaseUnit, packageQuantity, ... }
+    PROD_REPO --> SVC : Product
+
+    SVC -> SVC : stockEntry = toBaseUnits(product, qtdePacotes)
+    note right of SVC
+      toBaseUnits(product, n):
+        Se purchaseUnit != null
+        && packageQuantity > 0:
+          retorna n × packageQuantity × purchaseUnit.conversionFactor
+          Ex: 2 pacotes × 5 KG × 1000 = 10.000 g
+        Senão:
+          retorna n (escalar sem conversão)
+    end note
+
+    SVC -> STOCK : createStockEntry(product, stockEntry, "Compra #...")
+    STOCK -> STOCK : stockMovement.setQuantity(stockEntry)\nstockMovement.setType(ENTRY)
+    STOCK -> STOCK : updateProductStorage:\n  product.storage += stockEntry
+    STOCK -> PROD_REPO : save(product)  ← atualiza storage (BigDecimal)
+    PROD_REPO -> DB : UPDATE product SET storage=? WHERE id=?
+    DB --> PROD_REPO : OK
+    STOCK -> DB : INSERT INTO stock_movement ...\n(quantity em unidade base)
+    DB --> STOCK : StockMovement salvo
+
+    SVC -> SVC : total += unitPrice × qtdePacotes
+end
+
+SVC -> PUR_REPO : save(purchase)
+PUR_REPO -> DB : INSERT INTO purchase ...\nINSERT INTO purchase_item ...
+DB --> PUR_REPO : Purchase salvo
+PUR_REPO --> SVC : Purchase
+SVC --> CTRL : PurchaseResponseDTO
+CTRL --> FE : 200 OK + PurchaseResponseDTO
+
+FE --> U : Toast "Compra registrada com sucesso!"
+
+@enduml

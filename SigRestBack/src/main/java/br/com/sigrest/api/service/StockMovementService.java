@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class StockMovementService {
     }
 
     @Transactional
-    public void createStockEntry(Product product, Integer quantity, String description) {
+    public void createStockEntry(Product product, BigDecimal quantity, String description) {
         StockMovement stockMovement = new StockMovement();
         stockMovement.setProduct(product);
         stockMovement.setType(StockMovement.MovementType.ENTRY);
@@ -56,7 +57,7 @@ public class StockMovementService {
     }
 
     @Transactional
-    public void createStockExit(Product product, Integer quantity, String description) {
+    public void createStockExit(Product product, BigDecimal quantity, String description) {
         StockMovement stockMovement = new StockMovement();
         stockMovement.setProduct(product);
         stockMovement.setType(StockMovement.MovementType.EXIT);
@@ -68,14 +69,15 @@ public class StockMovementService {
         stockMovementRepository.save(stockMovement);
     }
 
-    private void updateProductStorage(Product product, Integer quantity, StockMovement.MovementType type) {
+    private void updateProductStorage(Product product, BigDecimal quantity, StockMovement.MovementType type) {
+        BigDecimal current = product.getStorage() != null ? product.getStorage() : BigDecimal.ZERO;
         if (type == StockMovement.MovementType.ENTRY) {
-            product.setStorage(product.getStorage() + quantity);
+            product.setStorage(current.add(quantity));
         } else if (type == StockMovement.MovementType.EXIT) {
-            if (product.getStorage() < quantity) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName());
+            if (current.compareTo(quantity) < 0) {
+                throw new RuntimeException("Estoque insuficiente para o produto: " + product.getName());
             }
-            product.setStorage(product.getStorage() - quantity);
+            product.setStorage(current.subtract(quantity));
         }
         productRepository.save(product);
     }
@@ -105,4 +107,3 @@ public class StockMovementService {
         return dto;
     }
 }
-

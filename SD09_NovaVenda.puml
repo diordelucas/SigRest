@@ -1,0 +1,66 @@
+@startuml SD09_NovaVenda
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD09 — Registrar Nova Venda (Estoque em BigDecimal)
+
+actor "Usuário" as U
+participant "SalePage\n(React)" as FE
+participant "SaleController\n(Spring)" as CTRL
+participant "SaleService\n(Spring)" as SVC
+participant "StockMovementService\n(Spring)" as STOCK
+participant "ProductRepository\n(JPA)" as PROD_REPO
+participant "SaleRepository\n(JPA)" as SALE_REPO
+database "PostgreSQL" as DB
+
+U -> FE : Seleciona cliente (opcional),\npagamento, desconto e itens\n(produto, qtde, preço unitário)
+U -> FE : Clica "Finalizar Venda"
+
+FE -> CTRL : POST /sale\n{ personId, paymentMethod, discount,\n  items: [{ productId, quantity (BigDecimal), unitPrice }] }
+
+CTRL -> SVC : createSale(SaleRequestDTO)
+
+SVC -> SVC : Cria entidade Sale\nsetDate(new Date())\nsetDiscount / setPaymentMethod
+
+alt personId != null
+    SVC -> PROD_REPO : personRepository.findById(personId)
+    PROD_REPO --> SVC : Person
+    SVC -> SVC : sale.setPerson(person)
+end
+
+SVC -> SVC : total = ZERO
+
+loop Para cada item da venda
+    SVC -> PROD_REPO : productRepository.findById(productId)
+    PROD_REPO -> DB : SELECT FROM product WHERE id=?
+    DB --> PROD_REPO : Product { storage: BigDecimal }
+    PROD_REPO --> SVC : Product
+
+    SVC -> SVC : currentStock = storage ?? ZERO
+    alt currentStock < item.quantity
+        SVC --> CTRL : throw RuntimeException\n"Estoque insuficiente para: {nome}"
+        CTRL --> FE : 400 Bad Request
+        FE --> U : Toast de erro
+    else
+        SVC -> SVC : Cria SellItem\nsetProduct, setQuantity(BigDecimal),\nsetUnitPrice, setSale
+        SVC -> SVC : total += unitPrice × quantity
+        SVC -> STOCK : createStockExit(product, quantity,\n"Venda #" + sale.getId())
+        STOCK -> STOCK : updateProductStorage:\n  product.storage -= quantity  (BigDecimal)
+        STOCK -> PROD_REPO : save(product)
+        PROD_REPO -> DB : UPDATE product SET storage=?
+        DB --> PROD_REPO : OK
+        STOCK -> DB : INSERT INTO stock_movement (SAÍDA)
+    end
+end
+
+SVC -> SVC : sale.setTotal(total - discount)
+SVC -> SALE_REPO : save(sale)
+SALE_REPO -> DB : INSERT INTO sale\nINSERT INTO sell_item ...
+DB --> SALE_REPO : Sale salvo
+SALE_REPO --> SVC : Sale
+SVC --> CTRL : SaleResponseDTO
+CTRL --> FE : 200 OK + SaleResponseDTO
+
+FE --> U : Toast "Venda registrada!"
+
+@enduml

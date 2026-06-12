@@ -1,0 +1,101 @@
+@startuml SD_CalcularCustoFicha
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD — Calcular Custo da Ficha Técnica e Preço de Venda Sugerido
+
+actor "Usuário" as U
+participant "TechnicalSheetForm\n(React)" as FORM
+participant "TechnicalSheetController\n(Spring)" as CTRL
+participant "TechnicalSheetService\n(Spring)" as SVC
+participant "TechnicalSheetRepository\n(JPA)" as TS_REPO
+database "PostgreSQL" as DB
+
+U -> FORM : Clica "Calcular Custos"\n(disponível apenas no modo edição)
+
+FORM -> FORM : setCalculatingCost(true)
+FORM -> CTRL : GET /technical-sheet/{id}/calculate-cost
+
+CTRL -> SVC : calculateCost(id)
+SVC -> TS_REPO : findById(id)
+note right of SVC
+  @Transactional(readOnly=true)
+  Carrega sheet + items + rawMaterial + purchaseUnit
+end note
+TS_REPO -> DB : SELECT ... FROM technical_sheet\nJOIN technical_sheet_item\nJOIN product (rawMaterial)
+DB --> TS_REPO : TechnicalSheet com itens
+TS_REPO --> SVC : TechnicalSheet
+
+SVC -> SVC : ingredientsTotalCost = ZERO
+
+loop Para cada TechnicalSheetItem
+    SVC -> SVC : rawMaterial = item.getRawMaterial()
+    alt rawMaterial.purchaseUnit == null\nou rawMaterial.packageQuantity == null\nou rawMaterial.price == null
+        SVC -> SVC : itemCost = ZERO  (skip: dados insuficientes)
+    else
+        SVC -> SVC : purchaseTotalBase = packageQuantity × purchaseUnit.conversionFactor
+        note right of SVC
+          Ex: 5 KG → 5 × 1000 = 5000 g
+        end note
+
+        SVC -> SVC : costPerBaseUnit = price ÷ purchaseTotalBase\n(scale=10, HALF_UP)
+        note right of SVC
+          Ex: R$12,50 ÷ 5000 g = R$0,0025000 / g
+        end note
+
+        SVC -> SVC : itemBase = quantity × (unit?.conversionFactor ?? 1)
+        note right of SVC
+          Ex: 250 G → 250 × 1 = 250 g
+        end note
+
+        SVC -> SVC : itemCost = costPerBaseUnit × itemBase\n(scale=4, HALF_UP)
+        note right of SVC
+          Ex: 0,0025 × 250 = R$0,6250
+        end note
+    end
+
+    SVC -> SVC : ingredientsTotalCost += itemCost
+    SVC -> SVC : Adiciona ItemCostDTO na lista
+end
+
+SVC -> SVC : totalCostWithLabour =\n  ingredientsTotalCost × (1 + labourCostPercent / 100)
+note right of SVC
+  Ex: R$2,00 × (1 + 0,30) = R$2,60
+end note
+
+SVC -> SVC : markupIndex =\n  (100 - variableExpensesPercent - desiredMarginPercent) / 100
+note right of SVC
+  Ex: (100 - 15 - 30) / 100 = 0,55
+end note
+
+alt markupIndex <= 0
+    SVC --> CTRL : throw RuntimeException\n"Margem + despesas >= 100%"
+else
+    SVC -> SVC : suggestedSellPrice =\n  totalCostWithLabour ÷ markupIndex\n  (scale=2, HALF_UP)
+    note right of SVC
+      Ex: R$2,60 ÷ 0,55 = R$4,73
+    end note
+end
+
+alt rendimento > 0
+    SVC -> SVC : perServingCost =\n  ingredientsTotalCost ÷ rendimento\n  (scale=4, HALF_UP)
+else
+    SVC -> SVC : perServingCost = null
+end
+
+SVC --> CTRL : CostCalculationResponseDTO\n{ technicalSheetId, technicalSheetName,\n  itemCosts: [...],\n  ingredientsTotalCost,\n  labourCostPercent, variableExpensesPercent,\n  desiredMarginPercent,\n  totalCostWithLabour,\n  suggestedSellPrice,\n  rendimento, perServingCost }
+CTRL --> FORM : 200 OK + CostCalculationResponseDTO
+
+FORM -> FORM : setCalculatingCost(false)\nsetCostResult(data)
+
+FORM --> U : Exibe painel de custos:
+note right of U
+  Tabela por item:
+    Insumo | Qtde | UDM | Custo/Base | Custo Total
+  ─────────────────────────────────────────────────
+  4 cards de resumo:
+    [Custo Ingredientes]  [Custo c/ Mão de Obra]
+    [Custo por Porção]    [Preço Sugerido de Venda]
+end note
+
+@enduml

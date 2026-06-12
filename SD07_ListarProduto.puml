@@ -1,0 +1,43 @@
+@startuml SD07_ListarProduto
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD07 — Listar Produtos (com Estoque em Unidade Base)
+
+actor "Usuário" as U
+participant "ProductList\n(React)" as LIST
+participant "ProductController\n(Spring)" as CTRL
+participant "ProductService\n(Spring)" as SVC
+participant "ProductRepository\n(JPA)" as REPO
+database "PostgreSQL" as DB
+
+U -> LIST : Acessa página de Produtos\nou clica "Atualizar Lista"
+
+LIST -> CTRL : GET /product
+CTRL -> SVC : findAll()
+SVC -> REPO : findAll()
+REPO -> DB : SELECT * FROM product
+DB --> REPO : List<Product>
+REPO --> SVC : List<Product>
+SVC --> CTRL : List<ProductResponseDTO>\n{ id, name, code, price, sellPrice,\n  storage (BigDecimal), minStorage (BigDecimal),\n  categoryId, categoryName,\n  tipo, purchaseUnit, packageQuantity }
+CTRL --> LIST : 200 OK + List<ProductResponseDTO>
+
+LIST -> LIST : Renderiza tabela
+
+note right of LIST
+  Para coluna "Estoque", a função
+  baseUnitOf(purchaseUnit) determina o sufixo:
+  • G ou KG → "g"
+  • ML ou L  → "ml"
+  • UN/DUZIA → "un"
+  • null      → "un."
+
+  Badge vermelho se:
+    storage <= minStorage
+  Badge verde se:
+    storage > minStorage
+end note
+
+LIST --> U : Tabela com badge colorido\nEx: "5000 g" (verde) ou "100 g" (vermelho)
+
+@enduml

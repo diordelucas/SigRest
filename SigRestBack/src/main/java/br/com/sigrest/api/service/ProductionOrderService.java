@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -63,7 +62,7 @@ public class ProductionOrderService {
     @Transactional
     public ProductionOrder finishProduction(Long id) {
         ProductionOrder order = findById(id);
-        
+
         if (order.getStatus() == ProductionOrder.Status.FINISHED) {
             throw new RuntimeException("Ordem de produção já foi finalizada.");
         }
@@ -79,32 +78,31 @@ public class ProductionOrderService {
         TechnicalSheet sheet = technicalSheetRepository.findByFinalProductId(finalProduct.getId())
                 .orElseThrow(() -> new RuntimeException("Ficha técnica não encontrada para o produto final: " + finalProduct.getName()));
 
-        // 1. Validar se há estoque suficiente dos insumos antes de finalizar
+        // 1. Calcular total necessário por insumo (em unidade base) e validar estoque
         for (TechnicalSheetItem item : sheet.getItems()) {
             Product rawMaterial = item.getRawMaterial();
-            BigDecimal totalNeededDecimal = item.getQuantity().multiply(BigDecimal.valueOf(order.getQuantity()));
-            int totalUsed = totalNeededDecimal.setScale(0, RoundingMode.HALF_UP).intValue();
-            
-            int currentStorage = rawMaterial.getStorage() != null ? rawMaterial.getStorage() : 0;
-            if (currentStorage < totalUsed) {
-                throw new RuntimeException("Estoque insuficiente para o insumo: " + rawMaterial.getName() +
-                        " (Necessário: " + totalUsed + ", Disponível: " + currentStorage + ")");
+            BigDecimal totalNeeded = toBaseUnits(item).multiply(BigDecimal.valueOf(order.getQuantity()));
+
+            BigDecimal currentStock = rawMaterial.getStorage() != null ? rawMaterial.getStorage() : BigDecimal.ZERO;
+            if (currentStock.compareTo(totalNeeded) < 0) {
+                String unit = item.getUnit() != null ? item.getUnit().getBaseUnitLabel() : "un";
+                throw new RuntimeException("Estoque insuficiente para o insumo: " + rawMaterial.getName()
+                        + " (Necessário: " + totalNeeded + " " + unit
+                        + ", Disponível: " + currentStock + " " + unit + ")");
             }
         }
-        
-        // 2. Dar baixa nos insumos
+
+        // 2. Dar baixa nos insumos (em unidade base)
         for (TechnicalSheetItem item : sheet.getItems()) {
             Product rawMaterial = item.getRawMaterial();
-            BigDecimal totalNeededDecimal = item.getQuantity().multiply(BigDecimal.valueOf(order.getQuantity()));
-            int totalUsed = totalNeededDecimal.setScale(0, RoundingMode.HALF_UP).intValue();
-            
+            BigDecimal totalNeeded = toBaseUnits(item).multiply(BigDecimal.valueOf(order.getQuantity()));
             String desc = "Consumo OP #" + order.getId() + " - " + sheet.getName();
-            stockMovementService.createStockExit(rawMaterial, totalUsed, desc);
+            stockMovementService.createStockExit(rawMaterial, totalNeeded, desc);
         }
 
-        // 3. Dar entrada no produto acabado
+        // 3. Dar entrada no produto acabado (em unidades — PRODUTO_FINAL usa UN)
         String entryDesc = "Produção OP #" + order.getId() + " - " + sheet.getName();
-        stockMovementService.createStockEntry(finalProduct, order.getQuantity(), entryDesc);
+        stockMovementService.createStockEntry(finalProduct, BigDecimal.valueOf(order.getQuantity()), entryDesc);
 
         order.setStatus(ProductionOrder.Status.FINISHED);
         return repository.save(order);
@@ -113,5 +111,17 @@ public class ProductionOrderService {
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    /**
+     * Converte a quantidade de um item da ficha técnica para sua unidade base.
+     * Ex: 250 G → 250 (já em gramas, fator=1); 0.25 KG → 250 (0.25 × 1000)
+     * Se unit for null, retorna a quantidade como escalar sem conversão.
+     */
+    private BigDecimal toBaseUnits(TechnicalSheetItem item) {
+        if (item.getUnit() != null) {
+            return item.getQuantity().multiply(item.getUnit().getConversionFactor());
+        }
+        return item.getQuantity();
     }
 }

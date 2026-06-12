@@ -27,5 +27,8 @@ public class TechnicalSheetItem {
     private Product rawMaterial;
 
     private BigDecimal quantity;
+
+    @Enumerated(EnumType.STRING)
+    private UnitOfMeasure unit;
 }
 

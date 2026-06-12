@@ -1,0 +1,100 @@
+@startuml UseCaseDiagram_000
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+left to right direction
+
+actor "ADMIN" as ADMIN
+actor "OPERADOR" as OPERADOR
+
+ADMIN --|> OPERADOR
+
+package "Autenticação" {
+    usecase "Login" as UC_Login
+}
+
+package "Cadastros" {
+    usecase "Cadastrar Produto" as UC_NovoProduto
+    usecase "Editar Produto" as UC_EditarProduto
+    usecase "Listar Produtos" as UC_ListarProduto
+    usecase "Excluir Produto" as UC_ExcluirProduto
+    usecase "Configurar Tipo e UDM" as UC_ConfigUDM
+    usecase "Cadastrar Categoria" as UC_Categoria
+    usecase "Cadastrar Fornecedor" as UC_Fornecedor
+    usecase "Cadastrar Cliente" as UC_Cliente
+    usecase "Cadastrar Usuário" as UC_Usuario
+}
+
+package "Ficha Técnica" {
+    usecase "Nova Ficha Técnica" as UC_NovaFicha
+    usecase "Editar Ficha Técnica" as UC_EditarFicha
+    usecase "Listar Fichas Técnicas" as UC_ListarFicha
+    usecase "Calcular Custo da Ficha" as UC_CalcularCusto
+    usecase "Visualizar Preço Sugerido" as UC_PrecoSugerido
+}
+
+package "Produção" {
+    usecase "Nova Ordem de Produção" as UC_NovaOP
+    usecase "Finalizar Produção" as UC_FinalizarOP
+    usecase "Listar Ordens de Produção" as UC_ListarOP
+}
+
+package "Vendas" {
+    usecase "Registrar Venda" as UC_NovaVenda
+    usecase "Listar Vendas" as UC_ListarVendas
+    usecase "Abrir Caixa" as UC_AbrirCaixa
+    usecase "Fechar Caixa" as UC_FecharCaixa
+}
+
+package "Compras e Estoque" {
+    usecase "Registrar Compra" as UC_NovaCompra
+    usecase "Movimentação Manual de Estoque" as UC_MovEstoque
+    usecase "Listar Movimentações" as UC_ListarMov
+}
+
+package "Financeiro" {
+    usecase "Contas a Pagar" as UC_ContaPagar
+    usecase "Contas a Receber" as UC_ContaReceber
+    usecase "Relatórios Financeiros" as UC_Relatorios
+}
+
+' OPERADOR pode fazer
+OPERADOR --> UC_Login
+OPERADOR --> UC_NovoProduto
+OPERADOR --> UC_EditarProduto
+OPERADOR --> UC_ListarProduto
+OPERADOR --> UC_ConfigUDM
+OPERADOR --> UC_NovaFicha
+OPERADOR --> UC_EditarFicha
+OPERADOR --> UC_ListarFicha
+OPERADOR --> UC_CalcularCusto
+OPERADOR --> UC_PrecoSugerido
+OPERADOR --> UC_NovaOP
+OPERADOR --> UC_FinalizarOP
+OPERADOR --> UC_ListarOP
+OPERADOR --> UC_NovaVenda
+OPERADOR --> UC_ListarVendas
+OPERADOR --> UC_AbrirCaixa
+OPERADOR --> UC_FecharCaixa
+OPERADOR --> UC_NovaCompra
+OPERADOR --> UC_MovEstoque
+OPERADOR --> UC_ListarMov
+
+' Somente ADMIN
+ADMIN --> UC_ExcluirProduto
+ADMIN --> UC_Categoria
+ADMIN --> UC_Fornecedor
+ADMIN --> UC_Cliente
+ADMIN --> UC_Usuario
+ADMIN --> UC_ContaPagar
+ADMIN --> UC_ContaReceber
+ADMIN --> UC_Relatorios
+
+' includes/extends
+UC_NovoProduto ..> UC_ConfigUDM : <<include>>
+UC_CalcularCusto ..> UC_PrecoSugerido : <<include>>
+UC_FinalizarOP ..> UC_MovEstoque : <<include>>
+UC_NovaVenda ..> UC_MovEstoque : <<include>>
+UC_NovaCompra ..> UC_MovEstoque : <<include>>
+
+@enduml

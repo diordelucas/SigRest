@@ -75,6 +75,9 @@ public class ProductController {
         product.setMinStorage(data.minStorage());
         product.setPrice(data.price());
         product.setSellPrice(data.sellPrice());
+        product.setTipo(data.tipo());
+        product.setPurchaseUnit(data.purchaseUnit());
+        product.setPackageQuantity(data.packageQuantity());
 
         Category category = new Category();
         category.setId(data.categoryId());

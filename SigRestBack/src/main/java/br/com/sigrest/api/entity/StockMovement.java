@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,10 +30,9 @@ public class StockMovement {
     @Enumerated(EnumType.STRING)
     private MovementType type;
 
-    private Integer quantity;
+    private BigDecimal quantity;
 
     private LocalDateTime date;
 
     private String description;
 }
-

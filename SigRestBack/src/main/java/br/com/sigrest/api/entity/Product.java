@@ -24,12 +24,20 @@ public class Product {
     private String code;
     private BigDecimal price;
     private BigDecimal sellPrice;
-    private Integer storage;
-    private Integer minStorage;
+    private BigDecimal storage;
+    private BigDecimal minStorage;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @Enumerated(EnumType.STRING)
+    private ProductType tipo;
+
+    @Enumerated(EnumType.STRING)
+    private UnitOfMeasure purchaseUnit;
+
+    private BigDecimal packageQuantity;
 
     public Product(ProductRequestDTO data){
         this.name = data.name();
@@ -38,6 +46,9 @@ public class Product {
         this.sellPrice = data.sellPrice();
         this.storage = data.storage();
         this.minStorage = data.minStorage();
+        this.tipo = data.tipo();
+        this.purchaseUnit = data.purchaseUnit();
+        this.packageQuantity = data.packageQuantity();
         if (data.categoryId() != null) {
             this.category = new Category();
             this.category.setId(data.categoryId());

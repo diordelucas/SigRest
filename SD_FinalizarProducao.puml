@@ -1,0 +1,82 @@
+@startuml SD_FinalizarProducao
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD — Finalizar Ordem de Produção (Baixa de Insumos em Unidade Base)
+
+actor "Usuário" as U
+participant "ProductionPage\n(React)" as FE
+participant "ProductionOrderController\n(Spring)" as CTRL
+participant "ProductionOrderService\n(Spring)" as SVC
+participant "StockMovementService\n(Spring)" as STOCK
+participant "TechnicalSheetRepository\n(JPA)" as TS_REPO
+participant "ProductRepository\n(JPA)" as PROD_REPO
+database "PostgreSQL" as DB
+
+U -> FE : Clica "Finalizar" em uma ordem ABERTA
+FE -> CTRL : PUT /production-order/{id}/finish
+
+CTRL -> SVC : finishProduction(id)
+SVC -> SVC : findById(id)
+SVC -> SVC : Verifica status:\n  FINISHED → exception\n  CANCELLED → exception
+
+SVC -> TS_REPO : findByFinalProductId(finalProduct.id)
+TS_REPO -> DB : SELECT ts, tsi, p FROM technical_sheet\nWHERE final_product_id=?
+DB --> TS_REPO : TechnicalSheet + items
+TS_REPO --> SVC : TechnicalSheet
+
+note right of SVC
+  FASE 1: Validação de estoque
+  (verifica antes de descontar qualquer item)
+end note
+
+loop Para cada TechnicalSheetItem — VALIDAÇÃO
+    SVC -> SVC : toBaseUnits(item):\n  quantity × (unit?.conversionFactor ?? 1)
+    note right of SVC
+      Ex: 250 G de farinha → 250 × 1 = 250 g
+          0,5 KG de açúcar → 0,5 × 1000 = 500 g
+    end note
+    SVC -> SVC : totalNeeded = toBaseUnits(item) × order.quantity
+    SVC -> SVC : currentStock = rawMaterial.storage ?? ZERO
+    alt currentStock < totalNeeded
+        SVC --> CTRL : throw RuntimeException\n"Estoque insuficiente: {nome}\n(Necessário: {X} {unidade},\n Disponível: {Y} {unidade})"
+        CTRL --> FE : 400 Bad Request
+        FE --> U : Toast de erro com detalhes
+    end
+end
+
+note right of SVC
+  FASE 2: Baixa dos insumos
+end note
+
+loop Para cada TechnicalSheetItem — BAIXA
+    SVC -> SVC : totalNeeded = toBaseUnits(item) × order.quantity
+    SVC -> STOCK : createStockExit(rawMaterial, totalNeeded,\n"Consumo OP #" + id + " - " + sheet.name)
+    STOCK -> STOCK : product.storage -= totalNeeded  (BigDecimal)
+    STOCK -> PROD_REPO : save(rawMaterial)
+    PROD_REPO -> DB : UPDATE product SET storage=?
+    DB --> PROD_REPO : OK
+    STOCK -> DB : INSERT INTO stock_movement (SAÍDA)
+end
+
+note right of SVC
+  FASE 3: Entrada do produto final
+  (PRODUTO_FINAL é contado em UN)
+end note
+
+SVC -> STOCK : createStockEntry(finalProduct,\n  BigDecimal.valueOf(order.quantity),\n  "Produção OP #" + id + " - " + sheet.name)
+STOCK -> STOCK : finalProduct.storage += order.quantity  (BigDecimal)
+STOCK -> PROD_REPO : save(finalProduct)
+PROD_REPO -> DB : UPDATE product SET storage=?
+DB --> PROD_REPO : OK
+STOCK -> DB : INSERT INTO stock_movement (ENTRADA)
+
+SVC -> SVC : order.setStatus(FINISHED)
+SVC -> DB : UPDATE production_order SET status='FINISHED'
+DB --> SVC : OK
+SVC --> CTRL : ProductionOrder (FINISHED)
+CTRL --> FE : 200 OK
+
+FE --> U : Toast "Produção finalizada!"
+
+@enduml

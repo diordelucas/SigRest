@@ -1,0 +1,56 @@
+@startuml SD05_NovoProduto
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD05 — Cadastrar Novo Produto
+
+actor "Usuário" as U
+participant "ProductPage\n(React)" as FE
+participant "ProductForm\n(React)" as FORM
+participant "ProductController\n(Spring)" as CTRL
+participant "ProductService\n(Spring)" as SVC
+participant "ProductRepository\n(JPA)" as REPO
+database "PostgreSQL" as DB
+
+U -> FE : Acessa página de Produtos
+FE -> FORM : Renderiza formulário vazio
+
+U -> FORM : Preenche Name, Code, Categoria
+U -> FORM : Preenche Preço Custo, Preço Venda
+U -> FORM : Preenche Estoque Atual, Estoque Mínimo
+note right of FORM
+  Campos exibem sufixo dinâmico:
+  "g" (G/KG), "ml" (ML/L), "un" (UN/DUZIA)
+  baseado em purchaseUnit selecionado
+end note
+
+U -> FORM : Seleciona Tipo de Produto\n(INSUMO / PRODUTO_FINAL / PRODUTO_INTERMEDIARIO)
+
+alt tipo == INSUMO
+    U -> FORM : Seleciona UDM de Compra\n(G, KG, ML, L, UN, DUZIA)
+    U -> FORM : Informa Qtde por Embalagem\n(Ex: 5 para "5 KG por embalagem")
+end
+
+U -> FORM : Clica "Cadastrar"
+
+FORM -> CTRL : POST /product\n{ name, code, price, sellPrice,\n  storage, minStorage, categoryId,\n  tipo, purchaseUnit, packageQuantity }
+
+CTRL -> SVC : save(ProductRequestDTO)
+SVC -> REPO : save(Product)
+note right of REPO
+  Hibernate persiste colunas:
+  tipo VARCHAR, purchaseUnit VARCHAR,
+  packageQuantity DECIMAL,
+  storage DECIMAL, minStorage DECIMAL
+end note
+REPO -> DB : INSERT INTO product ...
+DB --> REPO : Product com id gerado
+REPO --> SVC : Product salvo
+SVC --> CTRL : ProductResponseDTO
+CTRL --> FORM : 200 OK + ProductResponseDTO
+
+FORM -> FORM : clearForm()
+FORM --> U : Toast "Produto cadastrado com sucesso!"
+FE -> FORM : Dispara refreshTrigger → recarrega lista
+
+@enduml

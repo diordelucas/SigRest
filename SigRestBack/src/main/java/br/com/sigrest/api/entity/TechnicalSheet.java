@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -27,5 +28,10 @@ public class TechnicalSheet {
     @OneToMany(mappedBy = "technicalSheet", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<TechnicalSheetItem> items;
+
+    private Integer rendimento;
+    private BigDecimal labourCostPercent;
+    private BigDecimal variableExpensesPercent;
+    private BigDecimal desiredMarginPercent;
 }
 

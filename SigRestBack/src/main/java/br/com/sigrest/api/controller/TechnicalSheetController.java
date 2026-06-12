@@ -1,8 +1,8 @@
 package br.com.sigrest.api.controller;
 
+import br.com.sigrest.api.dto.CostCalculationResponseDTO;
 import br.com.sigrest.api.dto.TechnicalSheetRequestDTO;
 import br.com.sigrest.api.dto.TechnicalSheetResponseDTO;
-import br.com.sigrest.api.entity.TechnicalSheet;
 import br.com.sigrest.api.service.TechnicalSheetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -35,9 +35,18 @@ public class TechnicalSheetController {
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
+    @GetMapping("/{id}/calculate-cost")
+    public CostCalculationResponseDTO calculateCost(@PathVariable Long id) {
+        return service.calculateCost(id);
+    }
+
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public TechnicalSheetResponseDTO update(@PathVariable Long id, @RequestBody TechnicalSheetRequestDTO data) {
-        TechnicalSheetRequestDTO dto = new TechnicalSheetRequestDTO(id, data.name(), data.finalProductId(), data.items());
+        TechnicalSheetRequestDTO dto = new TechnicalSheetRequestDTO(
+                id, data.name(), data.finalProductId(), data.items(),
+                data.rendimento(), data.labourCostPercent(),
+                data.variableExpensesPercent(), data.desiredMarginPercent());
         return new TechnicalSheetResponseDTO(service.save(dto));
     }
 

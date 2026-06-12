@@ -1,0 +1,93 @@
+@startuml SD_NovaFichaTecnica
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD — Nova / Editar Ficha Técnica (com UDM por Item e Precificação)
+
+actor "Usuário" as U
+participant "TechnicalSheetForm\n(React)" as FORM
+participant "TechnicalSheetController\n(Spring)" as CTRL
+participant "TechnicalSheetService\n(Spring)" as SVC
+participant "TechnicalSheetRepository\n(JPA)" as TS_REPO
+participant "ProductRepository\n(JPA)" as PROD_REPO
+database "PostgreSQL" as DB
+
+U -> FORM : Abre formulário (criar ou editar)
+
+alt Modo Edição
+    FORM -> CTRL : GET /technical-sheet/{id}
+    CTRL -> SVC : findById(id)
+    SVC -> TS_REPO : findById(id)
+    TS_REPO -> DB : SELECT ... FROM technical_sheet\nJOIN technical_sheet_item
+    DB --> TS_REPO : TechnicalSheet
+    TS_REPO --> SVC : TechnicalSheet
+    SVC --> CTRL : TechnicalSheetResponseDTO\n{ name, finalProductId, rendimento,\n  labourCostPercent, variableExpensesPercent,\n  desiredMarginPercent,\n  items: [{ rawMaterialId, quantity, unit }] }
+    CTRL --> FORM : 200 OK
+
+    FORM -> FORM : useEffect: popula todos os campos\nitems com unit: i.unit || ""
+end
+
+FORM -> CTRL : GET /product?tipo=INSUMO  (para select de insumos)
+CTRL --> FORM : Lista de insumos disponíveis
+
+U -> FORM : Preenche Nome da Ficha
+U -> FORM : Seleciona Produto Final
+U -> FORM : Informa Rendimento (nº de porções)
+
+loop Para cada insumo na receita
+    U -> FORM : Seleciona Insumo (rawMaterial)
+    U -> FORM : Informa Quantidade
+    U -> FORM : Seleciona UDM do item\n(G, KG, ML, L, UN, DUZIA)
+    note right of FORM
+      UDM do item é independente da
+      UDM de compra do produto.
+      Ex: compra em KG, usa 250 G na receita.
+    end note
+end
+
+U -> FORM : Preenche seção PRECIFICAÇÃO:
+note right of U
+  % Mão de Obra (labourCostPercent)
+  % Despesas Variáveis (variableExpensesPercent)
+  % Margem Desejada (desiredMarginPercent)
+end note
+
+U -> FORM : Clica "Salvar"
+
+FORM -> CTRL : POST /technical-sheet  (novo)\nou PUT /technical-sheet/{id}  (edição)
+note right of FORM
+  Payload:
+  { name, finalProductId, rendimento,
+    labourCostPercent, variableExpensesPercent,
+    desiredMarginPercent,
+    items: [{ rawMaterialId, quantity, unit }] }
+end note
+
+CTRL -> SVC : save(TechnicalSheetRequestDTO)
+
+SVC -> PROD_REPO : findById(finalProductId)
+PROD_REPO -> DB : SELECT FROM product ...
+DB --> PROD_REPO : Product
+PROD_REPO --> SVC : finalProduct
+
+SVC -> TS_REPO : findById(id)  (edição) ou cria nova entidade
+SVC -> SVC : sheet.setRendimento(...)\nsheet.setLabourCostPercent(...)\nsheet.setVariableExpensesPercent(...)\nsheet.setDesiredMarginPercent(...)
+SVC -> SVC : sheet.getItems().clear()
+
+loop Para cada item do DTO
+    SVC -> PROD_REPO : findById(rawMaterialId)
+    PROD_REPO --> SVC : rawMaterial
+    SVC -> SVC : item.setQuantity(dto.quantity())\nitem.setUnit(dto.unit())
+    SVC -> SVC : sheet.getItems().add(item)
+end
+
+SVC -> TS_REPO : save(sheet)
+TS_REPO -> DB : INSERT/UPDATE technical_sheet\nINSERT/UPDATE technical_sheet_item\n(unit VARCHAR salvo via @Enumerated)
+DB --> TS_REPO : TechnicalSheet salvo
+TS_REPO --> SVC : TechnicalSheet
+SVC --> CTRL : TechnicalSheetResponseDTO
+CTRL --> FORM : 200 OK
+
+FORM --> U : Toast "Ficha salva com sucesso!"
+
+@enduml

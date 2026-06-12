@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,7 +16,7 @@ public class StockMovementReportDTO {
     private LocalDateTime date;
     private String productName;
     private StockMovement.MovementType type;
-    private Integer quantity;
+    private BigDecimal quantity;
     private String description;
 }
 

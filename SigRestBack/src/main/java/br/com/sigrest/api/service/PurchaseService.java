@@ -33,7 +33,7 @@ public class PurchaseService {
     private ProductRepository productRepository;
 
     @Autowired
-    private StockMovementService stockMovementService; // Assuming this service will be created later
+    private StockMovementService stockMovementService;
 
     @Transactional
     public PurchaseResponseDTO createPurchase(PurchaseRequestDTO purchaseRequestDTO) {
@@ -58,13 +58,30 @@ public class PurchaseService {
 
             total = total.add(itemDTO.getUnitPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
 
-            // Create stock movement for entry
-            stockMovementService.createStockEntry(product, itemDTO.getQuantity(), "Purchase " + purchase.getId());
+            // Calcular entrada de estoque em unidade base
+            // Se o produto tem UDM de compra configurada: qtde_pacotes × unidades_base/pacote
+            // Caso contrário, usar a quantidade de pacotes como escalar
+            BigDecimal stockEntry = toBaseUnits(product, itemDTO.getQuantity());
+            stockMovementService.createStockEntry(product, stockEntry, "Compra #" + purchase.getId());
         }
         purchase.setTotal(total);
 
         Purchase savedPurchase = purchaseRepository.save(purchase);
         return convertToResponseDTO(savedPurchase);
+    }
+
+    /**
+     * Converte a quantidade de pacotes comprados para a unidade base do produto.
+     * Ex: 2 pacotes de 5 KG → 2 × 5 × 1000 = 10.000 g
+     */
+    private BigDecimal toBaseUnits(Product product, int numberOfPackages) {
+        if (product.getPurchaseUnit() != null && product.getPackageQuantity() != null
+                && product.getPackageQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            return BigDecimal.valueOf(numberOfPackages)
+                    .multiply(product.getPackageQuantity())
+                    .multiply(product.getPurchaseUnit().getConversionFactor());
+        }
+        return BigDecimal.valueOf(numberOfPackages);
     }
 
     public List<PurchaseResponseDTO> getAllPurchases() {
@@ -79,13 +96,11 @@ public class PurchaseService {
         return convertToResponseDTO(purchase);
     }
 
-    // Helper method to convert Purchase to PurchaseResponseDTO
     private PurchaseResponseDTO convertToResponseDTO(Purchase purchase) {
         PurchaseResponseDTO dto = new PurchaseResponseDTO();
         dto.setId(purchase.getId());
         dto.setDate(purchase.getDate());
         dto.setTotal(purchase.getTotal());
-        // Assuming SupplierResponseDTO and ProductResponseDTO exist
         if (purchase.getSupplier() != null) {
             dto.setSupplier(new SupplierResponseDTO(purchase.getSupplier()));
         }
@@ -102,4 +117,3 @@ public class PurchaseService {
         return dto;
     }
 }
-

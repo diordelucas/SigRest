@@ -1,0 +1,270 @@
+@startuml ClassDiagram_000
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageStyle rectangle
+hide empty methods
+
+' ───────────────────────────────────────────
+' ENUMS
+' ───────────────────────────────────────────
+
+enum ProductType {
+    INSUMO
+    PRODUTO_FINAL
+    PRODUTO_INTERMEDIARIO
+}
+
+enum UnitOfMeasure {
+    G
+    KG
+    ML
+    L
+    UN
+    DUZIA
+    --
+    label : String
+    conversionFactor : BigDecimal
+    baseUnitLabel : String
+}
+
+enum MovementType {
+    ENTRY
+    EXIT
+}
+
+enum CashMovementType {
+    INCOME
+    EXPENSE
+}
+
+enum ProductionStatus {
+    OPEN
+    FINISHED
+    CANCELLED
+}
+
+enum UserRole {
+    ADMIN
+    OPERADOR
+}
+
+' ───────────────────────────────────────────
+' LOCALIZAÇÃO
+' ───────────────────────────────────────────
+
+class State {
+    id : Long
+    name : String
+    uf : String
+}
+
+class City {
+    id : Long
+    name : String
+}
+
+class Address {
+    id : Long
+    street : String
+    number : String
+    complement : String
+}
+
+' ───────────────────────────────────────────
+' PRODUTO E ESTOQUE
+' ───────────────────────────────────────────
+
+class Category {
+    id : Long
+    name : String
+    description : String
+}
+
+class Product {
+    id : Long
+    name : String
+    code : String
+    price : BigDecimal
+    sellPrice : BigDecimal
+    storage : BigDecimal
+    minStorage : BigDecimal
+    tipo : ProductType
+    purchaseUnit : UnitOfMeasure
+    packageQuantity : BigDecimal
+}
+
+class StockMovement {
+    id : Long
+    quantity : BigDecimal
+    date : LocalDateTime
+    description : String
+    type : MovementType
+}
+
+' ───────────────────────────────────────────
+' FICHA TÉCNICA E PRODUÇÃO
+' ───────────────────────────────────────────
+
+class TechnicalSheet {
+    id : Long
+    name : String
+    rendimento : Integer
+    labourCostPercent : BigDecimal
+    variableExpensesPercent : BigDecimal
+    desiredMarginPercent : BigDecimal
+}
+
+class TechnicalSheetItem {
+    id : Long
+    quantity : BigDecimal
+    unit : UnitOfMeasure
+}
+
+class ProductionOrder {
+    id : Long
+    quantity : Integer
+    date : LocalDateTime
+    notes : String
+    status : ProductionStatus
+}
+
+' ───────────────────────────────────────────
+' PESSOA E FORNECEDOR
+' ───────────────────────────────────────────
+
+class Person {
+    id : Long
+    name : String
+    cpf : String
+    email : String
+    phone : String
+}
+
+class Supplier {
+    id : Long
+    name : String
+    cnpj : String
+    email : String
+    phone : String
+}
+
+' ───────────────────────────────────────────
+' VENDAS E COMPRAS
+' ───────────────────────────────────────────
+
+class Sale {
+    id : Long
+    date : Date
+    total : BigDecimal
+    discount : Integer
+    paymentMethod : String
+}
+
+class SellItem {
+    id : Long
+    unitPrice : BigDecimal
+    quantity : BigDecimal
+}
+
+class Purchase {
+    id : Long
+    date : LocalDate
+    total : BigDecimal
+}
+
+class PurchaseItem {
+    id : Long
+    quantity : Integer
+    unitPrice : BigDecimal
+}
+
+' ───────────────────────────────────────────
+' CAIXA E FINANÇAS
+' ───────────────────────────────────────────
+
+class User {
+    id : Long
+    name : String
+    email : String
+    password : String
+    role : UserRole
+}
+
+class CashRegister {
+    id : Long
+    openingTime : LocalDateTime
+    closingTime : LocalDateTime
+    openingBalance : BigDecimal
+    closingBalance : BigDecimal
+    open : boolean
+}
+
+class CashMovement {
+    id : Long
+    date : LocalDateTime
+    type : CashMovementType
+    amount : BigDecimal
+    description : String
+}
+
+class AccountPayable {
+    id : Long
+    description : String
+    amount : BigDecimal
+    dueDate : LocalDate
+    status : String
+}
+
+class AccountReceivable {
+    id : Long
+    description : String
+    amount : BigDecimal
+    dueDate : LocalDate
+    status : String
+}
+
+' ───────────────────────────────────────────
+' RELACIONAMENTOS
+' ───────────────────────────────────────────
+
+City "N" --> "1" State
+Address "N" --> "1" City
+Person "N" --> "0..1" Address
+Supplier "N" --> "0..1" Address
+
+Product "N" --> "1" Category
+Product ..> ProductType
+Product ..> UnitOfMeasure
+
+StockMovement "N" --> "1" Product
+StockMovement ..> MovementType
+
+TechnicalSheet "1" --> "1" Product : finalProduct
+TechnicalSheet "1" *-- "N" TechnicalSheetItem : items
+TechnicalSheetItem "N" --> "1" Product : rawMaterial
+TechnicalSheetItem ..> UnitOfMeasure
+
+ProductionOrder "N" --> "1" Product : finalProduct
+ProductionOrder ..> ProductionStatus
+
+Sale "N" --> "0..1" Person
+Sale "1" *-- "N" SellItem : items
+SellItem "N" --> "1" Product
+
+Purchase "N" --> "1" Supplier
+Purchase "1" *-- "N" PurchaseItem : items
+PurchaseItem "N" --> "1" Product
+
+CashRegister "N" --> "1" User : openedBy
+CashRegister "N" --> "0..1" User : closedBy
+CashRegister "1" *-- "N" CashMovement : movements
+CashMovement "N" --> "1" User
+CashMovement ..> CashMovementType
+
+AccountPayable "N" --> "0..1" Supplier
+AccountReceivable "N" --> "0..1" Person
+
+User ..> UserRole
+
+@enduml

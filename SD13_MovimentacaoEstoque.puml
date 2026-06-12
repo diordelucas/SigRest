@@ -1,0 +1,50 @@
+@startuml SD13_MovimentacaoEstoque
+
+skinparam sequenceArrowThickness 2
+skinparam responseMessageBelowArrow true
+title SD13 — Movimentação Manual de Estoque (Quantidade em Unidade Base)
+
+actor "Usuário" as U
+participant "StockPage\n(React)" as FE
+participant "StockMovementController\n(Spring)" as CTRL
+participant "StockMovementService\n(Spring)" as SVC
+participant "ProductRepository\n(JPA)" as PROD_REPO
+participant "StockMovementRepository\n(JPA)" as MOV_REPO
+database "PostgreSQL" as DB
+
+U -> FE : Seleciona produto e\npreenche movimentação:\nTipo (ENTRADA/SAÍDA),\nQuantidade (em unidade base: g, ml ou un),\nDescrição
+U -> FE : Clica "Registrar"
+
+FE -> CTRL : POST /stock-movement\n{ productId, type, quantity (BigDecimal), description }
+
+CTRL -> SVC : createStockMovement(StockMovementRequestDTO)
+
+SVC -> PROD_REPO : findById(productId)
+PROD_REPO -> DB : SELECT FROM product WHERE id=?
+DB --> PROD_REPO : Product
+PROD_REPO --> SVC : Product
+
+SVC -> SVC : Cria StockMovement com\nquantity: BigDecimal\ndate: LocalDateTime.now()
+
+SVC -> SVC : updateProductStorage(product, quantity, type)
+
+alt type == ENTRY
+    SVC -> SVC : current = storage ?? ZERO\nproduct.storage = current.add(quantity)
+else type == EXIT
+    SVC -> SVC : current = storage ?? ZERO\nif current < quantity → throw RuntimeException\nproduct.storage = current.subtract(quantity)
+end
+
+SVC -> PROD_REPO : save(product)  ← storage atualizado (BigDecimal)
+PROD_REPO -> DB : UPDATE product SET storage=? WHERE id=?
+DB --> PROD_REPO : OK
+
+SVC -> MOV_REPO : save(stockMovement)
+MOV_REPO -> DB : INSERT INTO stock_movement\n(quantity DECIMAL, type, date, description, product_id)
+DB --> MOV_REPO : StockMovement salvo
+MOV_REPO --> SVC : StockMovement
+SVC --> CTRL : StockMovementResponseDTO
+CTRL --> FE : 200 OK + StockMovementResponseDTO
+
+FE --> U : Toast confirmação\nAtualiza lista de movimentações
+
+@enduml
