@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, RefreshCw, Search } from "lucide-react";
 import axios from "axios";
 import CategoryTag from "./CategoryTag";
+import { formatBRL } from '../utils/currency';
 
 const baseUnitOf = (purchaseUnit) => {
   if (!purchaseUnit) return "un.";
@@ -14,6 +15,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState('');
 
   const fetchProducts = async () => {
     try {
@@ -55,9 +57,20 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
     );
   }
 
+  const filtered = products.filter(product => {
+    const q = search.toLowerCase();
+    return [product.name, product.code, product.categoryName].some(v => (v ?? '').toLowerCase().includes(q));
+  });
+
   return (
     <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Lista de Produtos</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-slate-800">Lista de Produtos</h2>
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input type="text" placeholder="Pesquisar por nome, código..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-64" />
+        </div>
+      </div>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -65,8 +78,10 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
         </div>
       )}
 
-      {products.length === 0 ? (
-        <p className="text-center text-slate-400 py-8 text-sm">Nenhum produto cadastrado.</p>
+      {filtered.length === 0 ? (
+        <p className="text-center text-slate-400 py-8 text-sm">
+          {search ? `Nenhum resultado para "${search}".` : 'Nenhum produto cadastrado.'}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -85,14 +100,14 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map((product) => (
+              {filtered.map((product) => (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{product.id}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.name}</td>
                   <td className="px-4 py-3 text-sm"><CategoryTag name={product.categoryName} /></td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.code}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{product.price}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{product.sellPrice}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">R$ {formatBRL(product.price ?? 0)}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">R$ {formatBRL(product.sellPrice ?? 0)}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       (product.storage ?? 0) <= (product.minStorage ?? 0)

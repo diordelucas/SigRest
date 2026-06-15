@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { formatBRL } from '../utils/currency';
 
 const getPaymentMethodLabel = (method) => {
     switch (method) {
@@ -18,6 +19,7 @@ const SaleList = () => {
     const [sales, setSales] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const fetchSales = async () => {
@@ -47,21 +49,35 @@ const SaleList = () => {
         );
     }
 
+    const filtered = sales.filter(sale => {
+        const q = search.toLowerCase();
+        const dateStr = sale.date ? new Date(sale.date).toLocaleDateString() : '';
+        return [sale.personName, getPaymentMethodLabel(sale.paymentMethod), dateStr].some(v => (v ?? '').toLowerCase().includes(q));
+    });
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 gap-4">
                 <h2 className="text-lg font-semibold text-slate-800">Lista de Vendas</h2>
-                <button
-                    className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
-                    onClick={() => navigate('/sales/new')}
-                >
-                    <Plus size={14} /> Nova Venda
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input type="text" placeholder="Pesquisar cliente, pagamento..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
+                    </div>
+                    <button
+                        className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
+                        onClick={() => navigate('/sales/new')}
+                    >
+                        <Plus size={14} /> Nova Venda
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
-                {sales.length === 0 ? (
-                    <p className="text-center text-slate-400 py-8 text-sm">Nenhuma venda encontrada.</p>
+                {filtered.length === 0 ? (
+                    <p className="text-center text-slate-400 py-8 text-sm">
+                        {search ? `Nenhum resultado para "${search}".` : 'Nenhuma venda encontrada.'}
+                    </p>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -77,7 +93,7 @@ const SaleList = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {sales.map((sale) => (
+                                {filtered.map((sale) => (
                                     <tr key={sale.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3 text-sm text-slate-700">{sale.id}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{new Date(sale.date).toLocaleDateString()}</td>
@@ -87,8 +103,8 @@ const SaleList = () => {
                                                 {getPaymentMethodLabel(sale.paymentMethod)}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {sale.discount.toFixed(2)}</td>
-                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800 text-right">R$ {sale.total.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {formatBRL(sale.discount ?? 0)}</td>
+                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800 text-right">R$ {formatBRL(sale.total ?? 0)}</td>
                                         <td className="px-4 py-3">
                                             <button
                                                 className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"

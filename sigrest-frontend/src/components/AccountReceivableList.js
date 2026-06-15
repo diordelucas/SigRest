@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckCircle2 } from 'lucide-react';
+import { Plus, CheckCircle2, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { formatBRL } from '../utils/currency';
 
 const getStatusBadge = (status) => {
     switch (status) {
@@ -18,6 +19,7 @@ const AccountReceivableList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -56,21 +58,35 @@ const AccountReceivableList = () => {
         );
     }
 
+    const filtered = accounts.filter(account => {
+        const q = search.toLowerCase();
+        const statusLabel = account.status === 'PENDING' ? 'pendente' : account.status === 'RECEIVED' ? 'recebido' : 'atrasado';
+        return [account.description, account.person?.name, statusLabel].some(v => (v ?? '').toLowerCase().includes(q));
+    });
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 gap-4">
                 <h2 className="text-lg font-semibold text-slate-800">Contas a Receber</h2>
-                <button
-                    className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
-                    onClick={() => navigate('/accounts-receivable/new')}
-                >
-                    <Plus size={14} /> Nova Conta a Receber
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input type="text" placeholder="Pesquisar descrição, cliente..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-64" />
+                    </div>
+                    <button
+                        className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
+                        onClick={() => navigate('/accounts-receivable/new')}
+                    >
+                        <Plus size={14} /> Nova Conta a Receber
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
-                {accounts.length === 0 ? (
-                    <p className="text-center text-slate-400 py-8 text-sm">Nenhuma conta a receber encontrada.</p>
+                {filtered.length === 0 ? (
+                    <p className="text-center text-slate-400 py-8 text-sm">
+                        {search ? `Nenhum resultado para "${search}".` : 'Nenhuma conta a receber encontrada.'}
+                    </p>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -86,11 +102,11 @@ const AccountReceivableList = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {accounts.map((account) => (
+                                {filtered.map((account) => (
                                     <tr key={account.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3 text-sm text-slate-700">{account.id}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{account.description}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {account.amount.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {formatBRL(account.amount ?? 0)}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{new Date(account.dueDate).toLocaleDateString()}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{account.person?.name || 'N/A'}</td>
                                         <td className="px-4 py-3">{getStatusBadge(account.status)}</td>

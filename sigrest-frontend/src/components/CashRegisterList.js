@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import api from '../services/api';
+import { formatBRL } from '../utils/currency';
 
 const CashRegisterList = () => {
     const [cashRegisters, setCashRegisters] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const fetchCashRegisters = async () => {
@@ -34,13 +37,27 @@ const CashRegisterList = () => {
         );
     }
 
+    const filtered = cashRegisters.filter(cr => {
+        const q = search.toLowerCase();
+        const statusLabel = cr.isOpen ? 'aberto' : 'fechado';
+        return [cr.openedBy?.name, cr.closedBy?.name, statusLabel].some(v => (v ?? '').toLowerCase().includes(q));
+    });
+
     return (
         <div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-6">Histórico de Caixas</h2>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-slate-800">Histórico de Caixas</h2>
+                <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input type="text" placeholder="Pesquisar usuário, status..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-64" />
+                </div>
+            </div>
 
             <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
-                {cashRegisters.length === 0 ? (
-                    <p className="text-center text-slate-400 py-8 text-sm">Nenhum caixa encontrado.</p>
+                {filtered.length === 0 ? (
+                    <p className="text-center text-slate-400 py-8 text-sm">
+                        {search ? `Nenhum resultado para "${search}".` : 'Nenhum caixa encontrado.'}
+                    </p>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -57,14 +74,14 @@ const CashRegisterList = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {cashRegisters.map((cr) => (
+                                {filtered.map((cr) => (
                                     <tr key={cr.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3 text-sm text-slate-700">{cr.id}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{new Date(cr.openingTime).toLocaleString()}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{cr.closingTime ? new Date(cr.closingTime).toLocaleString() : 'N/A'}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {cr.openingBalance.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {formatBRL(cr.openingBalance ?? 0)}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700 text-right">
-                                            {cr.closingBalance ? `R$ ${cr.closingBalance.toFixed(2)}` : 'N/A'}
+                                            {cr.closingBalance != null ? `R$ ${formatBRL(cr.closingBalance)}` : 'N/A'}
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

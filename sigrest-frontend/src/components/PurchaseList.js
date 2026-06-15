@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { formatBRL } from '../utils/currency';
 
 const PurchaseList = () => {
     const navigate = useNavigate();
     const [purchases, setPurchases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [search, setSearch] = useState('');
 
     useEffect(() => {
         const fetchPurchases = async () => {
@@ -37,21 +39,35 @@ const PurchaseList = () => {
         );
     }
 
+    const filtered = purchases.filter(purchase => {
+        const q = search.toLowerCase();
+        const dateStr = purchase.date ? new Date(purchase.date).toLocaleDateString() : '';
+        return [purchase.supplier?.name, dateStr].some(v => (v ?? '').toLowerCase().includes(q));
+    });
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 gap-4">
                 <h2 className="text-lg font-semibold text-slate-800">Lista de Compras</h2>
-                <button
-                    className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
-                    onClick={() => navigate('/purchases/new')}
-                >
-                    <Plus size={14} /> Nova Compra
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input type="text" placeholder="Pesquisar fornecedor, data..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
+                    </div>
+                    <button
+                        className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
+                        onClick={() => navigate('/purchases/new')}
+                    >
+                        <Plus size={14} /> Nova Compra
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
-                {purchases.length === 0 ? (
-                    <p className="text-center text-slate-400 py-8 text-sm">Nenhuma compra encontrada.</p>
+                {filtered.length === 0 ? (
+                    <p className="text-center text-slate-400 py-8 text-sm">
+                        {search ? `Nenhum resultado para "${search}".` : 'Nenhuma compra encontrada.'}
+                    </p>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -65,12 +81,12 @@ const PurchaseList = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {purchases.map((purchase) => (
+                                {filtered.map((purchase) => (
                                     <tr key={purchase.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3 text-sm text-slate-700">{purchase.id}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{new Date(purchase.date).toLocaleDateString()}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{purchase.supplier ? purchase.supplier.name : 'N/A'}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {purchase.total.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-700 text-right">R$ {formatBRL(purchase.total ?? 0)}</td>
                                         <td className="px-4 py-3">
                                             <button
                                                 className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"

@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { formatBRL } from '../utils/currency';
 
 const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
 const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
@@ -257,14 +258,14 @@ const SaleForm = () => {
                     <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-4">
                         <div className="flex flex-col items-end gap-1">
                             <p className="text-sm text-slate-600">
-                                Subtotal: <strong>R$ {calculateSubtotal().toFixed(2)}</strong>
+                                Subtotal: <strong>R$ {formatBRL(calculateSubtotal())}</strong>
                             </p>
                             <p className="text-sm text-slate-600">
-                                Desconto: <strong>R$ {parseFloat(sale.discount || 0).toFixed(2)}</strong>
+                                Desconto: <strong>R$ {formatBRL(parseFloat(sale.discount || 0))}</strong>
                             </p>
                             <div className="w-48 border-t border-slate-300 my-1" />
                             <p className="text-base font-bold text-primary-500">
-                                Total: R$ {calculateTotal()}
+                                Total: R$ {formatBRL(calculateTotal())}
                             </p>
                         </div>
                     </div>

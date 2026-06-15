@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Search } from "lucide-react";
 import axios from "axios";
 
 const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState('');
 
   const fetchCategories = async () => {
     try {
@@ -44,9 +45,20 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
     );
   }
 
+  const filtered = categories.filter(c => {
+    const q = search.toLowerCase();
+    return [c.name, c.description].some(v => (v ?? '').toLowerCase().includes(q));
+  });
+
   return (
     <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Lista de Categorias</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-slate-800">Lista de Categorias</h2>
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input type="text" placeholder="Pesquisar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-64" />
+        </div>
+      </div>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -54,8 +66,10 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
         </div>
       )}
 
-      {categories.length === 0 ? (
-        <p className="text-center text-slate-400 py-8 text-sm">Nenhuma categoria cadastrada.</p>
+      {filtered.length === 0 ? (
+        <p className="text-center text-slate-400 py-8 text-sm">
+          {search ? `Nenhum resultado para "${search}".` : 'Nenhuma categoria cadastrada.'}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -70,7 +84,7 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {categories.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{c.id}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{c.name}</td>

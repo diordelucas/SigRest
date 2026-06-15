@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Trash2, CheckCircle2, Plus } from "lucide-react";
+import { Trash2, CheckCircle2, Plus, Search } from "lucide-react";
 import api from "../services/api";
 import moment from "moment";
 
@@ -21,6 +21,7 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [search, setSearch] = useState('');
 
   const fetchOrders = async () => {
     try {
@@ -77,16 +78,28 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
     );
   }
 
+  const filtered = orders.filter(order => {
+    const q = search.toLowerCase();
+    const statusLabel = order.status === 'OPEN' ? 'aberta' : order.status === 'FINISHED' ? 'finalizada' : 'cancelada';
+    return [order.finalProduct?.name, statusLabel, order.notes].some(v => (v ?? '').toLowerCase().includes(q));
+  });
+
   return (
     <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 gap-4">
         <h2 className="text-lg font-semibold text-slate-800">Ordens de Produção</h2>
-        <button
-          className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
-          onClick={onNewOrder}
-        >
-          <Plus size={14} /> Nova Ordem
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input type="text" placeholder="Pesquisar produto, status..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
+          </div>
+          <button
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
+            onClick={onNewOrder}
+          >
+            <Plus size={14} /> Nova Ordem
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -100,8 +113,10 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
         </div>
       )}
 
-      {orders.length === 0 ? (
-        <p className="text-center text-slate-400 py-8 text-sm">Nenhuma ordem de produção cadastrada.</p>
+      {filtered.length === 0 ? (
+        <p className="text-center text-slate-400 py-8 text-sm">
+          {search ? `Nenhum resultado para "${search}".` : 'Nenhuma ordem de produção cadastrada.'}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -117,7 +132,7 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {orders.map((order) => (
+              {filtered.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{order.id}</td>
                   <td className="px-4 py-3 text-sm font-medium text-slate-800">

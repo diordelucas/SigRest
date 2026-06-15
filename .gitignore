@@ -5,3 +5,5 @@ out/
 .vscode/
 sigrest-frontend/node_modules/
 SigRestBack/target/
+*.puml
+SigRestBack;C/

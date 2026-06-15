@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Search } from "lucide-react";
 import api from "../services/api";
 
 const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnly }) => {
   const [sheets, setSheets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState('');
 
   const fetchSheets = async () => {
     try {
@@ -45,18 +46,29 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
     );
   }
 
+  const filtered = sheets.filter(sheet => {
+    const q = search.toLowerCase();
+    return [sheet.name, sheet.finalProduct?.name].some(v => (v ?? '').toLowerCase().includes(q));
+  });
+
   return (
     <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 gap-4">
         <h2 className="text-lg font-semibold text-slate-800">Fichas Técnicas (Receitas)</h2>
-        {!isReadOnly && (
-          <button
-            className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
-            onClick={onNewSheet}
-          >
-            <Plus size={14} /> Nova Ficha Técnica
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input type="text" placeholder="Pesquisar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
+          </div>
+          {!isReadOnly && (
+            <button
+              className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
+              onClick={onNewSheet}
+            >
+              <Plus size={14} /> Nova Ficha Técnica
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -65,8 +77,10 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
         </div>
       )}
 
-      {sheets.length === 0 ? (
-        <p className="text-center text-slate-400 py-8 text-sm">Nenhuma ficha técnica cadastrada.</p>
+      {filtered.length === 0 ? (
+        <p className="text-center text-slate-400 py-8 text-sm">
+          {search ? `Nenhum resultado para "${search}".` : 'Nenhuma ficha técnica cadastrada.'}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -82,7 +96,7 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sheets.map((sheet) => (
+              {filtered.map((sheet) => (
                 <tr key={sheet.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{sheet.id}</td>
                   <td className="px-4 py-3 text-sm font-medium text-slate-800">{sheet.name}</td>
