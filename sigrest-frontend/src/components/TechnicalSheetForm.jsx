@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { ArrowLeft, Save, Plus, Trash2, Calculator } from "lucide-react";
 import api from "../services/api";
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
-const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const UDM_OPTIONS = [
   { value: "G", label: "G" },
@@ -163,11 +163,11 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
-          className="p-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+          className="p-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-stone-50 transition-colors"
           onClick={onCancel}
         >
           <ArrowLeft size={16} />
@@ -187,7 +187,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
         {/* Cabeçalho da ficha */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome da Receita / Ficha</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nome da Receita / Ficha</label>
             <input
               className={inputCls}
               value={name}
@@ -197,7 +197,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto Final (Marmita / Acabado)</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Produto Final (Marmita / Acabado)</label>
             <select
               className={selectCls}
               value={finalProductId}
@@ -211,7 +211,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rendimento (Porções)</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Rendimento (Porções)</label>
             <input
               type="number"
               min="1"
@@ -229,7 +229,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
           <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Insumos / Ingredientes</h3>
           <button
             type="button"
-            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
+            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors flex items-center gap-2"
             onClick={addItem}
           >
             <Plus size={14} /> Adicionar Insumo
@@ -245,16 +245,16 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
         ) : (
           <div className="overflow-x-auto mb-4">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-stone-100 border-b border-stone-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Insumo / Ingrediente</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style={{ width: "230px" }}>Qtde / UDM</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider" style={{ width: "80px" }}>Ações</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Insumo / Ingrediente</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider" style={{ width: "230px" }}>Qtde / UDM</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider" style={{ width: "80px" }}>Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {items.map((item, index) => (
-                  <tr key={index} className="hover:bg-slate-50 transition-colors">
+                  <tr key={index} className="hover:bg-stone-50 transition-colors">
                     <td className="px-4 py-3">
                       <select
                         className={selectCls}
@@ -320,7 +320,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Precificação</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Custo de Mão de Obra (%)</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Custo de Mão de Obra (%)</label>
             <input
               type="number"
               step="0.01"
@@ -333,7 +333,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Despesas Variáveis (%)</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Despesas Variáveis (%)</label>
             <input
               type="number"
               step="0.01"
@@ -347,7 +347,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
             <p className="text-xs text-slate-400 mt-1">Impostos, taxas de cartão, etc.</p>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Margem Desejada (%)</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Margem Desejada (%)</label>
             <input
               type="number"
               step="0.01"
@@ -363,7 +363,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
 
         {/* Prévia de Custos — disponível ao editar ficha existente */}
         {sheetToEdit?.id && (
-          <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 mb-6">
+          <div className="border border-slate-200 rounded-xl p-4 bg-stone-50 mb-6">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <Calculator size={14} />
@@ -418,19 +418,19 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-200">
-                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <div className="p-2 bg-stone-50 rounded-lg border border-stone-200">
                     <p className="text-xs text-slate-400 mb-0.5">Custo Ingredientes</p>
                     <p className="font-semibold text-slate-800 text-sm">
                       R$ {formatBRL(costResult.ingredientsTotalCost)}
                     </p>
                   </div>
-                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <div className="p-2 bg-stone-50 rounded-lg border border-stone-200">
                     <p className="text-xs text-slate-400 mb-0.5">Custo c/ Mão de Obra</p>
                     <p className="font-semibold text-slate-800 text-sm">
                       R$ {formatBRL(costResult.totalCostWithLabour)}
                     </p>
                   </div>
-                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <div className="p-2 bg-stone-50 rounded-lg border border-stone-200">
                     <p className="text-xs text-slate-400 mb-0.5">Custo por Porção</p>
                     <p className="font-semibold text-slate-800 text-sm">
                       {costResult.rendimento
@@ -453,7 +453,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }) => {
         <div className="flex justify-end gap-2 mt-4">
           <button
             type="button"
-            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors"
             onClick={onCancel}
             disabled={loading}
           >

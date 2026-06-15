@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { formatBRL } from '../utils/currency';
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
-const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const PAYMENT_METHODS = [
     { value: 'DINHEIRO', label: 'Dinheiro' },
@@ -122,13 +122,13 @@ const SaleForm = () => {
 
     return (
         <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+            <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
                 <h2 className="text-lg font-semibold text-slate-800 mb-6">Registrar Nova Venda</h2>
 
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div className="flex flex-col gap-1">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cliente <span className="normal-case font-normal text-slate-400">(opcional)</span></label>
+                            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Cliente <span className="normal-case font-normal text-slate-400">(opcional)</span></label>
                             <select
                                 name="personId"
                                 data-testid="sale-person"
@@ -143,7 +143,7 @@ const SaleForm = () => {
                             </select>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Forma de Pagamento</label>
+                            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Forma de Pagamento</label>
                             <select
                                 name="paymentMethod"
                                 data-testid="sale-payment"
@@ -159,7 +159,7 @@ const SaleForm = () => {
                             </select>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Desconto</label>
+                            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Desconto</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
                                 <input
@@ -168,7 +168,7 @@ const SaleForm = () => {
                                     data-testid="sale-discount"
                                     step="0.01"
                                     min="0"
-                                    className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                    className="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                                     value={sale.discount}
                                     onChange={handleSaleChange}
                                 />
@@ -181,10 +181,10 @@ const SaleForm = () => {
                     </div>
 
                     {sale.items.map((item, index) => (
-                        <div key={index} className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-3">
+                        <div key={index} className="bg-stone-50 border border-slate-200 rounded-lg p-4 mb-3">
                             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
                                 <div className="col-span-2 flex flex-col gap-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto</label>
+                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Produto</label>
                                     <select
                                         name="productId"
                                         data-testid="sale-item-product"
@@ -205,7 +205,7 @@ const SaleForm = () => {
                                     </select>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Qtd</label>
+                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Qtd</label>
                                     <input
                                         type="number"
                                         name="quantity"
@@ -218,7 +218,7 @@ const SaleForm = () => {
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço Unit.</label>
+                                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Preço Unit.</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
                                         <input
@@ -226,7 +226,7 @@ const SaleForm = () => {
                                             name="unitPrice"
                                             step="0.01"
                                             min="0"
-                                            className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                            className="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                                             value={item.unitPrice}
                                             onChange={(e) => handleItemChange(index, e)}
                                             required
@@ -249,13 +249,13 @@ const SaleForm = () => {
                     <button
                         type="button"
                         data-testid="sale-add-item"
-                        className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 mt-1"
+                        className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors flex items-center gap-2 mt-1"
                         onClick={handleAddItem}
                     >
                         <Plus size={14} /> Adicionar Item
                     </button>
 
-                    <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-4">
+                    <div className="mt-4 bg-stone-50 border border-slate-200 rounded-lg p-4">
                         <div className="flex flex-col items-end gap-1">
                             <p className="text-sm text-slate-600">
                                 Subtotal: <strong>R$ {formatBRL(calculateSubtotal())}</strong>
@@ -286,7 +286,7 @@ const SaleForm = () => {
                         </button>
                         <button
                             type="button"
-                            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+                            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors"
                             onClick={() => navigate('/sales')}
                             disabled={submitting}
                         >

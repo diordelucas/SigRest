@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { 
   LayoutDashboard, 
   Package, 
@@ -90,7 +90,7 @@ const Sidebar = () => {
       <nav className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-dark-border">
         {visibleSections.map((section, idx) => (
           <div key={idx} className="space-y-1">
-            <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <h3 className="px-3 text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
               {section.title}
             </h3>
             {section.items.map((item) => (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, Plus, Search } from "lucide-react";
 import api from "../services/api";
 
@@ -52,13 +52,13 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
   });
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <div className="flex justify-between items-center mb-4 gap-4">
         <h2 className="text-lg font-semibold text-slate-800">Fichas Técnicas (Receitas)</h2>
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input type="text" placeholder="Pesquisar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
+            <input type="text" placeholder="Pesquisar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-stone-50 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
           </div>
           {!isReadOnly && (
             <button
@@ -84,20 +84,20 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-stone-100 border-b border-stone-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome da Receita</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto Final</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Qtd. de Insumos</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Nome da Receita</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Produto Final</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">Qtd. de Insumos</th>
                 {!isReadOnly && (
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">Ações</th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((sheet) => (
-                <tr key={sheet.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={sheet.id} className="hover:bg-stone-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{sheet.id}</td>
                   <td className="px-4 py-3 text-sm font-medium text-slate-800">{sheet.name}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{sheet.finalProduct?.name || "Produto não identificado"}</td>
@@ -110,7 +110,7 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
                     <td className="px-4 py-3">
                       <div className="flex gap-2 justify-center">
                         <button
-                          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-stone-50 transition-colors"
                           onClick={() => onEditSheet(sheet)}
                           title="Editar Ficha"
                         >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, RefreshCw, Search } from "lucide-react";
 import axios from "axios";
 import CategoryTag from "./CategoryTag";
@@ -49,7 +49,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+      <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
         <div className="flex items-center justify-center h-40">
           <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
         </div>
@@ -63,12 +63,12 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   });
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-slate-800">Lista de Produtos</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input type="text" placeholder="Pesquisar por nome, código..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-64" />
+          <input type="text" placeholder="Pesquisar por nome, código..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-stone-50 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-64" />
         </div>
       </div>
 
@@ -85,23 +85,23 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-stone-100 border-b border-stone-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoria</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Código</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço Compra</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Preço Venda</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estoque</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Categoria</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Código</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Preço Compra</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Preço Venda</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Estoque</th>
                 {!isReadOnly && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Ações</th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((product) => (
-                <tr key={product.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={product.id} className="hover:bg-stone-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{product.id}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{product.name}</td>
                   <td className="px-4 py-3 text-sm"><CategoryTag name={product.categoryName} /></td>
@@ -121,7 +121,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
                     <td className="px-4 py-3">
                       <div className="flex gap-2 flex-wrap">
                         <button
-                          className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1"
+                          className="px-3 py-1.5 text-xs border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-stone-50 transition-colors flex items-center gap-1"
                           onClick={() => onEditPerson(product)}
                         >
                           <Pencil size={12} /> Editar
@@ -144,7 +144,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
 
       <div className="mt-4">
         <button
-          className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={fetchProducts}
           disabled={loading}
         >

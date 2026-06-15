@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { IMaskInput } from "react-imask";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { CPF_MASK, PHONE_MASK, CEP_MASK } from "../utils/masks";
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
 
 const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   const [name, setName] = useState("");
@@ -114,7 +114,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <h2 className="text-lg font-semibold text-slate-800 mb-4">
         {editingPerson ? "Editar Pessoa" : "Cadastro de Pessoa"}
       </h2>
@@ -122,7 +122,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome Completo</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nome Completo</label>
             <input
               className={inputCls}
               value={name}
@@ -132,7 +132,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">CPF</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">CPF</label>
             <IMaskInput
               mask={CPF_MASK}
               value={cpf}
@@ -145,7 +145,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Telefone</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Telefone</label>
             <IMaskInput
               mask={PHONE_MASK}
               value={phone}
@@ -155,7 +155,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">E-mail</label>
             <input
               type="email"
               className={inputCls}
@@ -172,14 +172,14 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
         <div className="flex gap-4 mb-4">
           <div className="flex flex-col gap-1" style={{ width: "180px" }}>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">CEP</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">CEP</label>
             <div className="relative">
               <IMaskInput
                 mask={CEP_MASK}
                 value={cep}
                 onAccept={(value) => setCep(value)}
                 onBlur={handleCepBlur}
-                className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                className="w-full pl-3 pr-10 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 placeholder="00000-000"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -192,7 +192,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             </div>
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rua / Logradouro</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Rua / Logradouro</label>
             <input
               className={inputCls}
               value={street}
@@ -201,7 +201,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             />
           </div>
           <div className="flex flex-col gap-1" style={{ width: "110px" }}>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Número</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Número</label>
             <input
               className={inputCls}
               value={number}
@@ -213,7 +213,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
         <div className="flex gap-4 mb-6">
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bairro</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Bairro</label>
             <input
               className={inputCls}
               value={nbhd}
@@ -222,7 +222,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             />
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cidade</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Cidade</label>
             <input
               className={inputCls}
               value={city}
@@ -231,7 +231,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             />
           </div>
           <div className="flex flex-col gap-1" style={{ width: "80px" }}>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">UF</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">UF</label>
             <input
               className={inputCls}
               value={uf}
@@ -252,7 +252,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           {editingPerson && (
             <button
               type="button"
-              className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors"
               onClick={handleCancel}
             >
               Cancelar

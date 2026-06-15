@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Trash2, CheckCircle2, Plus, Search } from "lucide-react";
 import api from "../services/api";
 import moment from "moment";
@@ -85,13 +85,13 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
   });
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <div className="flex justify-between items-center mb-4 gap-4">
         <h2 className="text-lg font-semibold text-slate-800">Ordens de Produção</h2>
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input type="text" placeholder="Pesquisar produto, status..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
+            <input type="text" placeholder="Pesquisar produto, status..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 pr-3 py-2 text-sm bg-stone-50 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 w-56" />
           </div>
           <button
             className="px-4 py-2 bg-primary-500 text-white text-sm font-semibold rounded-lg hover:bg-primary-600 transition-colors flex items-center gap-2"
@@ -120,20 +120,20 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }) => {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-stone-100 border-b border-stone-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto Final</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Qtd</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data de Abertura</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Observações</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Produto Final</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">Qtd</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Data de Abertura</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Observações</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={order.id} className="hover:bg-stone-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-slate-700">{order.id}</td>
                   <td className="px-4 py-3 text-sm font-medium text-slate-800">
                     {order.finalProduct?.name || "Produto não identificado"}

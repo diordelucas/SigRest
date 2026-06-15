@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import api from "../services/api";
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
-const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const ProductionOrderForm = ({ onSaveSuccess, onCancel }) => {
   const [finalProductId, setFinalProductId] = useState("");
@@ -53,11 +53,11 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
-          className="p-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+          className="p-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-stone-50 transition-colors"
           onClick={onCancel}
         >
           <ArrowLeft size={16} />
@@ -74,7 +74,7 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }) => {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Produto Final (com Ficha Técnica)</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Produto Final (com Ficha Técnica)</label>
             <select
               className={selectCls}
               value={finalProductId}
@@ -90,7 +90,7 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }) => {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Quantidade a Produzir</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Quantidade a Produzir</label>
             <input
               type="number"
               min="1"
@@ -105,9 +105,9 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }) => {
         </div>
 
         <div className="flex flex-col gap-1 mb-6">
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Observações (Lote, Perdas, Rendimento, etc)</label>
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Observações (Lote, Perdas, Rendimento, etc)</label>
           <textarea
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+            className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
             rows={4}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -118,7 +118,7 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }) => {
         <div className="flex justify-end gap-2">
           <button
             type="button"
-            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors"
             onClick={onCancel}
             disabled={loading}
           >

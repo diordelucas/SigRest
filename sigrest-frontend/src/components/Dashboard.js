@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { DollarSign, ShoppingCart, TrendingUp, AlertTriangle, ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
 import api from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -6,12 +6,12 @@ import moment from 'moment';
 import { formatBRL } from '../utils/currency';
 
 const KpiCard = ({ icon, label, value, accent }) => (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-5 flex items-center gap-4">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-5 flex items-center gap-4">
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${accent}`}>
             {icon}
         </div>
         <div className="min-w-0">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
+            <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider">{label}</p>
             <p className="text-2xl font-bold text-slate-800 truncate">{value}</p>
         </div>
     </div>
@@ -138,7 +138,7 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Faturamento Mensal */}
-                <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
+                <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Faturamento Mensal</h3>
                     {monthlyRevenue.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
@@ -157,7 +157,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Produtos Mais Vendidos */}
-                <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
+                <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Produtos Mais Vendidos (Quantidade)</h3>
                     {topSellingProducts.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
@@ -176,7 +176,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Vendas por Período */}
-                <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
+                <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Vendas por Período (Último Mês)</h3>
                     {salesByPeriod.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
@@ -196,7 +196,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Resumo de Estoque */}
-                <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6">
+                <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6">
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Resumo de Movimentação de Estoque (Último Mês)</h3>
                     <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
                         {stockMovement.length > 0 ? (

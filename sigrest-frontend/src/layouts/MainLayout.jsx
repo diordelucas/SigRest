@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Search, Bell, User, Menu } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -81,7 +81,7 @@ export default function MainLayout() {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-100 rounded-lg shadow-xl z-50 overflow-hidden text-gray-800">
+                <div className="absolute right-0 mt-2 w-72 bg-stone-50 border border-gray-100 rounded-lg shadow-xl z-50 overflow-hidden text-gray-800">
                   <div className="p-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
                     <span className="font-semibold text-sm">Alertas de Estoque</span>
                     <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
@@ -123,7 +123,7 @@ export default function MainLayout() {
         </header>
 
         {/* Dynamic Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-stone-100 text-slate-900">
           <Outlet />
         </main>
       </div>

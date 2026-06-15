@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import api from '../services/api';
@@ -6,8 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import CurrencyInput from './CurrencyInput';
 import { formatBRL } from '../utils/currency';
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
-const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const EMPTY_MOVEMENT = { type: 'EXPENSE', amount: '', description: '' };
 
@@ -133,7 +133,7 @@ const CashRegisterForm = () => {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+            <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
                 <h2 className="text-lg font-semibold text-slate-800 mb-4">Controle de Caixa</h2>
 
                 {currentCashRegister && currentCashRegister.open ? (
@@ -148,8 +148,8 @@ const CashRegisterForm = () => {
 
                         {/* Breakdown do saldo */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Saldo Inicial</p>
+                            <div className="p-3 bg-stone-50 border border-slate-200 rounded-lg">
+                                <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Saldo Inicial</p>
                                 <p className="text-base font-bold text-slate-800">R$ {formatBRL(currentCashRegister.openingBalance ?? 0)}</p>
                             </div>
                             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
@@ -180,7 +180,7 @@ const CashRegisterForm = () => {
                             <form onSubmit={handleMovementSubmit}>
                                 <div className="grid grid-cols-3 gap-3 mb-3">
                                     <div className="flex flex-col gap-1">
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</label>
+                                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Tipo</label>
                                         <select
                                             className={selectCls}
                                             value={movement.type}
@@ -191,11 +191,11 @@ const CashRegisterForm = () => {
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor</label>
+                                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Valor</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
                                             <CurrencyInput
-                                                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                                className="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                                                 value={movement.amount}
                                                 onChange={(val) => setMovement({ ...movement, amount: val })}
                                                 placeholder="0,00"
@@ -203,7 +203,7 @@ const CashRegisterForm = () => {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</label>
+                                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Descrição</label>
                                         <input
                                             type="text"
                                             className={inputCls}
@@ -265,12 +265,12 @@ const CashRegisterForm = () => {
                             Nenhum caixa está aberto no momento.
                         </div>
                         <div className="flex flex-col gap-1 mb-6">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Saldo Inicial</label>
+                            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Saldo Inicial</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
                                 <CurrencyInput
                                     data-testid="cash-opening-balance"
-                                    className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                                    className="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                                     value={openingBalance}
                                     onChange={setOpeningBalance}
                                 />
@@ -290,7 +290,7 @@ const CashRegisterForm = () => {
             {/* Confirmation Dialog */}
             {openDialog && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+                    <div className="bg-stone-50 rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
                         <h3 className="text-base font-semibold text-slate-800 mb-3">
                             {dialogAction === 'open' ? 'Confirmar Abertura de Caixa' : 'Confirmar Fechamento de Caixa'}
                         </h3>
@@ -301,7 +301,7 @@ const CashRegisterForm = () => {
                         </p>
                         <div className="flex justify-end gap-2">
                             <button
-                                className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+                                className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors"
                                 onClick={() => { setOpenDialog(false); setDialogAction(null); }}
                             >
                                 Cancelar

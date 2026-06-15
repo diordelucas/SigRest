@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import api from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ComposedChart, Area } from 'recharts';
 import moment from 'moment';
 import { formatBRL } from '../utils/currency';
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
-const selectCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const selectCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors appearance-none";
 
 const ReportPage = () => {
     const [reportType, setReportType] = useState('');
@@ -136,18 +136,18 @@ const ReportPage = () => {
                 return (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-stone-100 border-b border-stone-200">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data/Hora</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Quantidade</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Data/Hora</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Produto</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Tipo</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Quantidade</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Descrição</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {reportData.map((movement, index) => (
-                                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={index} className="hover:bg-stone-50 transition-colors">
                                         <td className="px-4 py-3 text-sm text-slate-700">{movement.date}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{movement.productName}</td>
                                         <td className="px-4 py-3">
@@ -185,17 +185,17 @@ const ReportPage = () => {
                         </ResponsiveContainer>
                         <div className="mt-4 overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-slate-50 border-b border-slate-200">
+                                <thead className="bg-stone-100 border-b border-stone-200">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mês</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Entradas</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Saídas</th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Saldo</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Mês</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Entradas</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Saídas</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Saldo</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {reportData.map((row, i) => (
-                                        <tr key={i} className="hover:bg-slate-50">
+                                        <tr key={i} className="hover:bg-stone-50">
                                             <td className="px-4 py-3 text-sm text-slate-700">{row.month}</td>
                                             <td className="px-4 py-3 text-sm text-emerald-600 text-right font-medium">R$ {formatBRL(row.totalEntradas)}</td>
                                             <td className="px-4 py-3 text-sm text-rose-600 text-right font-medium">R$ {formatBRL(row.totalSaidas)}</td>
@@ -213,17 +213,17 @@ const ReportPage = () => {
                 return (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-stone-100 border-b border-stone-200">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fornecedor</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Itens</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Data</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Fornecedor</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Itens</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Total</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {reportData.map((purchase) => (
-                                    <tr key={purchase.id} className="hover:bg-slate-50">
+                                    <tr key={purchase.id} className="hover:bg-stone-50">
                                         <td className="px-4 py-3 text-sm text-slate-700">{purchase.date}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700">{purchase.supplierName}</td>
                                         <td className="px-4 py-3 text-sm text-slate-700 text-right">{purchase.itemCount}</td>
@@ -244,7 +244,7 @@ const ReportPage = () => {
 
     return (
         <div>
-            <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+            <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
                 <h2 className="text-lg font-semibold text-slate-800 mb-6">Relatórios Gerenciais</h2>
 
                 {error && (
@@ -255,7 +255,7 @@ const ReportPage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-6">
                     <div className="flex flex-col gap-1">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tipo de Relatório</label>
+                        <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tipo de Relatório</label>
                         <select
                             className={selectCls}
                             value={reportType}
@@ -271,7 +271,7 @@ const ReportPage = () => {
                         </select>
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Data Inicial</label>
+                        <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Data Inicial</label>
                         <input
                             type="date"
                             className={inputCls}
@@ -280,7 +280,7 @@ const ReportPage = () => {
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Data Final</label>
+                        <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Data Final</label>
                         <input
                             type="date"
                             className={inputCls}

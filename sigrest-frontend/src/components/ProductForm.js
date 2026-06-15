@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import CurrencyInput from "./CurrencyInput";
 
-const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
+const inputCls = "w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors";
 
 const TIPOS = [
   { value: "INSUMO", label: "Insumo (Matéria-Prima)" },
@@ -107,7 +107,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-soft border border-slate-200 p-6 mb-6">
+    <div className="bg-stone-50 rounded-xl shadow-soft border border-stone-200 p-6 mb-6">
       <h2 className="text-lg font-semibold text-slate-800 mb-4">
         {editingPerson ? "Editar Produto" : "Cadastro de Produto"}
       </h2>
@@ -115,7 +115,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nome do Produto</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nome do Produto</label>
             <input
               data-testid="product-name"
               className={inputCls}
@@ -126,7 +126,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Código</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Código</label>
             <input
               data-testid="product-code"
               className={inputCls}
@@ -139,7 +139,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
         </div>
 
         <div className="flex flex-col gap-1 mb-4">
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Categoria (Tipo de Produto)</label>
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Categoria (Tipo de Produto)</label>
           <select
             data-testid="product-category"
             className={`${inputCls} appearance-none`}
@@ -160,24 +160,24 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço de Custo</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Preço de Custo</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
               <CurrencyInput
                 data-testid="product-price"
-                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                className="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 value={price}
                 onChange={setPrice}
               />
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Preço de Venda</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Preço de Venda</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">R$</span>
               <CurrencyInput
                 data-testid="product-sellprice"
-                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                className="w-full pl-8 pr-3 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 value={sellPrice}
                 onChange={setSellPrice}
               />
@@ -191,7 +191,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
               Estoque Atual{stockUnit(tipo, purchaseUnit) !== "un" ? ` (${stockUnit(tipo, purchaseUnit)})` : ""}
             </label>
             <div className="relative">
@@ -200,7 +200,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
                 type="number"
                 min="0"
                 step="any"
-                className="w-full pl-3 pr-12 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                className="w-full pl-3 pr-12 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 value={storage}
                 onChange={(e) => setStorage(e.target.value)}
                 placeholder="0"
@@ -209,7 +209,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
               Estoque Mínimo{stockUnit(tipo, purchaseUnit) !== "un" ? ` (${stockUnit(tipo, purchaseUnit)})` : ""}
             </label>
             <div className="relative">
@@ -218,7 +218,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
                 type="number"
                 min="0"
                 step="any"
-                className="w-full pl-3 pr-12 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
+                className="w-full pl-3 pr-12 py-2 bg-stone-50 border border-stone-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors"
                 value={minStorage}
                 onChange={(e) => setMinStorage(e.target.value)}
                 placeholder="0"
@@ -235,7 +235,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tipo de Produto</label>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tipo de Produto</label>
             <select
               className={`${inputCls} appearance-none`}
               value={tipo}
@@ -251,7 +251,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           {tipo === "INSUMO" && (
             <>
               <div className="flex flex-col gap-1">
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Unidade de Compra (UDM)</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Unidade de Compra (UDM)</label>
                 <select
                   className={`${inputCls} appearance-none`}
                   value={purchaseUnit}
@@ -265,7 +265,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Qtde por Embalagem</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Qtde por Embalagem</label>
                 <input
                   type="number"
                   step="any"
@@ -294,7 +294,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
           {editingPerson && (
             <button
               type="button"
-              className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-stone-50 transition-colors"
               onClick={handleCancel}
             >
               Cancelar
