@@ -31,10 +31,12 @@ public class ProductionOrderService {
     @Autowired
     private StockMovementService stockMovementService;
 
+    @Transactional(readOnly = true)
     public List<ProductionOrder> findAll() {
         return repository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public ProductionOrder findById(Long id) {
         return repository.findById(id).orElseThrow(() -> new RuntimeException("Ordem de Produção não encontrada"));
     }

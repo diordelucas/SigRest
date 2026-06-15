@@ -56,15 +56,17 @@ public class AccountReceivableService {
         return convertToResponseDTO(updatedAccount);
     }
 
+    @Transactional(readOnly = true)
     public List<AccountReceivableResponseDTO> getAllAccountReceivables() {
         return accountReceivableRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public AccountReceivableResponseDTO getAccountReceivableById(Long id) {
         AccountReceivable accountReceivable = accountReceivableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta a receber nÃ£o encontrada."));
+                .orElseThrow(() -> new RuntimeException("Conta a receber não encontrada."));
         return convertToResponseDTO(accountReceivable);
     }
 

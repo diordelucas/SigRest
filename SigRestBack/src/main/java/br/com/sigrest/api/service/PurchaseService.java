@@ -84,12 +84,14 @@ public class PurchaseService {
         return BigDecimal.valueOf(numberOfPackages);
     }
 
+    @Transactional(readOnly = true)
     public List<PurchaseResponseDTO> getAllPurchases() {
         return purchaseRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public PurchaseResponseDTO getPurchaseById(Long id) {
         Purchase purchase = purchaseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Purchase not found"));

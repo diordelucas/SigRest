@@ -56,15 +56,17 @@ public class AccountPayableService {
         return convertToResponseDTO(updatedAccount);
     }
 
+    @Transactional(readOnly = true)
     public List<AccountPayableResponseDTO> getAllAccountPayables() {
         return accountPayableRepository.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public AccountPayableResponseDTO getAccountPayableById(Long id) {
         AccountPayable accountPayable = accountPayableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Conta a pagar nÃ£o encontrada."));
+                .orElseThrow(() -> new RuntimeException("Conta a pagar não encontrada."));
         return convertToResponseDTO(accountPayable);
     }
 
