@@ -2,26 +2,120 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Tokens de tema: neutros (canvas/surface/ink/line) trocam com o modo
+ * claro/escuro (classe .dark na <html>); a escala primary/* troca com o
+ * preset pastel escolhido (atributo data-preset na <html>). Ver
+ * contexts/ThemeContext.tsx para quem aplica essas classes/atributos.
+ */
+:root {
+  /* Neutros — modo claro (padrão) */
+  --color-canvas: 250 250 249;
+  --color-surface: 255 255 255;
+  --color-surface-2: 245 245 244;
+  --color-ink: 41 37 36;
+  --color-ink-muted: 120 113 108;
+  --color-line: 231 229 228;
+
+  /* Preset "pêssego" (padrão) */
+  --color-primary-50: 255 247 237;
+  --color-primary-100: 255 237 213;
+  --color-primary-200: 254 215 170;
+  --color-primary-300: 253 186 116;
+  --color-primary-400: 251 146 60;
+  --color-primary-500: 249 115 22;
+  --color-primary-600: 234 88 12;
+  --color-primary-700: 194 65 12;
+  --color-primary-800: 154 52 18;
+  --color-primary-900: 124 45 18;
+}
+
+:root.dark {
+  --color-canvas: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-surface-2: 51 65 85;
+  --color-ink: 226 232 240;
+  --color-ink-muted: 148 163 184;
+  --color-line: 51 65 85;
+}
+
+:root[data-preset="lavanda"] {
+  --color-primary-50: 245 243 255;
+  --color-primary-100: 237 233 254;
+  --color-primary-200: 221 214 254;
+  --color-primary-300: 196 181 253;
+  --color-primary-400: 167 139 250;
+  --color-primary-500: 139 92 246;
+  --color-primary-600: 124 58 237;
+  --color-primary-700: 109 40 217;
+  --color-primary-800: 91 33 182;
+  --color-primary-900: 76 29 149;
+}
+
+:root[data-preset="menta"] {
+  --color-primary-50: 240 253 250;
+  --color-primary-100: 204 251 241;
+  --color-primary-200: 153 246 228;
+  --color-primary-300: 94 234 212;
+  --color-primary-400: 45 212 191;
+  --color-primary-500: 20 184 166;
+  --color-primary-600: 13 148 136;
+  --color-primary-700: 15 118 110;
+  --color-primary-800: 17 94 89;
+  --color-primary-900: 19 78 74;
+}
+
+:root[data-preset="azul-bebe"] {
+  --color-primary-50: 240 249 255;
+  --color-primary-100: 224 242 254;
+  --color-primary-200: 186 230 253;
+  --color-primary-300: 125 211 252;
+  --color-primary-400: 56 189 248;
+  --color-primary-500: 14 165 233;
+  --color-primary-600: 2 132 199;
+  --color-primary-700: 3 105 161;
+  --color-primary-800: 7 89 133;
+  --color-primary-900: 12 74 110;
+}
+
+:root[data-preset="rosa"] {
+  --color-primary-50: 255 241 242;
+  --color-primary-100: 255 228 230;
+  --color-primary-200: 254 205 211;
+  --color-primary-300: 253 164 175;
+  --color-primary-400: 251 113 133;
+  --color-primary-500: 244 63 94;
+  --color-primary-600: 225 29 72;
+  --color-primary-700: 190 18 60;
+  --color-primary-800: 159 18 57;
+  --color-primary-900: 136 19 55;
+}
+
 @layer base {
   body {
-    @apply bg-dark text-slate-200 antialiased font-sans;
+    @apply bg-canvas text-ink antialiased font-sans transition-colors duration-200;
   }
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-dark-lighter/80 backdrop-blur-md border border-dark-border rounded-xl shadow-lg;
+  /* Cartão padrão: usado nas telas ja migradas ao novo sistema de tokens. */
+  .card {
+    @apply bg-surface border border-line rounded-2xl shadow-card;
   }
 
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm focus:ring-2 focus:ring-primary-500 outline-none;
+    @apply bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-xl font-medium transition-colors shadow-sm focus:ring-2 focus:ring-primary-500/40 outline-none;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-2 hover:bg-line text-ink px-4 py-2 rounded-xl font-medium transition-colors border border-line outline-none;
   }
 
   .input-field {
-    @apply bg-dark border border-dark-border text-slate-200 px-3 py-2 rounded-lg focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-all w-full;
+    @apply bg-surface border border-line text-ink px-3 py-2 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 outline-none transition-all w-full placeholder:text-ink-muted;
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors;
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors;
   }
 }
