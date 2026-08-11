@@ -3,6 +3,8 @@ package br.com.sigrest.api.controller;
 import br.com.sigrest.api.dto.PurchaseItemRequestDTO;
 import br.com.sigrest.api.dto.PurchaseItemResponseDTO;
 import br.com.sigrest.api.entity.PurchaseItem;
+import br.com.sigrest.api.exception.BusinessException;
+import br.com.sigrest.api.exception.ErrorCode;
 import br.com.sigrest.api.repository.PurchaseItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +39,7 @@ public class PurchaseItemController {
 
     @GetMapping("/{id}")
     public PurchaseItemResponseDTO getPurchaseItemById(@PathVariable Long id){
-        PurchaseItem purchaseItem = repository.findById(id).orElseThrow(() -> new RuntimeException("Item de Compra nÃ£o encontrado"));
+        PurchaseItem purchaseItem = repository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.ITEM_COMPRA_NAO_ENCONTRADO));
         PurchaseItemResponseDTO dto = new PurchaseItemResponseDTO();
         dto.setId(purchaseItem.getId());
         dto.setQuantity(purchaseItem.getQuantity());
@@ -47,7 +49,9 @@ public class PurchaseItemController {
 
     @DeleteMapping("/{id}")
     public void deletePurchaseItem(@PathVariable Long id) {
-        repository.deleteById(id);
+        PurchaseItem purchaseItem = repository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ITEM_COMPRA_NAO_ENCONTRADO));
+        repository.delete(purchaseItem);
     }
 }
 
