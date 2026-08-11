@@ -17,7 +17,7 @@ services:
 
   backend:
     build:
-      context: ./SigRestBack
+      context: ./backend
       dockerfile: Dockerfile
     container_name: sigrest_backend
     restart: always
@@ -31,7 +31,7 @@ services:
 
   frontend:
     build:
-      context: ./sigrest-frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: sigrest_frontend
     restart: always
@@ -47,13 +47,13 @@ services:
     image: maven:3.9-eclipse-temurin-21
     working_dir: /app
     volumes:
-      - ./SigRestBack:/app
+      - ./backend:/app
 
   node:
     image: node:22-alpine
     working_dir: /app
     volumes:
-      - ./sigrest-frontend:/app
+      - ./frontend:/app
       - node_modules:/app/node_modules
 
 volumes:

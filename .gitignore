@@ -3,7 +3,6 @@
 out/
 .idea/
 .vscode/
-sigrest-frontend/node_modules/
-SigRestBack/target/
+frontend/node_modules/
+backend/target/
 *.puml
-SigRestBack;C/

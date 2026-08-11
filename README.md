@@ -32,11 +32,11 @@ Abaixo está um resumo da estrutura do repositório:
 
 ```text
 Sistemacompleto/
-├── SigRestBack/                # Backend (Spring Boot + Java)
+├── backend/                    # Backend (Spring Boot + Java)
 │   ├── src/                    # Código-fonte Java (controllers, services, entities, etc.)
 │   ├── pom.xml                 # Dependências e configurações do Maven
 │   └── Dockerfile              # Configurações do container Docker do backend
-├── sigrest-frontend/           # Frontend (React 19)
+├── frontend/                   # Frontend (React 19)
 │   ├── src/                    # Componentes, telas e estilos do React
 │   ├── package.json            # Dependências e scripts do Node.js
 │   └── Dockerfile              # Configurações do container Docker do frontend
@@ -81,7 +81,7 @@ docker-compose up -d db
 #### Passo 2: Executar o Backend (Spring Boot)
 1.  Navegue até a pasta do backend:
     ```bash
-    cd SigRestBack
+    cd backend
     ```
 2.  Execute o comando para iniciar a aplicação:
     ```bash
@@ -92,7 +92,7 @@ O backend estará de pé na porta `8080`.
 #### Passo 3: Executar o Frontend (React)
 1.  Navegue até a pasta do frontend:
     ```bash
-    cd sigrest-frontend
+    cd frontend
     ```
 2.  Instale as dependências:
     ```bash
