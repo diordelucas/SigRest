@@ -1,36 +1,37 @@
-import React, { useState } from "react";
-import CategoryForm from "../components/CategoryForm";
-import CategoryList from "../components/CategoryList";
-import { useAuth } from "../contexts/AuthContext";
+import React, { useState } from 'react';
+import CategoryForm from '../components/CategoryForm';
+import CategoryList from '../components/CategoryList';
+import { useAuth } from '../contexts/AuthContext';
+import { Category } from '../types';
 
 export default function Categories() {
   const [updateList, setUpdateList] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN';
 
-  const handleEditCategory = (category) => {
+  const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEditComplete = () => {
     setEditingCategory(null);
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
     <div className="space-y-6">
       {isAdmin && (
-        <CategoryForm 
+        <CategoryForm
           onCategoryAdded={() => setUpdateList(!updateList)}
           editingCategory={editingCategory}
           onEditComplete={handleEditComplete}
         />
       )}
-      <CategoryList 
-        key={updateList} 
+      <CategoryList
+        key={String(updateList)}
         refreshTrigger={refreshTrigger}
         onEditCategory={handleEditCategory}
         isReadOnly={!isAdmin}

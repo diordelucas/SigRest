@@ -1,0 +1,136 @@
+import React, { useState, useEffect, FormEvent } from 'react';
+import api from '../services/api';
+import { User, UserRole } from '../types';
+
+interface UserFormProps {
+  onUserAdded: () => void;
+  editingUser: User | null;
+  onEditComplete: () => void;
+}
+
+const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('OPERADOR');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (editingUser) {
+      setName(editingUser.name || '');
+      setEmail(editingUser.email || '');
+      setRole(editingUser.role || 'OPERADOR');
+      setPassword('');
+      setError('');
+    }
+  }, [editingUser]);
+
+  const clearForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setRole('OPERADOR');
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const userData = { name, email, password, role };
+    try {
+      if (editingUser) {
+        setError('Edição de usuário requer um endpoint específico na API (PUT).');
+      } else {
+        await api.post('/user/signup', userData);
+        clearForm();
+        onUserAdded();
+      }
+    } catch (error) {
+      setError(editingUser ? 'Erro ao atualizar.' : 'Erro ao cadastrar.');
+      console.error(error);
+    }
+  };
+
+  const handleCancel = () => {
+    clearForm();
+    if (onEditComplete) onEditComplete();
+  };
+
+  return (
+    <div className="card p-6 mb-6">
+      <h2 className="text-lg font-semibold text-ink mb-4">
+        {editingUser ? 'Editar Usuário' : 'Cadastro de Usuário'}
+      </h2>
+
+      {error && (
+        <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-sm">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Nome</label>
+            <input
+              className="input-field"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Nome completo"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Email</label>
+            <input
+              type="email"
+              className="input-field"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="email@exemplo.com"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Senha</label>
+            <input
+              type="password"
+              className="input-field"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required={!editingUser}
+              placeholder="••••••••"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              Nível de Acesso
+            </label>
+            <select
+              className="input-field appearance-none"
+              value={role}
+              onChange={(e) => setRole(e.target.value as UserRole)}
+            >
+              <option value="ADMIN">Administrador</option>
+              <option value="OPERADOR">Operador</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button type="submit" className="btn-primary">
+            {editingUser ? 'Atualizar' : 'Cadastrar'}
+          </button>
+          {editingUser && (
+            <button type="button" className="btn-secondary" onClick={handleCancel}>
+              Cancelar
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default UserForm;

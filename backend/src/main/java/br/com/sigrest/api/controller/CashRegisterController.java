@@ -2,11 +2,13 @@ package br.com.sigrest.api.controller;
 
 import br.com.sigrest.api.dto.CashRegisterRequestDTO;
 import br.com.sigrest.api.dto.CashRegisterResponseDTO;
+import br.com.sigrest.api.entity.User;
 import br.com.sigrest.api.service.CashRegisterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,15 +22,19 @@ public class CashRegisterController {
     @Autowired
     private CashRegisterService cashRegisterService;
 
+    // Quem abre/fecha o caixa e quem esta autenticado — nao um id que o cliente informe.
     @PostMapping("/open")
-    public ResponseEntity<CashRegisterResponseDTO> openCashRegister(@RequestBody CashRegisterRequestDTO requestDTO) {
+    public ResponseEntity<CashRegisterResponseDTO> openCashRegister(@RequestBody CashRegisterRequestDTO requestDTO,
+                                                                      @AuthenticationPrincipal User currentUser) {
+        requestDTO.setOpenedByUserId(currentUser.getId());
         CashRegisterResponseDTO openedCashRegister = cashRegisterService.openCashRegister(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(openedCashRegister);
     }
 
     @PostMapping("/close/{id}")
-    public ResponseEntity<CashRegisterResponseDTO> closeCashRegister(@PathVariable Long id, @RequestParam Long closedByUserId) {
-        CashRegisterResponseDTO closedCashRegister = cashRegisterService.closeCashRegister(id, closedByUserId);
+    public ResponseEntity<CashRegisterResponseDTO> closeCashRegister(@PathVariable Long id,
+                                                                       @AuthenticationPrincipal User currentUser) {
+        CashRegisterResponseDTO closedCashRegister = cashRegisterService.closeCashRegister(id, currentUser.getId());
         return ResponseEntity.ok(closedCashRegister);
     }
 
