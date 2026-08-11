@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 const CategoryForm = ({ onCategoryAdded, editingCategory, onEditComplete }) => {
   const [name, setName] = useState("");
@@ -24,11 +24,11 @@ const CategoryForm = ({ onCategoryAdded, editingCategory, onEditComplete }) => {
     const data = { name, description };
     try {
       if (editingCategory) {
-        await axios.put(`http://localhost:8080/category/${editingCategory.id}`, data);
+        await api.put(`/category/${editingCategory.id}`, data);
         clearForm();
         onEditComplete();
       } else {
-        await axios.post("http://localhost:8080/category", data);
+        await api.post("/category", data);
         clearForm();
         onCategoryAdded();
       }

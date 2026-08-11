@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Product {
+public class Product implements SoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +38,9 @@ public class Product {
     private UnitOfMeasure purchaseUnit;
 
     private BigDecimal packageQuantity;
+
+    @Column(nullable = false)
+    private boolean active = true;
 
     public Product(ProductRequestDTO data){
         this.name = data.name();

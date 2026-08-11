@@ -1,7 +1,8 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { IMaskInput } from "react-imask";
-import axios from "axios";
+import axios from "axios"; // ViaCEP: API pública de terceiros, não deve levar o token de autenticação
+import api from "../services/api";
 import toast from "react-hot-toast";
 import { CNPJ_MASK, PHONE_MASK, CEP_MASK } from "../utils/masks";
 
@@ -76,12 +77,12 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }) => {
     };
     try {
       if (editingSupplier) {
-        await axios.put(`http://localhost:8080/supplier/${editingSupplier.id}`, data);
+        await api.put(`/supplier/${editingSupplier.id}`, data);
         toast.success("Fornecedor atualizado com sucesso!");
         clearForm();
         onEditComplete();
       } else {
-        await axios.post("http://localhost:8080/supplier", data);
+        await api.post("/supplier", data);
         toast.success("Fornecedor cadastrado com sucesso!");
         clearForm();
         onSupplierAdded();

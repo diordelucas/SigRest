@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, Search } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 
 const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }) => {
   const [suppliers, setSuppliers] = useState([]);
@@ -11,7 +11,7 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }) => {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:8080/supplier");
+      const response = await api.get("/supplier");
       setSuppliers(response.data);
     } catch (error) {
       setError("Erro ao carregar fornecedores.");
@@ -23,7 +23,7 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Deseja excluir este fornecedor?")) {
       try {
-        await axios.delete(`http://localhost:8080/supplier/${id}`);
+        await api.delete(`/supplier/${id}`);
         setSuppliers(suppliers.filter((s) => s.id !== id));
       } catch (error) {
         setError("Erro ao excluir fornecedor.");

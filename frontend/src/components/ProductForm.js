@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 import toast from "react-hot-toast";
 import CurrencyInput from "./CurrencyInput";
 
@@ -41,8 +41,8 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
   const [packageQuantity, setPackageQuantity] = useState("");
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/category")
+    api
+      .get("/category")
       .then((res) => setCategories(res.data))
       .catch(() => toast.error("Erro ao carregar categorias."));
   }, []);
@@ -86,12 +86,12 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
     };
     try {
       if (editingPerson) {
-        await axios.put(`http://localhost:8080/product/${editingPerson.id}`, personData);
+        await api.put(`/product/${editingPerson.id}`, personData);
         toast.success("Produto atualizado com sucesso!");
         clearForm();
         onEditComplete();
       } else {
-        await axios.post("http://localhost:8080/product", personData);
+        await api.post("/product", personData);
         toast.success("Produto cadastrado com sucesso!");
         clearForm();
         onUserAdded();

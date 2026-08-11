@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 const UserForm = ({ onUserAdded, editingUser, onEditComplete }) => {
   const [name, setName] = useState("");
@@ -32,7 +32,7 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }) => {
       if (editingUser) {
         setError("Edição de usuário requer um endpoint específico na API (PUT).");
       } else {
-        await axios.post("http://localhost:8080/user/signup", userData);
+        await api.post("/user/signup", userData);
         clearForm();
         onUserAdded();
       }

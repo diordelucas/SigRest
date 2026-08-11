@@ -16,7 +16,6 @@ public class AddressController {
     @Autowired
     private AddressRepository repository;
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void saveAddres(@RequestBody AddressRequestDTO data){
         Address addressData = new Address();
@@ -27,21 +26,18 @@ public class AddressController {
         repository.save(addressData);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<AddressResponseDTO> getAll(){
         List<AddressResponseDTO> addressList = repository.findAll().stream().map(AddressResponseDTO::new).toList();
         return addressList;
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public AddressResponseDTO getAddressById(@PathVariable Long id){
         Address address = repository.findById(id).orElseThrow(() -> new RuntimeException("Endereço não encontrado"));
         return new AddressResponseDTO(address);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public AddressResponseDTO updateAddress(@PathVariable Long id, @RequestBody AddressRequestDTO data) {
         Address address = repository.findById(id).orElseThrow(() -> new RuntimeException("Endereço não encontrado"));
@@ -55,7 +51,6 @@ public class AddressController {
         return new AddressResponseDTO(address);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @DeleteMapping("/{id}")
     public void deleteAddress(@PathVariable Long id) {
         repository.deleteById(id);

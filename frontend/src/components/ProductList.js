@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, RefreshCw, Search } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 import CategoryTag from "./CategoryTag";
 import { formatBRL } from '../utils/currency';
 
@@ -21,7 +21,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
     try {
       setLoading(true);
       setError("");
-      const response = await axios.get("http://localhost:8080/product");
+      const response = await api.get("/product");
       setProducts(response.data);
     } catch (error) {
       setError("Erro ao carregar a lista de produtos. Verifique o servidor.");
@@ -34,7 +34,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Tem certeza que deseja excluir este produto?")) {
       try {
-        await axios.delete(`http://localhost:8080/product/${id}`);
+        await api.delete(`/product/${id}`);
         setProducts(products.filter((product) => product.id !== id));
       } catch (error) {
         setError("Erro ao excluir produto. Verifique o servidor.");

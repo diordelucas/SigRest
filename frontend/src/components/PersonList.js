@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, RefreshCw, Search } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 
 const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const [persons, setPersons] = useState([]);
@@ -12,7 +12,7 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
     try {
       setLoading(true);
       setError("");
-      const response = await axios.get("http://localhost:8080/person");
+      const response = await api.get("/person");
       setPersons(response.data);
     } catch (error) {
       setError("Erro ao carregar a lista de pessoas. Verifique o servidor.");
@@ -25,7 +25,7 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Tem certeza que deseja excluir esta pessoa?")) {
       try {
-        await axios.delete(`http://localhost:8080/person/${id}`);
+        await api.delete(`/person/${id}`);
         setPersons(persons.filter((person) => person.id !== id));
       } catch (error) {
         setError("Erro ao excluir pessoa. Verifique o servidor.");

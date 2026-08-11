@@ -16,7 +16,6 @@ public class SellItemController {
     @Autowired
     private SellItemRepository repository;
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void saveSellItem(@RequestBody SellItemRequestDTO data){
         SellItem sellItemData = new SellItem(data);
@@ -24,7 +23,6 @@ public class SellItemController {
         return;
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<SellItemResponseDTO> getAll(){
 
@@ -32,14 +30,12 @@ public class SellItemController {
             return sellItemList;
         }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public SellItemResponseDTO getSellItemById(@PathVariable Long id){
         SellItem sellItem = repository.findById(id).orElseThrow(() -> new RuntimeException("Itens nÃ£o encontrados"));
         return new SellItemResponseDTO(sellItem);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public SellItemResponseDTO updateSellItem(@PathVariable Long id, @RequestBody SellItemRequestDTO data) {
         SellItem sellItem = repository.findById(id).orElseThrow(() -> new RuntimeException("Itens nÃ£o encontrados"));
@@ -49,7 +45,6 @@ public class SellItemController {
         return new SellItemResponseDTO(sellItem);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @DeleteMapping("/{id}")
     public void deleteSellItem(@PathVariable Long id) {
         repository.deleteById(id);

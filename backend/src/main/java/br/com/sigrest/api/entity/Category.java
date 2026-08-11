@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Category {
+public class Category implements SoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +23,9 @@ public class Category {
     private String name;
     
     private String description;
+
+    @Column(nullable = false)
+    private boolean active = true;
 
     public Category(CategoryRequestDTO data) {
         this.name = data.name();

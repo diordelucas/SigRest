@@ -6,14 +6,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Endpoints exigem autenticacao desde a introducao do JWT (ver WebSecurityConfig).
+ * ADMIN aqui garante que os smoke tests cubram inclusive as rotas restritas
+ * (GET /user), sem precisar de um token real por teste.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser(username = "test-admin@sigrest.local", roles = "ADMIN")
 @DisplayName("SigRest API - Integration Tests")
 class SigRestApiIntegrationTest {
 

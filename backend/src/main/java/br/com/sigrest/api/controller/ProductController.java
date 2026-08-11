@@ -9,6 +9,7 @@ import br.com.sigrest.api.repository.CategoryRepository;
 import br.com.sigrest.api.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,7 +34,6 @@ public class ProductController {
         }
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void saveProduct(@RequestBody ProductRequestDTO data){
         validateCategory(data.categoryId());
@@ -42,28 +42,26 @@ public class ProductController {
         return;
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<ProductResponseDTO> getAll(){
-        List<ProductResponseDTO> productList = repository.findAll().stream().map(ProductResponseDTO::new).toList();
+        List<ProductResponseDTO> productList = repository.findAll().stream()
+                .filter(Product::isActive)
+                .map(ProductResponseDTO::new).toList();
         return productList;
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/low-stock")
     public List<ProductResponseDTO> getLowStock(){
         List<ProductResponseDTO> lowStockList = repository.findLowStockProducts().stream().map(ProductResponseDTO::new).toList();
         return lowStockList;
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public ProductResponseDTO getProductById(@PathVariable Long id){
         Product product = repository.findById(id).orElseThrow(() -> new BusinessException("Produto não encontrado.", HttpStatus.NOT_FOUND));
         return new ProductResponseDTO(product);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public ProductResponseDTO updatePerson(@PathVariable Long id, @RequestBody ProductRequestDTO data) {
         validateCategory(data.categoryId());
@@ -88,9 +86,17 @@ public class ProductController {
         return new ProductResponseDTO(updatedProduct);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    /**
+     * Exclusao de produto e privilegio de administrador (ver TCC, secao 5.1).
+     * Nunca remove fisicamente: so desativa, preservando vendas, compras e
+     * fichas tecnicas que ja referenciam este produto.
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable Long id) {
-        repository.deleteById(id);
+        Product product = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Produto não encontrado.", HttpStatus.NOT_FOUND));
+        product.setActive(false);
+        repository.save(product);
     }
 }

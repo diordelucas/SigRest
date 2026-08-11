@@ -1,7 +1,8 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { IMaskInput } from "react-imask";
-import axios from "axios";
+import axios from "axios"; // ViaCEP: API pública de terceiros, não deve levar o token de autenticação
+import api from "../services/api";
 import toast from "react-hot-toast";
 import { CPF_MASK, PHONE_MASK, CEP_MASK } from "../utils/masks";
 
@@ -93,12 +94,12 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }) => {
 
     try {
       if (editingPerson) {
-        await axios.put(`http://localhost:8080/person/${editingPerson.id}`, personData);
+        await api.put(`/person/${editingPerson.id}`, personData);
         toast.success("Pessoa atualizada com sucesso!");
         clearForm();
         onEditComplete();
       } else {
-        await axios.post("http://localhost:8080/person", personData);
+        await api.post("/person", personData);
         toast.success("Pessoa cadastrada com sucesso!");
         clearForm();
         onUserAdded();

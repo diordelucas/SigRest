@@ -19,7 +19,6 @@ public class SupplierController {
     @Autowired
     private SupplierRepository repository;
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void saveSupplier(@RequestBody SupplierRequestDTO data) {
         Supplier supplier = new Supplier(data);
@@ -44,13 +43,11 @@ public class SupplierController {
         repository.save(supplier);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<SupplierResponseDTO> getAll() {
-        return repository.findAll().stream().map(SupplierResponseDTO::new).toList();
+        return repository.findAll().stream().filter(Supplier::isActive).map(SupplierResponseDTO::new).toList();
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public SupplierResponseDTO getSupplierById(@PathVariable Long id) {
         Supplier supplier = repository.findById(id)
@@ -58,7 +55,6 @@ public class SupplierController {
         return new SupplierResponseDTO(supplier);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public SupplierResponseDTO updateSupplier(@PathVariable Long id, @RequestBody SupplierRequestDTO data) {
         Supplier supplier = repository.findById(id)
@@ -91,9 +87,12 @@ public class SupplierController {
         return new SupplierResponseDTO(repository.save(supplier));
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    /** Nunca remove fisicamente: so desativa, preservando o historico de compras deste fornecedor. */
     @DeleteMapping("/{id}")
     public void deleteSupplier(@PathVariable Long id) {
-        repository.deleteById(id);
+        Supplier supplier = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Fornecedor não encontrado"));
+        supplier.setActive(false);
+        repository.save(supplier);
     }
 }

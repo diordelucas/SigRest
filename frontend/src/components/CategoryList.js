@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, Search } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 
 const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
   const [categories, setCategories] = useState([]);
@@ -11,7 +11,7 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:8080/category");
+      const response = await api.get("/category");
       setCategories(response.data);
     } catch (error) {
       setError("Erro ao carregar categorias.");
@@ -23,7 +23,7 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Deseja excluir esta categoria?")) {
       try {
-        await axios.delete(`http://localhost:8080/category/${id}`);
+        await api.delete(`/category/${id}`);
         setCategories(categories.filter((c) => c.id !== id));
       } catch (error) {
         setError("Erro ao excluir categoria.");

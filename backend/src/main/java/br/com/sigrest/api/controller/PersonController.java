@@ -19,7 +19,6 @@ public class PersonController {
     @Autowired
     private PersonRepository repository;
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void savePerson(@RequestBody PersonRequestDTO data){
         Person personData = new Person(data);
@@ -51,22 +50,21 @@ public class PersonController {
         repository.save(personData);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public PersonResponseDTO getPersonById(@PathVariable Long id){
         Person person = repository.findById(id).orElseThrow(() -> new RuntimeException("Pessoa nÃ£o encontrada"));
         return new PersonResponseDTO(person);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<PersonResponseDTO> getAll(){
 
-        List<PersonResponseDTO> personList = repository.findAll().stream().map(PersonResponseDTO::new).toList();
+        List<PersonResponseDTO> personList = repository.findAll().stream()
+                .filter(Person::isActive)
+                .map(PersonResponseDTO::new).toList();
             return personList;
         }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public PersonResponseDTO updatePerson(@PathVariable Long id, @RequestBody PersonRequestDTO data) {
         Person person = repository.findById(id).orElseThrow(() -> new RuntimeException("Pessoa nÃ£o encontrada"));
@@ -104,10 +102,13 @@ public class PersonController {
         return new PersonResponseDTO(person);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    /** Nunca remove fisicamente: so desativa, preservando o historico de vendas deste cliente. */
     @DeleteMapping("/{id}")
     public void deletePerson(@PathVariable Long id) {
-        repository.deleteById(id);
+        Person person = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pessoa não encontrada"));
+        person.setActive(false);
+        repository.save(person);
     }
 
     }

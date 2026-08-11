@@ -5,6 +5,7 @@ import br.com.sigrest.api.entity.User;
 import br.com.sigrest.api.repository.CategoryRepository;
 import br.com.sigrest.api.repository.UserRepository;
 import br.com.sigrest.api.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -28,8 +29,12 @@ public class DataInitializer implements CommandLineRunner {
         this.categoryRepository = categoryRepository;
     }
 
-    private static final String ADMIN_EMAIL = "admin@admin.com";
-    private static final String ADMIN_PLAIN_PASSWORD = "admin123";
+    @Value("${app.admin.email:admin@admin.com}")
+    private String adminEmail;
+
+    /** Default de desenvolvimento — trocar via ADMIN_PASSWORD antes de qualquer uso real. */
+    @Value("${app.admin.password:admin123}")
+    private String adminPlainPassword;
 
     /** Tipos de produto padrão da Maju's Assados e Congelados. */
     private static final Map<String, String> DEFAULT_CATEGORIES = Map.of(
@@ -42,21 +47,21 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         seedDefaultCategories();
-        Optional<User> existing = userRepository.findByEmail(ADMIN_EMAIL);
+        Optional<User> existing = userRepository.findByEmail(adminEmail);
 
         if (existing.isEmpty()) {
             User admin = new User();
             admin.setName("Master User");
-            admin.setEmail(ADMIN_EMAIL);
-            admin.setPassword(ADMIN_PLAIN_PASSWORD);
+            admin.setEmail(adminEmail);
+            admin.setPassword(adminPlainPassword);
             admin.setRole("ADMIN");
             userService.signUp(admin);
-            System.out.println("=== Admin criado: " + ADMIN_EMAIL + " ===");
+            System.out.println("=== Admin criado: " + adminEmail + " ===");
         } else {
             // Garante que a senha sempre está em BCrypt (corrige inserções diretas no banco)
             User admin = existing.get();
             if (!admin.getPassword().startsWith("$2")) {
-                admin.setPassword(passwordEncoder.encode(ADMIN_PLAIN_PASSWORD));
+                admin.setPassword(passwordEncoder.encode(adminPlainPassword));
                 userRepository.save(admin);
                 System.out.println("=== Senha do admin corrigida para BCrypt ===");
             }

@@ -16,27 +16,23 @@ public class CategoryController {
     @Autowired
     private CategoryRepository repository;
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void saveCategory(@RequestBody CategoryRequestDTO data){
         Category categoryData = new Category(data);
         repository.save(categoryData);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<CategoryResponseDTO> getAll(){
-        return repository.findAll().stream().map(CategoryResponseDTO::new).toList();
+        return repository.findAll().stream().filter(Category::isActive).map(CategoryResponseDTO::new).toList();
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public CategoryResponseDTO getCategoryById(@PathVariable Long id){
         Category category = repository.findById(id).orElseThrow(() -> new RuntimeException("Categoria nÃ£o encontrada"));
         return new CategoryResponseDTO(category);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PutMapping("/{id}")
     public CategoryResponseDTO updateCategory(@PathVariable Long id, @RequestBody CategoryRequestDTO data) {
         Category category = repository.findById(id).orElseThrow(() -> new RuntimeException("Categoria nÃ£o encontrada"));
@@ -46,10 +42,13 @@ public class CategoryController {
         return new CategoryResponseDTO(category);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
+    /** Nunca remove fisicamente: so desativa, preservando produtos que ja apontam para esta categoria. */
     @DeleteMapping("/{id}")
     public void deleteCategory(@PathVariable Long id) {
-        repository.deleteById(id);
+        Category category = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        category.setActive(false);
+        repository.save(category);
     }
 }
 

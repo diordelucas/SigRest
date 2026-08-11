@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-public class Person {
+public class Person implements SoftDeletable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +27,8 @@ public class Person {
     @JoinColumn(name = "address_id")
     public Address address;
 
+    @Column(nullable = false)
+    private boolean active = true;
 
     public Person(PersonRequestDTO data) {
         this.name = data.name();

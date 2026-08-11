@@ -16,7 +16,6 @@ public class PurchaseItemController {
     @Autowired
     private PurchaseItemRepository repository;
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping
     public void savePurchaseItem(@RequestBody PurchaseItemRequestDTO data){
         PurchaseItem purchaseItemData = new PurchaseItem();
@@ -25,7 +24,6 @@ public class PurchaseItemController {
         repository.save(purchaseItemData);
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping
     public List<PurchaseItemResponseDTO> getAll(){
         return repository.findAll().stream().map(purchaseItem -> {
@@ -37,7 +35,6 @@ public class PurchaseItemController {
         }).toList();
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/{id}")
     public PurchaseItemResponseDTO getPurchaseItemById(@PathVariable Long id){
         PurchaseItem purchaseItem = repository.findById(id).orElseThrow(() -> new RuntimeException("Item de Compra nÃ£o encontrado"));
@@ -48,7 +45,6 @@ public class PurchaseItemController {
         return dto;
     }
 
-    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @DeleteMapping("/{id}")
     public void deletePurchaseItem(@PathVariable Long id) {
         repository.deleteById(id);

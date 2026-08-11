@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, RefreshCw, Search } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 
 const UserList = ({ refreshTrigger, onEditUser }) => {
   const [users, setUsers] = useState([]);
@@ -12,7 +12,7 @@ const UserList = ({ refreshTrigger, onEditUser }) => {
     try {
       setLoading(true);
       setError("");
-      const response = await axios.get("http://localhost:8080/user");
+      const response = await api.get("/user");
       setUsers(response.data);
     } catch (error) {
       setError("Erro ao carregar a lista de usuários. Verifique o servidor.");
@@ -23,11 +23,12 @@ const UserList = ({ refreshTrigger, onEditUser }) => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir este usuário? (Endpoint DELETE pendente na API)")) {
+    if (window.confirm("Tem certeza que deseja excluir este usuário?")) {
       try {
-        alert("Endpoint de deleção precisa ser implementado na API.");
+        await api.delete(`/user/${id}`);
+        await fetchUsers();
       } catch (error) {
-        setError("Erro ao excluir usuário.");
+        setError(error.response?.data?.message || "Erro ao excluir usuário.");
         console.error(error);
       }
     }
