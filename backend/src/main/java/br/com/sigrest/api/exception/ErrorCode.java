@@ -61,6 +61,7 @@ public enum ErrorCode {
     PORD_CANCELADA("SIGREST-PORD-003", "Esta ordem de produção foi cancelada.", HttpStatus.BAD_REQUEST),
     PORD_PRODUTO_NAO_ASSOCIADO("SIGREST-PORD-004", "Ordem de produção sem produto associado.", HttpStatus.CONFLICT),
     PORD_SEM_FICHA_TECNICA("SIGREST-PORD-005", "Este produto não tem ficha técnica cadastrada.", HttpStatus.BAD_REQUEST),
+    PORD_MOTIVO_QUEBRA_OBRIGATORIO("SIGREST-PORD-006", "Informe o motivo da quebra quando a quantidade produzida for menor que a planejada.", HttpStatus.BAD_REQUEST),
 
     // Caixa
     CASH_JA_ABERTO("SIGREST-CASH-001", "Já existe um caixa aberto.", HttpStatus.BAD_REQUEST),

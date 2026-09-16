@@ -35,5 +35,12 @@ public class ProductionOrder {
     private Status status;
 
     private String notes;
+
+    /** Quantidade que realmente saiu boa, preenchida ao finalizar. Nulo enquanto OPEN/CANCELLED. */
+    private Integer actualQuantity;
+
+    /** Motivo da quebra, preenchido apenas quando actualQuantity < quantity. */
+    @Enumerated(EnumType.STRING)
+    private LossReason lossReason;
 }
 

@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import moment from 'moment';
 import { formatBRL } from '../utils/currency';
+import { lossReasonLabel } from '../utils/lossReason';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import { Table, Th } from './ui/Table';
@@ -26,7 +27,8 @@ type ReportType =
   | 'monthly-revenue'
   | 'stock-movement'
   | 'financial-flow'
-  | 'purchase-history';
+  | 'purchase-history'
+  | 'loss';
 
 const ReportPage = () => {
   const [reportType, setReportType] = useState<ReportType>('');
@@ -79,6 +81,12 @@ const ReportPage = () => {
               supplierName: item.supplier?.name || '—',
               itemCount: item.items?.length ?? 0,
             }))
+          );
+          break;
+        case 'loss':
+          response = await api.get('/reports/loss', { params: { startDate, endDate } });
+          setReportData(
+            response.data.map((item: any) => ({ ...item, date: moment(item.date).format('DD/MM/YYYY HH:mm') }))
           );
           break;
         default:
@@ -250,6 +258,68 @@ const ReportPage = () => {
             )}
           </div>
         );
+      case 'loss': {
+        const totalQuantity = reportData.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+        const totalProducao = reportData
+          .filter((r) => r.source === 'PRODUCAO')
+          .reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+        const totalEstoque = reportData
+          .filter((r) => r.source === 'ESTOQUE')
+          .reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+        return (
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="card p-4">
+                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Quebra Total</p>
+                <p className="text-xl font-bold text-ink">{totalQuantity}</p>
+              </div>
+              <div className="card p-4">
+                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Quebra de Produção</p>
+                <p className="text-xl font-bold text-amber-600">{totalProducao}</p>
+              </div>
+              <div className="card p-4">
+                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Perda de Estoque</p>
+                <p className="text-xl font-bold text-rose-600">{totalEstoque}</p>
+              </div>
+            </div>
+            <Table>
+              <thead className="bg-surface-2 border-b border-line">
+                <tr>
+                  <Th>Data/Hora</Th>
+                  <Th>Origem</Th>
+                  <Th>Produto</Th>
+                  <Th>Motivo</Th>
+                  <Th className="text-right">Quantidade</Th>
+                  <Th>Descrição</Th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {reportData.map((row, index) => (
+                  <tr key={index} className="hover:bg-surface-2 transition-colors">
+                    <td className="px-4 py-3 text-sm text-ink">{row.date}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          row.source === 'PRODUCAO' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {row.source === 'PRODUCAO' ? 'PRODUÇÃO' : 'ESTOQUE'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-ink">{row.productName}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{lossReasonLabel(row.reason)}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right">{row.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{row.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            {reportData.length === 0 && (
+              <p className="text-sm text-ink-muted text-center py-8">Nenhuma quebra registrada no período.</p>
+            )}
+          </div>
+        );
+      }
       default:
         return null;
     }
@@ -281,6 +351,7 @@ const ReportPage = () => {
               <option value="stock-movement">Movimentação de Estoque</option>
               <option value="financial-flow">Fluxo Financeiro</option>
               <option value="purchase-history">Histórico de Compras</option>
+              <option value="loss">Quebra (Produção e Estoque)</option>
             </Field>
           </div>
           <div className="flex flex-col gap-1">
