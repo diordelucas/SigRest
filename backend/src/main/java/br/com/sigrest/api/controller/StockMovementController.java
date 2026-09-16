@@ -1,5 +1,6 @@
 package br.com.sigrest.api.controller;
 
+import br.com.sigrest.api.dto.StockLossRequestDTO;
 import br.com.sigrest.api.dto.StockMovementRequestDTO;
 import br.com.sigrest.api.dto.StockMovementResponseDTO;
 import br.com.sigrest.api.service.StockMovementService;
@@ -21,6 +22,12 @@ public class StockMovementController {
     @PostMapping
     public ResponseEntity<StockMovementResponseDTO> createStockMovement(@Valid @RequestBody StockMovementRequestDTO stockMovementRequestDTO) {
         StockMovementResponseDTO createdMovement = stockMovementService.createStockMovement(stockMovementRequestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdMovement);
+    }
+
+    @PostMapping("/loss")
+    public ResponseEntity<StockMovementResponseDTO> createStockLoss(@Valid @RequestBody StockLossRequestDTO requestDTO) {
+        StockMovementResponseDTO createdMovement = stockMovementService.createStockLoss(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMovement);
     }
 

@@ -15,7 +15,8 @@ public class StockMovement {
 
     public enum MovementType {
         ENTRY,
-        EXIT
+        EXIT,
+        LOSS
     }
 
     @Id
@@ -35,4 +36,8 @@ public class StockMovement {
     private LocalDateTime date;
 
     private String description;
+
+    /** Preenchido apenas quando type=LOSS — motivo da quebra (venceu, queimou, etc.). */
+    @Enumerated(EnumType.STRING)
+    private LossReason reason;
 }

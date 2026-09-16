@@ -1,6 +1,8 @@
 package br.com.sigrest.api.service;
 
+import br.com.sigrest.api.dto.ProductionOrderFinishRequestDTO;
 import br.com.sigrest.api.dto.ProductionOrderRequestDTO;
+import br.com.sigrest.api.entity.LossReason;
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.ProductionOrder;
 import br.com.sigrest.api.entity.TechnicalSheet;
@@ -10,6 +12,7 @@ import br.com.sigrest.api.exception.ErrorCode;
 import br.com.sigrest.api.repository.ProductRepository;
 import br.com.sigrest.api.repository.ProductionOrderRepository;
 import br.com.sigrest.api.repository.TechnicalSheetRepository;
+import br.com.sigrest.api.service.audit.LogAtividadeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,9 @@ public class ProductionOrderService {
 
     @Autowired
     private StockMovementService stockMovementService;
+
+    @Autowired
+    private LogAtividadeService logAtividadeService;
 
     @Transactional(readOnly = true)
     public List<ProductionOrder> findAll() {
@@ -64,7 +70,7 @@ public class ProductionOrderService {
     }
 
     @Transactional
-    public ProductionOrder finishProduction(Long id) {
+    public ProductionOrder finishProduction(Long id, ProductionOrderFinishRequestDTO dto) {
         ProductionOrder order = findById(id);
 
         if (order.getStatus() == ProductionOrder.Status.FINISHED) {
@@ -77,6 +83,14 @@ public class ProductionOrderService {
         Product finalProduct = order.getFinalProduct();
         if (finalProduct == null) {
             throw new BusinessException(ErrorCode.PORD_PRODUTO_NAO_ASSOCIADO);
+        }
+
+        int planned = order.getQuantity();
+        Integer informedActual = dto != null ? dto.actualQuantity() : null;
+        int actual = informedActual != null ? informedActual : planned;
+        LossReason lossReason = actual < planned ? (dto != null ? dto.lossReason() : null) : null;
+        if (actual < planned && lossReason == null) {
+            throw new BusinessException(ErrorCode.PORD_MOTIVO_QUEBRA_OBRIGATORIO);
         }
 
         TechnicalSheet sheet = technicalSheetRepository.findByFinalProductId(finalProduct.getId())
@@ -105,12 +119,23 @@ public class ProductionOrderService {
             stockMovementService.createStockExit(rawMaterial, totalNeeded, desc);
         }
 
-        // 3. Dar entrada no produto acabado (em unidades — PRODUTO_FINAL usa UN)
+        // 3. Dar entrada no produto acabado (em unidades — PRODUTO_FINAL usa UN), pela quantidade REAL
         String entryDesc = "Produção OP #" + order.getId() + " - " + sheet.getName();
-        stockMovementService.createStockEntry(finalProduct, BigDecimal.valueOf(order.getQuantity()), entryDesc);
+        if (actual > 0) {
+            stockMovementService.createStockEntry(finalProduct, BigDecimal.valueOf(actual), entryDesc);
+        }
 
+        order.setActualQuantity(actual);
+        order.setLossReason(lossReason);
         order.setStatus(ProductionOrder.Status.FINISHED);
-        return repository.save(order);
+        ProductionOrder saved = repository.save(order);
+
+        if (actual < planned) {
+            String detalhes = "Planejado: " + planned + ", Real: " + actual + ", Motivo: " + lossReason;
+            logAtividadeService.registrar("QUEBRA_PRODUCAO", "ProductionOrder", saved.getId(),
+                    detalhes, logAtividadeService.usuarioAtual());
+        }
+        return saved;
     }
 
     @Transactional

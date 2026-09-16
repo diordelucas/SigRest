@@ -1,30 +1,93 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import CategoryTag from './CategoryTag';
-import { Search } from 'lucide-react';
-import { StockMovement } from '../types';
+import { Search, PackageMinus } from 'lucide-react';
+import { LossReason, Product, StockMovement } from '../types';
+import { lossReasonLabel, LOSS_REASON_LABELS } from '../utils/lossReason';
+import Button from './ui/Button';
 import Field from './ui/Field';
+import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+
+const MOVEMENT_TYPE_STYLES: Record<string, string> = {
+  ENTRY: 'bg-emerald-100 text-emerald-800',
+  EXIT: 'bg-rose-100 text-rose-800',
+  LOSS: 'bg-amber-100 text-amber-800',
+};
+
+const MOVEMENT_TYPE_LABELS: Record<string, string> = {
+  ENTRY: 'ENTRADA',
+  EXIT: 'SAÍDA',
+  LOSS: 'PERDA',
+};
 
 const StockMovementList = () => {
   const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
+  const [lossModalOpen, setLossModalOpen] = useState(false);
+  const [lossProductId, setLossProductId] = useState('');
+  const [lossQuantity, setLossQuantity] = useState('');
+  const [lossReason, setLossReason] = useState<LossReason | ''>('');
+  const [lossDescription, setLossDescription] = useState('');
+  const [lossError, setLossError] = useState('');
+  const [savingLoss, setSavingLoss] = useState(false);
+
+  const fetchStockMovements = async () => {
+    try {
+      const response = await api.get<StockMovement[]>('/stock-movements');
+      setMovements(response.data);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao carregar movimentações de estoque.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStockMovements = async () => {
-      try {
-        const response = await api.get<StockMovement[]>('/stock-movements');
-        setMovements(response.data);
-      } catch (err) {
-        setError(getErrorMessage(err, 'Erro ao carregar movimentações de estoque.'));
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStockMovements();
+    api
+      .get<Product[]>('/product')
+      .then((response) => setProducts(response.data))
+      .catch(() => {});
   }, []);
+
+  const openLossModal = () => {
+    setLossProductId('');
+    setLossQuantity('');
+    setLossReason('');
+    setLossDescription('');
+    setLossError('');
+    setLossModalOpen(true);
+  };
+
+  const handleRegisterLoss = async () => {
+    if (!lossProductId || !lossQuantity || !lossReason) {
+      setLossError('Selecione o produto, informe a quantidade e o motivo da perda.');
+      return;
+    }
+    setSavingLoss(true);
+    setLossError('');
+    try {
+      await api.post('/stock-movements/loss', {
+        productId: Number(lossProductId),
+        quantity: Number(lossQuantity),
+        reason: lossReason,
+        description: lossDescription || undefined,
+      });
+      toast.success('Perda registrada com sucesso!');
+      setLossModalOpen(false);
+      fetchStockMovements();
+    } catch (err) {
+      setLossError(getErrorMessage(err, 'Erro ao registrar perda.'));
+    } finally {
+      setSavingLoss(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -40,23 +103,30 @@ const StockMovementList = () => {
 
   const filtered = movements.filter((m) => {
     const q = search.toLowerCase();
-    const typeLabel = m.type === 'ENTRY' ? 'entrada' : 'saída';
-    return [m.product?.name, m.description, typeLabel].some((v) => (v ?? '').toLowerCase().includes(q));
+    const typeLabel = MOVEMENT_TYPE_LABELS[m.type] ?? m.type;
+    return [m.product?.name, m.description, typeLabel, lossReasonLabel(m.reason)].some((v) =>
+      (v ?? '').toLowerCase().includes(q)
+    );
   });
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-4">
         <h2 className="text-lg font-semibold text-ink">Histórico de Movimentações de Estoque</h2>
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
-          <Field
-            type="text"
-            placeholder="Pesquisar produto, descrição..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-64"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
+            <Field
+              type="text"
+              placeholder="Pesquisar produto, descrição..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 py-2 text-sm w-56"
+            />
+          </div>
+          <Button variant="secondary" onClick={openLossModal}>
+            <PackageMinus size={14} /> Registrar Perda
+          </Button>
         </div>
       </div>
 
@@ -74,6 +144,7 @@ const StockMovementList = () => {
                   <Th>Produto</Th>
                   <Th>Tipo</Th>
                   <Th className="text-right">Quantidade</Th>
+                  <Th>Motivo</Th>
                   <Th>Descrição</Th>
                 </tr>
               </thead>
@@ -91,13 +162,14 @@ const StockMovementList = () => {
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          movement.type === 'ENTRY' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          MOVEMENT_TYPE_STYLES[movement.type] ?? 'bg-surface-2 text-ink-muted'
                         }`}
                       >
-                        {movement.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA'}
+                        {MOVEMENT_TYPE_LABELS[movement.type] ?? movement.type}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-ink text-right">{movement.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{lossReasonLabel(movement.reason)}</td>
                     <td className="px-4 py-3 text-sm text-ink">{movement.description}</td>
                   </tr>
                 ))}
@@ -105,6 +177,67 @@ const StockMovementList = () => {
           </Table>
         )}
       </div>
+
+      <Modal
+        open={lossModalOpen}
+        title="Registrar perda de estoque"
+        confirmLabel={savingLoss ? 'Salvando...' : 'Registrar'}
+        onCancel={() => setLossModalOpen(false)}
+        onConfirm={handleRegisterLoss}
+      >
+        {lossError && (
+          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-sm">
+            {lossError}
+          </div>
+        )}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Produto</label>
+            <Field as="select" value={lossProductId} onChange={(e) => setLossProductId(e.target.value)}>
+              <option value="">Selecione...</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Field>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Quantidade</label>
+            <Field
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={lossQuantity}
+              onChange={(e) => setLossQuantity(e.target.value)}
+              placeholder="Ex: 5"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Motivo</label>
+            <Field as="select" value={lossReason} onChange={(e) => setLossReason(e.target.value as LossReason)}>
+              <option value="">Selecione...</option>
+              {Object.entries(LOSS_REASON_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Field>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+              Observações (opcional)
+            </label>
+            <Field
+              as="textarea"
+              rows={2}
+              value={lossDescription}
+              onChange={(e) => setLossDescription(e.target.value)}
+              placeholder="Ex: 5 marmitas do almoço sobraram e venceram."
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

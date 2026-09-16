@@ -1,5 +1,6 @@
 package br.com.sigrest.api.controller;
 
+import br.com.sigrest.api.dto.ProductionOrderFinishRequestDTO;
 import br.com.sigrest.api.dto.ProductionOrderRequestDTO;
 import br.com.sigrest.api.dto.ProductionOrderResponseDTO;
 import br.com.sigrest.api.entity.ProductionOrder;
@@ -40,8 +41,9 @@ public class ProductionOrderController {
     }
 
     @PostMapping("/{id}/finish")
-    public ProductionOrderResponseDTO finishProduction(@PathVariable Long id) {
-        return new ProductionOrderResponseDTO(service.finishProduction(id));
+    public ProductionOrderResponseDTO finishProduction(@PathVariable Long id,
+            @Valid @RequestBody(required = false) ProductionOrderFinishRequestDTO data) {
+        return new ProductionOrderResponseDTO(service.finishProduction(id, data));
     }
 
     /** Exclusao de ordem de producao e privilegio de administrador (mesmo padrao de ProductController). */
