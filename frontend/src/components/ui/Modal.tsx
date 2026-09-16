@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import Button from './Button';
 
 interface ModalProps {
@@ -27,13 +28,13 @@ const Modal = ({
 }: ModalProps) => {
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-        onClick={onCancel}
-      />
-      <div className="relative card p-6 max-w-sm w-full">
+  // Renderizado via portal direto em <body>: escapa de qualquer ancestral com
+  // transform/backdrop-filter (header, sidebar) que faria o navegador borrar
+  // o modal inteiro junto com o fundo em vez de só o conteúdo atrás dele.
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/60" onClick={onCancel} />
+      <div className="relative card p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto">
         <h3 className="text-base font-semibold text-ink mb-2">{title}</h3>
         {message && <p className="text-sm text-ink-muted mb-6">{message}</p>}
         {children}
@@ -55,7 +56,8 @@ const Modal = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
