@@ -7,7 +7,8 @@
 export type ProductType = 'INSUMO' | 'PRODUTO_FINAL' | 'PRODUTO_INTERMEDIARIO';
 export type UnitOfMeasure = 'G' | 'KG' | 'ML' | 'L' | 'UN' | 'DUZIA';
 export type UserRole = 'ADMIN' | 'OPERADOR';
-export type MovementType = 'ENTRY' | 'EXIT';
+export type MovementType = 'ENTRY' | 'EXIT' | 'LOSS';
+export type LossReason = 'VENCIMENTO' | 'ERRO_PREPARO' | 'DESCARTE_QUALIDADE' | 'OUTRO';
 export type CashMovementType = 'INCOME' | 'EXPENSE';
 export type ProductionOrderStatus = 'OPEN' | 'FINISHED' | 'CANCELLED';
 export type AccountPayableStatus = 'PENDING' | 'PAID' | 'OVERDUE';
@@ -128,6 +129,7 @@ export interface StockMovement {
   quantity: number;
   date: string;
   description: string;
+  reason: LossReason | null;
 }
 
 export interface TechnicalSheetItem {
@@ -178,6 +180,8 @@ export interface ProductionOrder {
   date: string;
   status: ProductionOrderStatus;
   notes: string | null;
+  actualQuantity: number | null;
+  lossReason: LossReason | null;
 }
 
 export interface CashRegister {

@@ -1,12 +1,16 @@
 package br.com.sigrest.api.service;
 
 import br.com.sigrest.api.dto.report.FinancialFlowDTO;
+import br.com.sigrest.api.dto.report.LossReportDTO;
 import br.com.sigrest.api.dto.report.MonthlyRevenueDTO;
 import br.com.sigrest.api.dto.report.ProductSalesDTO;
 import br.com.sigrest.api.dto.report.SalesByPeriodDTO;
 import br.com.sigrest.api.dto.report.StockMovementReportDTO;
+import br.com.sigrest.api.entity.ProductionOrder;
 import br.com.sigrest.api.entity.Sale;
 import br.com.sigrest.api.entity.SellItem;
+import br.com.sigrest.api.entity.StockMovement;
+import br.com.sigrest.api.repository.ProductionOrderRepository;
 import br.com.sigrest.api.repository.PurchaseRepository;
 import br.com.sigrest.api.repository.SaleRepository;
 import br.com.sigrest.api.repository.StockMovementRepository;
@@ -37,6 +41,9 @@ public class ReportService {
 
     @Autowired
     private PurchaseRepository purchaseRepository;
+
+    @Autowired
+    private ProductionOrderRepository productionOrderRepository;
 
     @Transactional(readOnly = true)
     public List<SalesByPeriodDTO> getSalesByPeriod(LocalDate startDate, LocalDate endDate) {
@@ -153,6 +160,47 @@ public class ReportService {
 
     private BigDecimal nullSafe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    /**
+     * Quebra no período: baixas de estoque tipo LOSS (venceu/queimou/descarte) +
+     * ordens de produção finalizadas cujo rendimento real ficou abaixo do planejado.
+     */
+    @Transactional(readOnly = true)
+    public List<LossReportDTO> getLossReport(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+
+        List<LossReportDTO> result = new ArrayList<>();
+
+        stockMovementRepository.findAll().stream()
+                .filter(m -> m.getType() == StockMovement.MovementType.LOSS)
+                .filter(m -> !m.getDate().isBefore(startDateTime) && !m.getDate().isAfter(endDateTime))
+                .forEach(m -> result.add(new LossReportDTO(
+                        "ESTOQUE",
+                        m.getDate(),
+                        m.getProduct() != null ? m.getProduct().getName() : null,
+                        m.getReason() != null ? m.getReason().name() : null,
+                        m.getQuantity(),
+                        m.getDescription()
+                )));
+
+        productionOrderRepository.findAll().stream()
+                .filter(o -> o.getStatus() == ProductionOrder.Status.FINISHED)
+                .filter(o -> o.getActualQuantity() != null && o.getActualQuantity() < o.getQuantity())
+                .filter(o -> o.getDate() != null && !o.getDate().isBefore(startDateTime) && !o.getDate().isAfter(endDateTime))
+                .forEach(o -> result.add(new LossReportDTO(
+                        "PRODUCAO",
+                        o.getDate(),
+                        o.getFinalProduct() != null ? o.getFinalProduct().getName() : null,
+                        o.getLossReason() != null ? o.getLossReason().name() : null,
+                        BigDecimal.valueOf(o.getQuantity() - o.getActualQuantity()),
+                        "OP #" + o.getId() + " — planejado " + o.getQuantity() + ", real " + o.getActualQuantity()
+                )));
+
+        return result.stream()
+                .sorted(Comparator.comparing(LossReportDTO::getDate))
+                .collect(Collectors.toList());
     }
 }
 

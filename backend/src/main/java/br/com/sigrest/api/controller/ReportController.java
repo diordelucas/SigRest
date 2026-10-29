@@ -1,6 +1,7 @@
 package br.com.sigrest.api.controller;
 
 import br.com.sigrest.api.dto.report.FinancialFlowDTO;
+import br.com.sigrest.api.dto.report.LossReportDTO;
 import br.com.sigrest.api.dto.report.MonthlyRevenueDTO;
 import br.com.sigrest.api.dto.report.ProductSalesDTO;
 import br.com.sigrest.api.dto.report.SalesByPeriodDTO;
@@ -60,5 +61,12 @@ public class ReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(reportService.getFinancialFlow(startDate, endDate));
+    }
+
+    @GetMapping("/loss")
+    public ResponseEntity<List<LossReportDTO>> getLossReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(reportService.getLossReport(startDate, endDate));
     }
 }

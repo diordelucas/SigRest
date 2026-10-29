@@ -1,5 +1,6 @@
 package br.com.sigrest.api.dto;
 
+import br.com.sigrest.api.entity.LossReason;
 import br.com.sigrest.api.entity.StockMovement;
 import lombok.Data;
 
@@ -14,5 +15,6 @@ public class StockMovementResponseDTO {
     private BigDecimal quantity;
     private LocalDateTime date;
     private String description;
+    private LossReason reason;
 }
 

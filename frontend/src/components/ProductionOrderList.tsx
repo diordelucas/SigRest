@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, CheckCircle2, Plus, Search } from 'lucide-react';
-import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import moment from 'moment';
-import { ProductionOrder, ProductionOrderStatus } from '../types';
+import { LossReason, ProductionOrder, ProductionOrderStatus } from '../types';
+import { lossReasonLabel, LOSS_REASON_LABELS } from '../utils/lossReason';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
@@ -49,7 +49,11 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [search, setSearch] = useState('');
-  const [confirmFinish, setConfirmFinish] = useState<number | null>(null);
+  const [finishOrder, setFinishOrder] = useState<ProductionOrder | null>(null);
+  const [finishActualQuantity, setFinishActualQuantity] = useState('');
+  const [finishLossReason, setFinishLossReason] = useState<LossReason | ''>('');
+  const [finishError, setFinishError] = useState('');
+  const [finishing, setFinishing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const fetchOrders = async () => {
@@ -65,16 +69,39 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
     }
   };
 
-  const handleFinish = async (id: number) => {
+  const openFinishModal = (order: ProductionOrder) => {
+    setFinishOrder(order);
+    setFinishActualQuantity(String(order.quantity));
+    setFinishLossReason('');
+    setFinishError('');
+  };
+
+  const handleFinish = async () => {
+    if (!finishOrder) return;
+    const actual = finishActualQuantity === '' ? finishOrder.quantity : Number(finishActualQuantity);
+    if (isNaN(actual) || actual < 0) {
+      setFinishError('A quantidade real deve ser um número maior ou igual a zero.');
+      return;
+    }
+    if (actual < finishOrder.quantity && !finishLossReason) {
+      setFinishError('Informe o motivo, já que a quantidade real ficou abaixo do planejado.');
+      return;
+    }
+    setFinishing(true);
+    setFinishError('');
     try {
-      await api.post(`/production-order/${id}/finish`);
+      await api.post(`/production-order/${finishOrder.id}/finish`, {
+        actualQuantity: actual,
+        lossReason: actual < finishOrder.quantity ? finishLossReason : null,
+      });
       setSuccessMessage('Ordem de Produção finalizada com sucesso!');
       setTimeout(() => setSuccessMessage(''), 4000);
+      setFinishOrder(null);
       fetchOrders();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao finalizar ordem de produção.'));
+      setFinishError(getErrorMessage(err, 'Erro ao finalizar ordem de produção.'));
     } finally {
-      setConfirmFinish(null);
+      setFinishing(false);
     }
   };
 
@@ -150,7 +177,8 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
               <tr>
                 <Th>ID</Th>
                 <Th>Produto Final</Th>
-                <Th className="text-center">Qtd</Th>
+                <Th className="text-center">Qtd Planejada</Th>
+                <Th className="text-center">Qtd Real</Th>
                 <Th>Data de Abertura</Th>
                 <Th>Status</Th>
                 <Th>Observações</Th>
@@ -165,6 +193,20 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
                     {order.finalProduct?.name || 'Produto não identificado'}
                   </td>
                   <td className="px-4 py-3 text-sm font-bold text-ink text-center">{order.quantity}</td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    {order.actualQuantity == null ? (
+                      <span className="text-ink-muted">-</span>
+                    ) : order.actualQuantity < order.quantity ? (
+                      <span
+                        className="font-bold text-amber-600"
+                        title={`Quebra de produção: ${lossReasonLabel(order.lossReason)}`}
+                      >
+                        {order.actualQuantity}
+                      </span>
+                    ) : (
+                      <span className="font-bold text-ink">{order.actualQuantity}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-sm text-ink">
                     {order.date ? moment(order.date).format('DD/MM/YYYY HH:mm') : '-'}
                   </td>
@@ -177,7 +219,7 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
                       {order.status === 'OPEN' && (
                         <button
                           className="px-3 py-1.5 text-xs bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors flex items-center gap-1"
-                          onClick={() => setConfirmFinish(order.id)}
+                          onClick={() => openFinishModal(order)}
                         >
                           <CheckCircle2 size={12} /> Finalizar
                         </button>
@@ -198,13 +240,59 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
       )}
 
       <Modal
-        open={confirmFinish !== null}
+        open={finishOrder !== null}
         title="Finalizar ordem de produção"
-        message="Deseja realmente finalizar esta Ordem de Produção? Os estoques de insumos serão debitados e o produto acabado será creditado."
-        confirmLabel="Finalizar"
-        onCancel={() => setConfirmFinish(null)}
-        onConfirm={() => confirmFinish !== null && handleFinish(confirmFinish)}
-      />
+        confirmLabel={finishing ? 'Finalizando...' : 'Finalizar'}
+        onCancel={() => setFinishOrder(null)}
+        onConfirm={handleFinish}
+      >
+        {finishOrder && (
+          <>
+            <p className="text-sm text-ink-muted mb-4">
+              Os insumos da ficha técnica serão debitados pela quantidade planejada ({finishOrder.quantity}). Informe
+              quanto realmente saiu bom — se for menos que o planejado, é a quebra de produção.
+            </p>
+            {finishError && (
+              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-sm">
+                {finishError}
+              </div>
+            )}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                  Quantidade real produzida (planejado: {finishOrder.quantity})
+                </label>
+                <Field
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={finishActualQuantity}
+                  onChange={(e) => setFinishActualQuantity(e.target.value)}
+                />
+              </div>
+              {Number(finishActualQuantity) < finishOrder.quantity && (
+                <div className="flex flex-col gap-1">
+                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                    Motivo da quebra
+                  </label>
+                  <Field
+                    as="select"
+                    value={finishLossReason}
+                    onChange={(e) => setFinishLossReason(e.target.value as LossReason)}
+                  >
+                    <option value="">Selecione...</option>
+                    {Object.entries(LOSS_REASON_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Field>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </Modal>
 
       <Modal
         open={confirmDelete !== null}

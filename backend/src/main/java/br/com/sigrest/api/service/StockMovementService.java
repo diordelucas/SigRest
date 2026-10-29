@@ -1,5 +1,6 @@
 package br.com.sigrest.api.service;
 
+import br.com.sigrest.api.dto.StockLossRequestDTO;
 import br.com.sigrest.api.dto.StockMovementRequestDTO;
 import br.com.sigrest.api.dto.StockMovementResponseDTO;
 import br.com.sigrest.api.dto.ProductResponseDTO;
@@ -9,6 +10,7 @@ import br.com.sigrest.api.exception.BusinessException;
 import br.com.sigrest.api.exception.ErrorCode;
 import br.com.sigrest.api.repository.ProductRepository;
 import br.com.sigrest.api.repository.StockMovementRepository;
+import br.com.sigrest.api.service.audit.LogAtividadeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,9 @@ public class StockMovementService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private LogAtividadeService logAtividadeService;
 
     @Transactional
     public StockMovementResponseDTO createStockMovement(StockMovementRequestDTO requestDTO) {
@@ -75,13 +80,38 @@ public class StockMovementService {
         BigDecimal current = product.getStorage() != null ? product.getStorage() : BigDecimal.ZERO;
         if (type == StockMovement.MovementType.ENTRY) {
             product.setStorage(current.add(quantity));
-        } else if (type == StockMovement.MovementType.EXIT) {
+        } else if (type == StockMovement.MovementType.EXIT || type == StockMovement.MovementType.LOSS) {
             if (current.compareTo(quantity) < 0) {
                 throw new BusinessException(ErrorCode.STOCK_INSUFICIENTE, "Estoque insuficiente para o produto: " + product.getName());
             }
             product.setStorage(current.subtract(quantity));
         }
         productRepository.save(product);
+    }
+
+    /** Baixa por perda (quebra pós-produção): venceu, queimou, descarte de qualidade, etc. */
+    @Transactional
+    public StockMovementResponseDTO createStockLoss(StockLossRequestDTO requestDTO) {
+        Product product = productRepository.findById(requestDTO.getProductId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO));
+
+        StockMovement stockMovement = new StockMovement();
+        stockMovement.setProduct(product);
+        stockMovement.setType(StockMovement.MovementType.LOSS);
+        stockMovement.setQuantity(requestDTO.getQuantity());
+        stockMovement.setReason(requestDTO.getReason());
+        stockMovement.setDate(LocalDateTime.now());
+        stockMovement.setDescription(requestDTO.getDescription());
+
+        updateProductStorage(product, requestDTO.getQuantity(), StockMovement.MovementType.LOSS);
+        StockMovement savedMovement = stockMovementRepository.save(stockMovement);
+
+        String detalhes = product.getName() + " - " + requestDTO.getQuantity() + " - " + requestDTO.getReason()
+                + (requestDTO.getDescription() != null ? " - " + requestDTO.getDescription() : "");
+        logAtividadeService.registrar("REGISTRAR_PERDA_ESTOQUE", "StockMovement", savedMovement.getId(),
+                detalhes, logAtividadeService.usuarioAtual());
+
+        return convertToResponseDTO(savedMovement);
     }
 
     public List<StockMovementResponseDTO> getAllStockMovements() {
@@ -103,6 +133,7 @@ public class StockMovementService {
         dto.setQuantity(stockMovement.getQuantity());
         dto.setDate(stockMovement.getDate());
         dto.setDescription(stockMovement.getDescription());
+        dto.setReason(stockMovement.getReason());
         if (stockMovement.getProduct() != null) {
             dto.setProduct(new ProductResponseDTO(stockMovement.getProduct()));
         }
