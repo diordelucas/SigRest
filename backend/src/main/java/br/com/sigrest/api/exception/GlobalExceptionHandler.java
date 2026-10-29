@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -75,6 +76,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleIntegridade(DataIntegrityViolationException ex) {
         return responseFor(ErrorCode.GEN_CONFLITO_DADOS);
+    }
+
+    /**
+     * Acesso negado por {@code @PreAuthorize} (ex.: OPERADOR em rota de ADMIN). A exceção nasce
+     * dentro do controller, então cai aqui e não no accessDeniedHandler do WebSecurityConfig —
+     * sem este handler, viraria 500 no handler genérico abaixo.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAcessoNegado(AccessDeniedException ex) {
+        return responseFor(ErrorCode.AUTH_PERMISSAO_INSUFICIENTE);
     }
 
     @ExceptionHandler(Exception.class)
