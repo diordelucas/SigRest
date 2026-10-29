@@ -1,0 +1,2 @@
+# Scripts shell rodam dentro dos containers Linux: com CRLF (padrão do Git no Windows) o sh falha.
+*.sh text eol=lf
