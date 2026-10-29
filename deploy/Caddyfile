@@ -1,0 +1,18 @@
+# Proxy de entrada da produção (docker-compose.prod.yml). Com um domínio de verdade em SITE_DOMAIN
+# (ex.: sigrest.duckdns.org), o Caddy emite e renova sozinho o certificado HTTPS do Let's Encrypt.
+{$SITE_DOMAIN} {
+	encode gzip
+
+	# API: /api/* vai para o Spring Boot sem o prefixo. O X-Forwarded-Prefix faz o Swagger
+	# (/api/swagger-ui/index.html) gerar os links já com /api.
+	handle_path /api/* {
+		reverse_proxy backend:8080 {
+			header_up X-Forwarded-Prefix /api
+		}
+	}
+
+	# Todo o resto é o frontend.
+	handle {
+		reverse_proxy frontend:80
+	}
+}

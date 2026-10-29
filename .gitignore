@@ -6,3 +6,7 @@ out/
 frontend/node_modules/
 backend/target/
 *.puml
+
+# Producao (VM): segredos e backups do banco
+.env.prod
+backups/

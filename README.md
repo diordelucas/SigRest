@@ -68,6 +68,10 @@ Esta abordagem levanta o banco de dados, o backend e o frontend simultaneamente.
     *   **Backend:** `http://localhost:8080`
     *   **Banco de Dados:** `localhost:5432`
 
+### Produção (Oracle Cloud)
+
+O passo a passo para publicar o sistema numa VM gratuita da Oracle, com HTTPS, backup diário e deploy automático a cada merge na `main`, está em [DEPLOY.md](DEPLOY.md).
+
 ### Modo desenvolvimento (recarga automática)
 
 Para programar sem reconstruir as imagens a cada alteração, suba o modo dev. O código das pastas `backend/` e `frontend/` é montado direto nos containers:

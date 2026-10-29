@@ -31,7 +31,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) {
+  // Em produção a API fica no mesmo domínio, em /api (atrás do Caddy): nunca entra no cache.
+  if (
+    request.method !== 'GET' ||
+    !request.url.startsWith(self.location.origin) ||
+    new URL(request.url).pathname.startsWith('/api/')
+  ) {
     return;
   }
 
