@@ -73,6 +73,8 @@ O frontend é uma **Single Page Application (SPA)** organizada em:
 | PostgreSQL Driver | 42.x (gerenciado) | Driver JDBC para PostgreSQL |
 | Lombok | 1.18.x (gerenciado) | Redução de boilerplate (getters, setters, construtores) |
 | SpringDoc OpenAPI | 2.6.0 | Geração automática de documentação Swagger UI |
+| Thymeleaf | 3.1 (gerenciado) | Templates HTML dos relatórios gerenciais |
+| OpenHTMLtoPDF | 1.0.10 | Conversão dos relatórios HTML em PDF (PDFBox) |
 | Maven | 3.9.6 | Gerenciador de dependências e build |
 | JUnit 5 | 5.x (gerenciado) | Framework de testes unitários e de integração |
 | H2 Database | 2.x (gerenciado) | Banco em memória usado nos testes automatizados |
@@ -426,6 +428,26 @@ Permite ao gestor acompanhar o fluxo de caixa projetado e identificar inadimplê
 | `GET /reports/stock-movement` | Histórico de movimentações de estoque |
 | `GET /reports/purchase-history` | Histórico de compras por fornecedor |
 | `GET /reports/financial-flow` | Fluxo financeiro: entradas, saídas e saldo |
+| `GET /reports/loss` | Quebras de produção e perdas de estoque |
+
+**Relatórios em PDF (`/reports/pdf`, somente ADMIN):**
+
+Os relatórios para impressão são gerados no backend em duas etapas: o **Thymeleaf** monta o HTML a partir de templates em `src/main/resources/templates/reports/` e o **OpenHTMLtoPDF** converte esse HTML em PDF A4, com cabeçalho (empresa, título, período), rodapé (data/hora, usuário que gerou e "Página X de Y") e cabeçalho de tabela repetido a cada página. A formatação pt-BR (moeda, datas, rótulos dos enums) fica centralizada no `ReportFormatter`, e os gráficos de barra são desenhados em CSS puro.
+
+| Endpoint | Relatório | Período |
+|---|---|---|
+| `GET /reports/pdf/sales` | Vendas: totais, ticket médio, por forma de pagamento, por dia e lista de vendas | Sim |
+| `GET /reports/pdf/top-selling-products` | Ranking de produtos por quantidade e receita | Sim |
+| `GET /reports/pdf/monthly-revenue` | Faturamento mês a mês, média e melhor mês | Sim |
+| `GET /reports/pdf/financial-flow` | Entradas (vendas) × saídas (compras) e saldo por mês | Sim |
+| `GET /reports/pdf/accounts-payable` | Contas a pagar por vencimento, com vencidas e dias de atraso | Sim |
+| `GET /reports/pdf/accounts-receivable` | Contas a receber por vencimento, com vencidas e dias de atraso | Sim |
+| `GET /reports/pdf/purchases` | Compras do período e total por fornecedor | Sim |
+| `GET /reports/pdf/stock-position` | Estoque atual, mínimo, custo unitário e valor estimado em estoque | Não (posição atual) |
+| `GET /reports/pdf/stock-movement` | Movimentações de estoque (entrada, saída, perda) | Sim |
+| `GET /reports/pdf/loss` | Quebras e perdas por motivo e origem | Sim |
+| `GET /reports/pdf/technical-sheets` | Custo, preço sugerido (markup) e margem real de cada ficha técnica | Não (posição atual) |
+| `GET /reports/pdf/activity-log` | Trilha de auditoria por ação e por usuário | Sim |
 
 ---
 
@@ -695,6 +717,7 @@ Toda movimentação de estoque (entrada ou saída) gera um registro em `stock_mo
 | Gráficos | Recharts | 2.12.7 |
 | Containerização | Docker + Docker Compose | 25.x / 2.x |
 | Documentação API | SpringDoc OpenAPI (Swagger) | 2.6.0 |
+| Relatórios em PDF | Thymeleaf + OpenHTMLtoPDF | 3.1 / 1.0.10 |
 | Testes Backend | JUnit 5 + H2 | 5.x |
 | Testes E2E | Selenium + WebDriverManager | 4.x / 5.9.2 |
 | Gerenciador Build | Maven | 3.9.6 |

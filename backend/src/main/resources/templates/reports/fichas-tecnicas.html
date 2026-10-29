@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Fichas técnicas</div><div class="kpi-valor" th:text="${fichas.size()}">0</div></td>
+    <td>
+      <div class="kpi-rotulo">Abaixo da margem desejada</div>
+      <div class="kpi-valor" th:classappend="${abaixoDaMargem > 0} ? 'negativo'" th:text="${abaixoDaMargem}">0</div>
+    </td>
+  </tr>
+</table>
+
+<th:block th:if="${fichas.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhuma ficha técnica cadastrada.')}"></div></th:block>
+
+<th:block th:unless="${fichas.isEmpty()}">
+  <h2>Resumo</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr>
+        <th>Ficha técnica</th><th>Produto final</th><th class="num">Custo c/ mão de obra</th>
+        <th class="num">Preço sugerido</th><th class="num">Preço atual</th><th class="num">Margem desejada</th><th class="num">Margem real</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="f : ${fichas}">
+        <td th:text="${f.cost.technicalSheetName()}">Ficha</td>
+        <td th:text="${fmt.texto(f.finalProductName)}">Produto</td>
+        <td class="num" th:text="${fmt.moeda(f.cost.totalCostWithLabour())}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.moeda(f.cost.suggestedSellPrice())}">R$ 0,00</td>
+        <td class="num" th:text="${f.currentSellPrice != null ? fmt.moeda(f.currentSellPrice) : '—'}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.percentual(f.cost.desiredMarginPercent())}">0%</td>
+        <td class="num"
+            th:classappend="${f.realMarginPercent != null and f.realMarginPercent.compareTo(f.cost.desiredMarginPercent()) &lt; 0} ? 'negativo' : 'positivo'"
+            th:text="${fmt.percentual(f.realMarginPercent)}">0%</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota">Preço sugerido pelo markup divisor: custo com mão de obra ÷ (1 - (despesas variáveis + margem desejada)).
+    Margem real = 100% - despesas variáveis - custo com mão de obra ÷ preço atual.</p>
+
+  <h2>Composição de custo</h2>
+  <div class="bloco" th:each="f : ${fichas}">
+    <h3>
+      <span th:text="${f.cost.technicalSheetName()}">Ficha</span>
+      <span class="muted" th:if="${f.finalProductName}" th:text="|» ${f.finalProductName}|">» Produto</span>
+    </h3>
+    <p class="nota">
+      Rendimento: <span th:text="${f.cost.rendimento() != null ? f.cost.rendimento() : '—'}">1</span> ·
+      Mão de obra: <span th:text="${fmt.percentual(f.cost.labourCostPercent())}">0%</span> ·
+      Despesas variáveis: <span th:text="${fmt.percentual(f.cost.variableExpensesPercent())}">0%</span> ·
+      Margem desejada: <span th:text="${fmt.percentual(f.cost.desiredMarginPercent())}">0%</span>
+    </p>
+    <table class="dados compacta">
+      <thead>
+        <tr><th>Insumo</th><th class="num">Quantidade</th><th class="num">Custo por unidade base</th><th class="num">Custo</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="i : ${f.cost.itemCosts()}">
+          <td th:text="${i.rawMaterialName()}">Insumo</td>
+          <td class="num" th:text="|${fmt.quantidade(i.quantity())} ${i.unit() != null ? #strings.toLowerCase(i.unit()) : ''}|">0 g</td>
+          <td class="num" th:text="${'R$ ' + fmt.decimal(i.costPerBaseUnit(), 4)}">R$ 0,0000</td>
+          <td class="num" th:text="${fmt.moeda(i.itemCost())}">R$ 0,00</td>
+        </tr>
+        <tr th:if="${f.cost.itemCosts().isEmpty()}">
+          <td colspan="4" class="muted">Ficha sem insumos cadastrados.</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Custo dos ingredientes</td>
+          <td class="num" th:text="${fmt.moeda(f.cost.ingredientsTotalCost())}">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td colspan="3">Custo com mão de obra</td>
+          <td class="num" th:text="${fmt.moeda(f.cost.totalCostWithLabour())}">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td colspan="3">Custo dos ingredientes por porção</td>
+          <td class="num" th:text="${fmt.moeda(f.cost.perServingCost())}">R$ 0,00</td>
+        </tr>
+        <tr>
+          <td colspan="3">Preço de venda sugerido</td>
+          <td class="num" th:text="${fmt.moeda(f.cost.suggestedSellPrice())}">R$ 0,00</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</th:block>
+</body>
+</html>

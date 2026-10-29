@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
@@ -17,5 +18,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     @Query("SELECT COALESCE(SUM(p.total), 0) FROM Purchase p WHERE p.date BETWEEN :start AND :end")
     BigDecimal sumTotalBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
-}
 
+    /** Compras do intervalo em ordem cronológica (histórico de compras). */
+    List<Purchase> findByDateBetweenOrderByDateAsc(LocalDate start, LocalDate end);
+}

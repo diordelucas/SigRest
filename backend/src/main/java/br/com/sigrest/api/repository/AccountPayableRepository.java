@@ -6,11 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 public interface AccountPayableRepository extends JpaRepository<AccountPayable, Long> {
 
     @Query("SELECT COALESCE(SUM(a.amount), 0) FROM AccountPayable a WHERE a.status = 'PENDING'")
     BigDecimal sumPending();
-}
 
+    /** Contas com vencimento no intervalo, da mais antiga para a mais nova. */
+    List<AccountPayable> findByDueDateBetweenOrderByDueDateAsc(LocalDate start, LocalDate end);
+}

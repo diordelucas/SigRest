@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Eventos registrados</div><div class="kpi-valor" th:text="${eventos.size()}">0</div></td>
+    <td><div class="kpi-rotulo">Usuários envolvidos</div><div class="kpi-valor" th:text="${porUsuario.size()}">0</div></td>
+    <td><div class="kpi-rotulo">Tipos de ação</div><div class="kpi-valor" th:text="${porAcao.size()}">0</div></td>
+  </tr>
+</table>
+
+<th:block th:if="${eventos.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhum evento de auditoria no período.')}"></div></th:block>
+
+<th:block th:unless="${eventos.isEmpty()}">
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="width: 50%; vertical-align: top; padding-right: 8px;">
+        <h2>Por ação</h2>
+        <table class="dados">
+          <thead><tr><th>Ação</th><th class="num">Eventos</th></tr></thead>
+          <tbody>
+            <tr th:each="g : ${porAcao}">
+              <td th:text="${g.label}">Ação</td>
+              <td class="num" th:text="${g.count}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+      <td style="width: 50%; vertical-align: top; padding-left: 8px;">
+        <h2>Por usuário</h2>
+        <table class="dados">
+          <thead><tr><th>Usuário</th><th class="num">Eventos</th></tr></thead>
+          <tbody>
+            <tr th:each="g : ${porUsuario}">
+              <td th:text="${g.label}">Usuário</td>
+              <td class="num" th:text="${g.count}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <h2>Eventos do período</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr><th>Data/hora</th><th>Usuário</th><th>Ação</th><th>Registro</th><th>Detalhes</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="e : ${eventos}">
+        <td th:text="${fmt.dataHora(e.dataHora)}">01/01/2026 12:00</td>
+        <td th:text="${e.usuarioNome != null ? e.usuarioNome : 'Sistema'}">Usuário</td>
+        <td th:text="${fmt.acao(e.acao)}">Ação</td>
+        <td th:text="${e.entidadeId != null ? e.entidade + ' #' + e.entidadeId : e.entidade}">Sale #1</td>
+        <td th:text="${fmt.texto(e.detalhes)}">Detalhes</td>
+      </tr>
+    </tbody>
+  </table>
+</th:block>
+</body>
+</html>

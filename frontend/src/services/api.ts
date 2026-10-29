@@ -20,6 +20,32 @@ export function getErrorMessage(err: unknown, fallback = 'Ocorreu um erro inespe
   return fallback;
 }
 
+/**
+ * Baixa um relatório em PDF (endpoints /reports/pdf/*). A resposta vem como Blob — inclusive a
+ * de erro, então o ErrorResponse JSON é convertido de volta para objeto antes de relançar, para
+ * o getErrorMessage continuar funcionando.
+ */
+export async function fetchPdf(
+  url: string,
+  params?: Record<string, string | number | boolean>
+): Promise<{ blob: Blob; fileName: string }> {
+  try {
+    const response = await api.get<Blob>(url, { params, responseType: 'blob' });
+    const disposition: string = response.headers['content-disposition'] ?? '';
+    const fileName = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? 'relatorio-sigrest.pdf';
+    return { blob: response.data, fileName };
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.data instanceof Blob) {
+      try {
+        err.response.data = JSON.parse(await err.response.data.text());
+      } catch {
+        // corpo não era JSON: getErrorMessage cai no fallback
+      }
+    }
+    throw err;
+  }
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('@sigrest:token');
   if (token) {

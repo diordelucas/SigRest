@@ -76,6 +76,10 @@ public enum ErrorCode {
     REC_NAO_ENCONTRADA("SIGREST-REC-001", "Conta a receber não encontrada.", HttpStatus.NOT_FOUND),
     REC_JA_RECEBIDA("SIGREST-REC-002", "Esta conta já foi recebida.", HttpStatus.BAD_REQUEST),
 
+    // Relatórios
+    REPORT_PERIODO_INVALIDO("SIGREST-REPORT-001", "A data inicial não pode ser posterior à data final.", HttpStatus.BAD_REQUEST),
+    REPORT_GERACAO_FALHOU("SIGREST-REPORT-002", "Não foi possível gerar o relatório em PDF. Tente novamente.", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // Genéricos / infraestrutura
     GEN_REQUISICAO_INVALIDA("SIGREST-GEN-001", "Requisição inválida. Confira os dados enviados.", HttpStatus.BAD_REQUEST),
     GEN_PARAMETRO_AUSENTE("SIGREST-GEN-002", "Parâmetro obrigatório ausente na requisição.", HttpStatus.BAD_REQUEST),

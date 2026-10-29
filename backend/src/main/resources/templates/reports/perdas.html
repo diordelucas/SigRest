@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Ocorrências</div><div class="kpi-valor" th:text="${perdas.size()}">0</div></td>
+    <td th:each="g : ${porOrigem}">
+      <div class="kpi-rotulo" th:text="|Quebra de ${#strings.toLowerCase(g.label)}|">Quebra de produção</div>
+      <div class="kpi-valor" th:text="|${g.count} ocorrência(s)|">0</div>
+    </td>
+  </tr>
+</table>
+
+<th:block th:if="${perdas.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhuma quebra ou perda registrada no período.')}"></div></th:block>
+
+<th:block th:unless="${perdas.isEmpty()}">
+  <h2>Por motivo</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Motivo</th><th class="num">Ocorrências</th><th class="num">Quantidade perdida</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="g : ${porMotivo}">
+        <td th:text="${g.label}">Vencimento</td>
+        <td class="num" th:text="${g.count}">0</td>
+        <td class="num" th:text="${fmt.quantidade(g.total)}">0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Ocorrências do período</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr><th>Data/hora</th><th>Origem</th><th>Produto</th><th>Motivo</th><th class="num">Quantidade</th><th>Descrição</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="p : ${perdas}">
+        <td th:text="${fmt.dataHora(p.date)}">01/01/2026 12:00</td>
+        <td>
+          <span class="selo" th:classappend="${p.source == 'PRODUCAO'} ? 'selo-alerta' : 'selo-erro'"
+                th:text="${fmt.origemPerda(p.source)}">Estoque</span>
+        </td>
+        <td th:text="${fmt.texto(p.productName)}">Produto</td>
+        <td th:text="${fmt.motivoPerda(p.reason)}">Vencimento</td>
+        <td class="num" th:text="${fmt.quantidade(p.quantity)}">0</td>
+        <td th:text="${fmt.texto(p.description)}">Descrição</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota">Produção: diferença entre a quantidade planejada e a produzida na ordem (em unidades do produto final).
+    Estoque: baixas registradas como perda (em unidade base do produto).</p>
+</th:block>
+</body>
+</html>

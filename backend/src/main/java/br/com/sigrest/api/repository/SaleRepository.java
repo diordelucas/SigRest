@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, Long> {
@@ -22,5 +23,7 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     /** Quantidade de vendas no intervalo informado. */
     @Query("SELECT COUNT(s) FROM sale s WHERE s.date BETWEEN :start AND :end")
     long countSalesBetween(@Param("start") Date start, @Param("end") Date end);
-}
 
+    /** Vendas do intervalo em ordem cronológica (relatório de vendas em PDF). */
+    List<Sale> findByDateBetweenOrderByDateAsc(Date start, Date end);
+}

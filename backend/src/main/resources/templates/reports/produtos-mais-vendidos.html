@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Produtos no ranking</div><div class="kpi-valor" th:text="${produtos.size()}">0</div></td>
+    <td><div class="kpi-rotulo">Unidades vendidas</div><div class="kpi-valor" th:text="${fmt.inteiro(quantidadeTotal)}">0</div></td>
+    <td><div class="kpi-rotulo">Receita dos produtos</div><div class="kpi-valor" th:text="${fmt.moeda(receitaTotal)}">R$ 0,00</div></td>
+  </tr>
+</table>
+
+<th:block th:if="${produtos.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhum produto vendido no período.')}"></div></th:block>
+
+<th:block th:unless="${produtos.isEmpty()}">
+  <h2>Ranking por quantidade vendida</h2>
+  <table class="dados">
+    <thead>
+      <tr>
+        <th class="centro">#</th><th>Produto</th><th class="num">Quantidade</th><th style="width: 30%;"></th>
+        <th class="num">Receita</th><th class="num">Participação</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="p, it : ${produtos}">
+        <td class="centro" th:text="${it.count}">1</td>
+        <td th:text="${p.productName}">Produto</td>
+        <td class="num" th:text="${fmt.inteiro(p.totalQuantitySold)}">0</td>
+        <td><div class="barra-fundo"><div class="barra" th:style="|width: ${fmt.larguraInteira(p.totalQuantitySold, maiorQuantidade)}%|"></div></div></td>
+        <td class="num" th:text="${fmt.moeda(p.totalRevenue)}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.participacao(p.totalRevenue, receitaTotal)}">0%</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota">Participação calculada sobre a receita dos produtos listados.</p>
+</th:block>
+</body>
+</html>

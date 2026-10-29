@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Entradas (vendas)</div><div class="kpi-valor positivo" th:text="${fmt.moeda(entradas)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo">Saídas (compras)</div><div class="kpi-valor negativo" th:text="${fmt.moeda(saidas)}">R$ 0,00</div></td>
+    <td>
+      <div class="kpi-rotulo">Saldo</div>
+      <div class="kpi-valor" th:classappend="${saldo.signum() < 0} ? 'negativo' : 'positivo'" th:text="${fmt.moeda(saldo)}">R$ 0,00</div>
+    </td>
+  </tr>
+</table>
+
+<h2>Entradas e saídas por mês</h2>
+<table class="dados">
+  <thead>
+    <tr>
+      <th>Mês</th><th style="width: 32%;"></th><th class="num">Entradas</th><th class="num">Saídas</th><th class="num">Saldo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr th:each="m : ${meses}">
+      <td th:text="${fmt.mesIso(m.month())}">Jan/2026</td>
+      <td>
+        <div class="barra-fundo"><div class="barra entrada" th:style="|width: ${fmt.largura(m.totalEntradas(), maiorValor)}%|"></div></div>
+        <div class="barra-fundo"><div class="barra saida" th:style="|width: ${fmt.largura(m.totalSaidas(), maiorValor)}%|"></div></div>
+      </td>
+      <td class="num positivo" th:text="${fmt.moeda(m.totalEntradas())}">R$ 0,00</td>
+      <td class="num negativo" th:text="${fmt.moeda(m.totalSaidas())}">R$ 0,00</td>
+      <td class="num" th:classappend="${m.saldo().signum() < 0} ? 'negativo'" th:text="${fmt.moeda(m.saldo())}">R$ 0,00</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2">Total</td>
+      <td class="num" th:text="${fmt.moeda(entradas)}">R$ 0,00</td>
+      <td class="num" th:text="${fmt.moeda(saidas)}">R$ 0,00</td>
+      <td class="num" th:text="${fmt.moeda(saldo)}">R$ 0,00</td>
+    </tr>
+  </tfoot>
+</table>
+<p class="nota">Entradas = faturamento das vendas; saídas = total das compras. Barra verde: entradas · barra vermelha: saídas.</p>
+</body>
+</html>

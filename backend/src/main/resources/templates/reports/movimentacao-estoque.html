@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Movimentações</div><div class="kpi-valor" th:text="${movimentos.size()}">0</div></td>
+    <td th:each="g : ${porTipo}">
+      <div class="kpi-rotulo" th:text="${g.label}">Entrada</div>
+      <div class="kpi-valor" th:text="${g.count}">0</div>
+    </td>
+  </tr>
+</table>
+
+<th:block th:if="${movimentos.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhuma movimentação de estoque no período.')}"></div></th:block>
+
+<th:block th:unless="${movimentos.isEmpty()}">
+  <h2>Movimentações do período</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr><th>Data/hora</th><th>Produto</th><th>Tipo</th><th class="num">Quantidade</th><th>Descrição</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="m : ${movimentos}">
+        <td th:text="${fmt.dataHora(m.date)}">01/01/2026 12:00</td>
+        <td th:text="${fmt.texto(m.productName)}">Produto</td>
+        <td>
+          <span class="selo"
+                th:classappend="${m.type.name() == 'ENTRY'} ? 'selo-ok' : (${m.type.name() == 'LOSS'} ? 'selo-erro' : 'selo-neutro')"
+                th:text="${fmt.tipoMovimento(m.type)}">Entrada</span>
+        </td>
+        <td class="num" th:text="${fmt.quantidade(m.quantity)}">0</td>
+        <td th:text="${fmt.texto(m.description)}">Descrição</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="nota">Quantidades em unidade base do produto (g, ml ou un).</p>
+</th:block>
+</body>
+</html>
