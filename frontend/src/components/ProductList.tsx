@@ -8,9 +8,12 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
+import { formatQuantity } from '../utils/format';
 
 const baseUnitOf = (purchaseUnit: string | null): string => {
-  if (!purchaseUnit) return 'un.';
+  if (!purchaseUnit) return 'un';
   if (['G', 'KG'].includes(purchaseUnit)) return 'g';
   if (['ML', 'L'].includes(purchaseUnit)) return 'ml';
   return 'un';
@@ -26,7 +29,8 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const fetchProducts = async () => {
@@ -45,13 +49,20 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/product/${id}`);
+      toast.success('Produto excluído com sucesso!');
       setProducts(products.filter((product) => product.id !== id));
     } catch (error) {
-      setError(getErrorMessage(error, 'Erro ao excluir produto.'));
+      toast.error(getErrorMessage(error, 'Erro ao excluir produto.'));
     } finally {
       setConfirmDelete(null);
     }
   };
+
+  // A busca global chega por aqui: /products?q=nome
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null) setSearch(q);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchProducts();
@@ -75,7 +86,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Lista de Produtos</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
@@ -84,7 +95,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
             placeholder="Pesquisar por nome, código..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-64"
+            className="pl-8 py-2 text-sm w-full sm:w-64"
           />
         </div>
       </div>
@@ -122,17 +133,17 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
                     <CategoryTag name={product.categoryName} />
                   </td>
                   <td className="px-4 py-3 text-sm text-ink">{product.code}</td>
-                  <td className="px-4 py-3 text-sm text-ink">R$ {formatBRL(product.price ?? 0)}</td>
-                  <td className="px-4 py-3 text-sm text-ink">R$ {formatBRL(product.sellPrice ?? 0)}</td>
+                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">R$ {formatBRL(product.price ?? 0)}</td>
+                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">R$ {formatBRL(product.sellPrice ?? 0)}</td>
                   <td className="px-4 py-3 text-sm text-ink">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        (product.storage ?? 0) <= (product.minStorage ?? 0)
+                        (product.minStorage ?? 0) > 0 && (product.storage ?? 0) <= (product.minStorage ?? 0)
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
                     >
-                      {product.storage ?? 0} {baseUnitOf(product.purchaseUnit)}
+                      {formatQuantity(product.storage)} {baseUnitOf(product.purchaseUnit)}
                     </span>
                   </td>
                   {!isReadOnly && (

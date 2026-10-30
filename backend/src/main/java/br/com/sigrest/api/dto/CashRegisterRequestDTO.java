@@ -12,7 +12,7 @@ public class CashRegisterRequestDTO {
     private LocalDateTime openingTime;
 
     @NotNull(message = "informe o saldo de abertura")
-    @DecimalMin(value = "0.0", message = "não pode ser negativo")
+    @DecimalMin(value = "0.0", message = "o saldo de abertura não pode ser negativo")
     private BigDecimal openingBalance;
 
     private Long openedByUserId;

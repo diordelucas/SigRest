@@ -94,6 +94,36 @@ public class AccountPayableService {
         return convertToResponseDTO(updatedAccount);
     }
 
+    /** Desfaz o pagamento: a conta volta a ficar em aberto e o valor retorna ao caixa aberto. */
+    @Transactional
+    public AccountPayableResponseDTO undoPayment(Long id, User currentUser) {
+        AccountPayable accountPayable = accountPayableRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAY_NAO_ENCONTRADA));
+        if (accountPayable.getStatus() != AccountPayable.Status.PAID) {
+            throw new BusinessException(ErrorCode.PAY_NAO_PAGA);
+        }
+        CashRegister cashRegister = cashRegisterRepository.findByIsOpenTrue()
+                .orElseThrow(() -> new BusinessException(ErrorCode.CASH_NAO_ABERTO,
+                        "Abra o caixa antes de desfazer o pagamento."));
+
+        accountPayable.setPaymentDate(null);
+        accountPayable.setStatus(AccountPayable.Status.PENDING);
+        AccountPayable updatedAccount = accountPayableRepository.save(accountPayable);
+
+        CashMovement movement = new CashMovement();
+        movement.setCashRegister(cashRegister);
+        movement.setDate(LocalDateTime.now());
+        movement.setType(CashMovement.MovementType.INCOME);
+        movement.setAmount(accountPayable.getAmount());
+        movement.setDescription("Pagamento desfeito: " + accountPayable.getDescription());
+        movement.setUser(currentUser);
+        cashMovementRepository.save(movement);
+
+        logAtividadeService.registrar("DESFAZER_PAGAMENTO", "AccountPayable", accountPayable.getId(),
+                "Pagamento desfeito: " + accountPayable.getDescription(), currentUser);
+        return convertToResponseDTO(updatedAccount);
+    }
+
     @Transactional(readOnly = true)
     public List<AccountPayableResponseDTO> getAllAccountPayables() {
         return accountPayableRepository.findAll().stream()

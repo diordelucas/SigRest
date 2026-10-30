@@ -25,8 +25,24 @@ public class Sale {
     private Long id;
     private Date date;
     private BigDecimal total;
-    private Integer discount;
+    private BigDecimal discount;
     private String paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SaleStatus status = SaleStatus.COMPLETED;
+
+    private Date reversalDate;
+    private String reversalReason;
+
+    @ManyToOne
+    @JoinColumn(name = "reversed_by_user_id")
+    private User reversedBy;
+
+    /** Caixa aberto no momento da venda. É ele que recebe o valor das vendas em dinheiro. */
+    @ManyToOne
+    @JoinColumn(name = "cash_register_id")
+    private CashRegister cashRegister;
 
     @ManyToOne
     @JoinColumn(name = "person_id")

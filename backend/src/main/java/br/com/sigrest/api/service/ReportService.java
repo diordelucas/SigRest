@@ -18,6 +18,9 @@ import br.com.sigrest.api.entity.ActivityLog;
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.ProductionOrder;
 import br.com.sigrest.api.entity.Sale;
+import br.com.sigrest.api.entity.SaleStatus;
+import br.com.sigrest.api.exception.BusinessException;
+import br.com.sigrest.api.exception.ErrorCode;
 import br.com.sigrest.api.entity.SellItem;
 import br.com.sigrest.api.entity.StockMovement;
 import br.com.sigrest.api.entity.TechnicalSheet;
@@ -84,7 +87,9 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<SalesByPeriodDTO> getSalesByPeriod(LocalDate startDate, LocalDate endDate) {
+        validarPeriodo(startDate, endDate);
         List<Sale> sales = saleRepository.findAll().stream()
+                .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
                 .filter(sale -> {
                     LocalDate saleDate = sale.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     return !saleDate.isBefore(startDate) && !saleDate.isAfter(endDate);
@@ -109,6 +114,7 @@ public class ReportService {
         List<Sale> sales = saleRepository.findAll();
 
         Map<Long, List<SellItem>> itemsByProduct = sales.stream()
+                .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
                 .flatMap(sale -> sale.getItems().stream())
                 .collect(Collectors.groupingBy(item -> item.getProduct().getId()));
 
@@ -131,7 +137,9 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<MonthlyRevenueDTO> getMonthlyRevenue(LocalDate startMonth, LocalDate endMonth) {
+        validarPeriodo(startMonth, endMonth);
         List<Sale> sales = saleRepository.findAll().stream()
+                .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
                 .filter(sale -> {
                     LocalDate saleDate = sale.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     YearMonth saleYearMonth = YearMonth.from(saleDate);
@@ -152,6 +160,7 @@ public class ReportService {
     }
 
     public List<StockMovementReportDTO> getStockMovementReport(LocalDate startDate, LocalDate endDate) {
+        validarPeriodo(startDate, endDate);
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
 
@@ -166,13 +175,16 @@ public class ReportService {
                         movement.getProduct().getName(),
                         movement.getType(),
                         movement.getQuantity(),
-                        movement.getDescription()
+                        movement.getDescription(),
+                        movement.getProduct().getPurchaseUnit() != null
+                                ? movement.getProduct().getPurchaseUnit().getBaseUnitLabel() : "un"
                 ))
                 .sorted(Comparator.comparing(StockMovementReportDTO::getDate))
                 .collect(Collectors.toList());
     }
 
     public List<FinancialFlowDTO> getFinancialFlow(LocalDate startDate, LocalDate endDate) {
+        validarPeriodo(startDate, endDate);
         List<FinancialFlowDTO> result = new ArrayList<>();
         ZoneId zone = ZoneId.systemDefault();
         YearMonth current = YearMonth.from(startDate);
@@ -195,6 +207,12 @@ public class ReportService {
         return result;
     }
 
+    private void validarPeriodo(LocalDate inicio, LocalDate fim) {
+        if (inicio.isAfter(fim)) {
+            throw new BusinessException(ErrorCode.REPORT_PERIODO_INVALIDO);
+        }
+    }
+
     private BigDecimal nullSafe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
     }
@@ -205,6 +223,7 @@ public class ReportService {
      */
     @Transactional(readOnly = true)
     public List<LossReportDTO> getLossReport(LocalDate startDate, LocalDate endDate) {
+        validarPeriodo(startDate, endDate);
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
 
@@ -253,7 +272,7 @@ public class ReportService {
                         sale.getPerson() != null ? sale.getPerson().getName() : null,
                         sale.getPaymentMethod(),
                         sale.getItems() != null ? sale.getItems().size() : 0,
-                        sale.getDiscount() != null ? BigDecimal.valueOf(sale.getDiscount()) : BigDecimal.ZERO,
+                        nullSafe(sale.getDiscount()),
                         nullSafe(sale.getTotal())
                 ))
                 .collect(Collectors.toList());
@@ -262,6 +281,7 @@ public class ReportService {
     /** Produtos mais vendidos dentro do período (o endpoint JSON antigo considera todas as vendas). */
     @Transactional(readOnly = true)
     public List<ProductSalesDTO> getTopSellingProducts(LocalDate startDate, LocalDate endDate, int limit) {
+        validarPeriodo(startDate, endDate);
         Map<Long, List<SellItem>> itemsByProduct = findSalesBetween(startDate, endDate).stream()
                 .flatMap(sale -> sale.getItems().stream())
                 .filter(item -> item.getProduct() != null)
@@ -285,11 +305,12 @@ public class ReportService {
         ZoneId zone = ZoneId.systemDefault();
         Date start = Date.from(startDate.atStartOfDay(zone).toInstant());
         Date end = Date.from(endDate.atTime(LocalTime.MAX).atZone(zone).toInstant());
-        return saleRepository.findByDateBetweenOrderByDateAsc(start, end);
+        return saleRepository.findByDateBetweenAndStatusOrderByDateAsc(start, end, SaleStatus.COMPLETED);
     }
 
     @Transactional(readOnly = true)
     public List<PurchaseHistoryDTO> getPurchaseHistory(LocalDate startDate, LocalDate endDate) {
+        validarPeriodo(startDate, endDate);
         return purchaseRepository.findByDateBetweenOrderByDateAsc(startDate, endDate).stream()
                 .map(purchase -> new PurchaseHistoryDTO(
                         purchase.getId(),
@@ -308,7 +329,7 @@ public class ReportService {
                 .map(product -> {
                     BigDecimal storage = nullSafe(product.getStorage());
                     BigDecimal unitCost = costPerBaseUnit(product);
-                    boolean belowMinimum = product.getMinStorage() != null
+                    boolean belowMinimum = product.getMinStorage() != null && product.getMinStorage().signum() > 0
                             && storage.compareTo(product.getMinStorage()) <= 0;
                     return new StockPositionDTO(
                             product.getCode(),
@@ -402,7 +423,7 @@ public class ReportService {
                     BigDecimal sellPrice = sheet.getFinalProduct() != null ? sheet.getFinalProduct().getSellPrice() : null;
                     BigDecimal realMargin = null;
                     if (sellPrice != null && sellPrice.signum() > 0) {
-                        BigDecimal costShare = cost.totalCostWithLabour()
+                        BigDecimal costShare = cost.servingCostWithLabour()
                                 .multiply(new BigDecimal("100"))
                                 .divide(sellPrice, 4, RoundingMode.HALF_UP);
                         realMargin = new BigDecimal("100")

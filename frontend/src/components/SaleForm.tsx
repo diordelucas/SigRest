@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { formatBRL } from '../utils/currency';
+import { formatMoney, formatQuantity } from '../utils/format';
 import { Person, Product } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -92,15 +93,22 @@ const SaleForm = () => {
   const calculateSubtotal = () =>
     sale.items.reduce((sum, item) => sum + (parseFloat(String(item.quantity)) || 0) * (parseFloat(String(item.unitPrice)) || 0), 0);
 
-  const calculateTotal = () => {
-    const total = calculateSubtotal() - (parseFloat(String(sale.discount)) || 0);
-    return Math.max(0, total).toFixed(2);
-  };
+  const discountValue = parseFloat(String(sale.discount)) || 0;
+  const discountTooHigh = discountValue > calculateSubtotal();
+
+  const calculateTotal = () => (calculateSubtotal() - discountValue).toFixed(2);
+
+  // Insumos e produtos intermediários não são vendidos ao cliente.
+  const sellableProducts = products.filter((p) => p.tipo !== 'INSUMO' && p.tipo !== 'PRODUTO_INTERMEDIARIO');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (sale.items.length === 0) {
       toast.error('Adicione pelo menos um item à venda.');
+      return;
+    }
+    if (discountTooHigh) {
+      toast.error('O desconto não pode ser maior que o subtotal da venda.');
       return;
     }
     setSubmitting(true);
@@ -144,17 +152,17 @@ const SaleForm = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="saleform-cliente-opcional" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Cliente <span className="normal-case font-normal text-ink-muted">(opcional)</span>
               </label>
-              <Field
+              <Field id="saleform-cliente-opcional"
                 as="select"
                 name="personId"
                 data-testid="sale-person"
                 value={sale.personId}
                 onChange={handleSaleChange}
               >
-                <option value="">Selecione...</option>
+                <option value="">Consumidor final</option>
                 {people.map((person) => (
                   <option key={person.id} value={person.id}>
                     {person.name}
@@ -163,10 +171,10 @@ const SaleForm = () => {
               </Field>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="saleform-forma-de-pagamento" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Forma de Pagamento
               </label>
-              <Field
+              <Field id="saleform-forma-de-pagamento"
                 as="select"
                 name="paymentMethod"
                 data-testid="sale-payment"
@@ -183,12 +191,12 @@ const SaleForm = () => {
               </Field>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="saleform-desconto" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Desconto
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                <Field
+                <Field id="saleform-desconto"
                   type="number"
                   name="discount"
                   data-testid="sale-discount"
@@ -197,8 +205,12 @@ const SaleForm = () => {
                   className="pl-8"
                   value={sale.discount}
                   onChange={handleSaleChange}
+                  aria-invalid={discountTooHigh}
                 />
               </div>
+              {discountTooHigh && (
+                <p className="text-xs text-rose-500 mt-1">O desconto não pode ser maior que o subtotal.</p>
+              )}
             </div>
           </div>
 
@@ -210,10 +222,10 @@ const SaleForm = () => {
             <div key={index} className="bg-surface-2 border border-line rounded-xl p-4 mb-3">
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
                 <div className="col-span-2 flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                  <label htmlFor={`saleform-produto-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                     Produto
                   </label>
-                  <Field
+                  <Field id={`saleform-produto-${index}`}
                     as="select"
                     name="productId"
                     data-testid="sale-item-product"
@@ -223,18 +235,18 @@ const SaleForm = () => {
                     required
                   >
                     <option value="">Selecione...</option>
-                    {products.map((product) => (
+                    {sellableProducts.map((product) => (
                       <option key={product.id} value={product.id}>
                         {product.name}
-                        {product.categoryName ? ` · ${product.categoryName}` : ''} ({product.storage} un.)
-                        {product.storage <= product.minStorage ? ' ⚠' : ''}
+                        {product.categoryName ? ` · ${product.categoryName}` : ''} ({formatQuantity(product.storage)} un)
+                        {product.minStorage > 0 && product.storage <= product.minStorage ? ' ⚠' : ''}
                       </option>
                     ))}
                   </Field>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Qtd</label>
-                  <Field
+                  <label htmlFor={`saleform-qtd-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Qtd</label>
+                  <Field id={`saleform-qtd-${index}`}
                     type="number"
                     name="quantity"
                     data-testid="sale-item-qty"
@@ -246,16 +258,16 @@ const SaleForm = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                  <label htmlFor={`saleform-preco-unit-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                     Preço Unit.
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                    <Field
+                    <Field id={`saleform-preco-unit-${index}`}
                       type="number"
                       name="unitPrice"
                       step="0.01"
-                      min="0"
+                      min="0.01"
                       className="pl-8 bg-surface"
                       value={item.unitPrice}
                       onChange={(e) => handleItemChange(index, e)}
@@ -266,6 +278,7 @@ const SaleForm = () => {
                 <div className="flex items-end pb-0.5">
                   <button
                     type="button"
+                    aria-label="Remover item"
                     className="p-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
                     onClick={() => handleRemoveItem(index)}
                   >
@@ -296,7 +309,7 @@ const SaleForm = () => {
               </p>
               <div className="w-48 border-t border-line my-1" />
               <p className="text-base font-bold text-primary-600 dark:text-primary-400">
-                Total: R$ {formatBRL(Number(calculateTotal()))}
+                Total: {formatMoney(calculateTotal())}
               </p>
             </div>
           </div>
@@ -305,7 +318,7 @@ const SaleForm = () => {
             <Button
               type="submit"
               data-testid="sale-submit"
-              disabled={submitting}
+              disabled={submitting || discountTooHigh}
               loading={submitting}
               loadingText="Registrando..."
             >

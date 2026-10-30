@@ -17,7 +17,7 @@ public class StockMovementRequestDTO {
     private StockMovement.MovementType type;
 
     @NotNull(message = "informe a quantidade")
-    @DecimalMin(value = "0.01", message = "deve ser maior que zero")
+    @DecimalMin(value = "0.01", message = "a quantidade deve ser maior que zero")
     private BigDecimal quantity;
 
     private LocalDateTime date;

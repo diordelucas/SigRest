@@ -219,6 +219,7 @@ const Sidebar = () => {
     <NavLink
       key={menuItem.path}
       to={menuItem.path}
+      end
       title={collapsed ? menuItem.label : undefined}
       className={({ isActive }) => `
         flex items-center gap-3 rounded-xl transition-all duration-200 group px-3 py-2
@@ -230,7 +231,7 @@ const Sidebar = () => {
       `}
     >
       <span className="transition-transform duration-200 group-hover:scale-110 shrink-0">{menuItem.icon}</span>
-      <span className="text-sm font-medium truncate">{menuItem.label}</span>
+      <span className="text-sm font-medium leading-tight">{menuItem.label}</span>
     </NavLink>
   );
 
@@ -266,7 +267,9 @@ const Sidebar = () => {
                   <NavLink
                     key={entry.item.path}
                     to={entry.item.path}
+                    end
                     title={entry.item.label}
+                    aria-label={entry.item.label}
                     className={({ isActive }) => linkClasses(isActive)}
                   >
                     <span className="transition-transform duration-200 group-hover:scale-110">{entry.item.icon}</span>
@@ -362,7 +365,7 @@ const Sidebar = () => {
           onClick={() => setCollapsed((v) => !v)}
           aria-label={collapsed ? 'Expandir menu' : 'Retrair menu'}
           title={collapsed ? 'Expandir menu' : 'Retrair menu'}
-          className={`flex items-center gap-3 px-3 py-2 w-full rounded-xl text-ink-muted hover:bg-surface-2 hover:text-ink transition-colors font-medium ${
+          className={`hidden lg:flex items-center gap-3 px-3 py-2 w-full rounded-xl text-ink-muted hover:bg-surface-2 hover:text-ink transition-colors font-medium ${
             collapsed ? 'justify-center' : ''
           }`}
         >
@@ -371,6 +374,7 @@ const Sidebar = () => {
         </button>
         <button
           onClick={signOut}
+          aria-label="Sair do Sistema"
           title={collapsed ? 'Sair do Sistema' : undefined}
           className={`flex items-center gap-3 px-3 py-2 w-full rounded-xl text-ink-muted hover:bg-rose-500/10 hover:text-rose-500 transition-colors font-medium group ${
             collapsed ? 'justify-center' : ''

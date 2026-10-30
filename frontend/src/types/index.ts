@@ -13,6 +13,7 @@ export type CashMovementType = 'INCOME' | 'EXPENSE';
 export type ProductionOrderStatus = 'OPEN' | 'FINISHED' | 'CANCELLED';
 export type AccountPayableStatus = 'PENDING' | 'PAID' | 'OVERDUE';
 export type AccountReceivableStatus = 'PENDING' | 'RECEIVED' | 'OVERDUE';
+export type SaleStatus = 'COMPLETED' | 'REVERSED';
 
 /** Espelha ErrorResponse do backend (br.com.sigrest.api.exception). */
 export interface ApiErrorResponse {
@@ -104,6 +105,10 @@ export interface Sale {
   discount: number;
   paymentMethod: string;
   personName: string | null;
+  status: SaleStatus;
+  reversalDate: string | null;
+  reversalReason: string | null;
+  reversedByName: string | null;
   items: SellItem[];
 }
 
@@ -171,6 +176,7 @@ export interface CostCalculation {
   suggestedSellPrice: number;
   rendimento: number;
   perServingCost: number | null;
+  servingCostWithLabour: number;
 }
 
 export interface ProductionOrder {
@@ -190,8 +196,11 @@ export interface CashRegister {
   closingTime: string | null;
   openingBalance: number;
   closingBalance: number | null;
+  countedBalance: number | null;
+  difference: number | null;
   currentBalance: number;
   salesTotal: number;
+  otherPaymentsTotal: number;
   purchasesTotal: number;
   movementsTotal: number;
   openedBy: User | null;

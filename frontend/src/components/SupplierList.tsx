@@ -5,6 +5,9 @@ import { Supplier } from '../types';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
+import { formatCnpj } from '../utils/format';
 
 interface SupplierListProps {
   refreshTrigger: number | boolean;
@@ -16,7 +19,8 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }: SupplierLi
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const fetchSuppliers = async () => {
@@ -34,13 +38,20 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }: SupplierLi
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/supplier/${id}`);
+      toast.success('Fornecedor excluído com sucesso!');
       setSuppliers(suppliers.filter((s) => s.id !== id));
     } catch (error) {
-      setError(getErrorMessage(error, 'Erro ao excluir fornecedor.'));
+      toast.error(getErrorMessage(error, 'Erro ao excluir fornecedor.'));
     } finally {
       setConfirmDelete(null);
     }
   };
+
+  // A busca global chega por aqui: /products?q=nome
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null) setSearch(q);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchSuppliers();
@@ -64,7 +75,7 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }: SupplierLi
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Lista de Fornecedores</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
@@ -73,7 +84,7 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }: SupplierLi
             placeholder="Pesquisar por nome, CNPJ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-64"
+            className="pl-8 py-2 text-sm w-full sm:w-64"
           />
         </div>
       </div>
@@ -104,7 +115,7 @@ const SupplierList = ({ refreshTrigger, onEditSupplier, isReadOnly }: SupplierLi
                 <tr key={s.id} className="hover:bg-surface-2 transition-colors">
                   <td className="px-4 py-3 text-sm text-ink">{s.id}</td>
                   <td className="px-4 py-3 text-sm text-ink">{s.name}</td>
-                  <td className="px-4 py-3 text-sm text-ink">{s.cnpj}</td>
+                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">{formatCnpj(s.cnpj)}</td>
                   <td className="px-4 py-3 text-sm text-ink">{s.email}</td>
                   {!isReadOnly && (
                     <td className="px-4 py-3">

@@ -3,6 +3,7 @@ import CategoryForm from '../components/CategoryForm';
 import CategoryList from '../components/CategoryList';
 import { useAuth } from '../contexts/AuthContext';
 import { Category } from '../types';
+import { scrollMainToTop } from '../utils/format';
 
 export default function Categories() {
   const [updateList, setUpdateList] = useState(false);
@@ -13,7 +14,7 @@ export default function Categories() {
 
   const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollMainToTop();
   };
 
   const handleEditComplete = () => {

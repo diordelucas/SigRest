@@ -3,6 +3,8 @@ import api, { getErrorMessage } from '../services/api';
 import { User, UserRole } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
+import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UserFormProps {
   onUserAdded: () => void;
@@ -16,6 +18,7 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) =
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('OPERADOR');
   const [error, setError] = useState('');
+  const { currentUser, signOut } = useAuth();
 
   useEffect(() => {
     if (editingUser) {
@@ -36,12 +39,24 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) =
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError('');
     const userData = { name, email, password, role };
     try {
       if (editingUser) {
-        setError('Edição de usuário requer um endpoint específico na API (PUT).');
+        await api.put(`/user/${editingUser.id}`, { name, email, role, password: password || undefined });
+        // A sessão guarda e-mail e perfil: se o próprio usuário mudou, ele precisa entrar de novo.
+        const self = currentUser?.email === editingUser.email;
+        if (self && (email.trim().toLowerCase() !== editingUser.email.toLowerCase() || role !== editingUser.role)) {
+          toast.success('Usuário atualizado. Entre novamente para continuar.');
+          signOut();
+          return;
+        }
+        toast.success('Usuário atualizado com sucesso!');
+        clearForm();
+        onEditComplete();
       } else {
         await api.post('/user/signup', userData);
+        toast.success('Usuário cadastrado com sucesso!');
         clearForm();
         onUserAdded();
       }
@@ -52,6 +67,7 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) =
 
   const handleCancel = () => {
     clearForm();
+    setError('');
     if (onEditComplete) onEditComplete();
   };
 
@@ -68,10 +84,10 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) =
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Nome</label>
-            <Field
+            <label htmlFor="userform-nome" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Nome</label>
+            <Field id="userform-nome"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -79,8 +95,8 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) =
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Email</label>
-            <Field
+            <label htmlFor="userform-email" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Email</label>
+            <Field id="userform-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -90,22 +106,24 @@ const UserForm = ({ onUserAdded, editingUser, onEditComplete }: UserFormProps) =
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Senha</label>
-            <Field
+            <label htmlFor="userform-senha" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Senha</label>
+            <Field id="userform-senha"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required={!editingUser}
-              placeholder="••••••••"
+              minLength={6}
+              autoComplete="new-password"
+              placeholder={editingUser ? 'Deixe em branco para manter a atual' : '••••••••'}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="userform-nivel-de-acesso" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Nível de Acesso
             </label>
-            <Field
+            <Field id="userform-nivel-de-acesso"
               as="select"
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}

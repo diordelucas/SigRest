@@ -2,11 +2,15 @@ package br.com.sigrest.api.controller;
 
 import br.com.sigrest.api.dto.SaleRequestDTO;
 import br.com.sigrest.api.dto.SaleResponseDTO;
+import br.com.sigrest.api.dto.SaleReversalRequestDTO;
+import br.com.sigrest.api.entity.User;
 import br.com.sigrest.api.service.SaleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +26,15 @@ public class SaleController {
     public ResponseEntity<SaleResponseDTO> createSale(@Valid @RequestBody SaleRequestDTO saleRequestDTO) {
         SaleResponseDTO createdSale = saleService.createSale(saleRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSale);
+    }
+
+    /** Estorno mexe em estoque e caixa: privilégio de administrador. */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/reversal")
+    public ResponseEntity<SaleResponseDTO> reverseSale(@PathVariable Long id,
+                                                       @Valid @RequestBody SaleReversalRequestDTO data,
+                                                       @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(saleService.reverseSale(id, data.reason().trim(), currentUser));
     }
 
     @GetMapping

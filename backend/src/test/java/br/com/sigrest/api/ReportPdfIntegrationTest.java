@@ -131,7 +131,7 @@ class ReportPdfIntegrationTest {
         compra.setTotal(new BigDecimal("25.00"));
         PurchaseItem itemCompra = new PurchaseItem();
         itemCompra.setProduct(farinha);
-        itemCompra.setQuantity(2);
+        itemCompra.setQuantity(new BigDecimal("2"));
         itemCompra.setUnitPrice(new BigDecimal("12.50"));
         itemCompra.setPurchase(compra);
         compra.getItems().add(itemCompra);
@@ -305,7 +305,7 @@ class ReportPdfIntegrationTest {
         venda.setDate(new Date());
         venda.setPerson(cliente);
         venda.setPaymentMethod(formaPagamento);
-        venda.setDiscount(desconto);
+        venda.setDiscount(BigDecimal.valueOf(desconto));
         venda.setTotal(new BigDecimal(total));
         SellItem item = new SellItem();
         item.setProduct(produto);

@@ -18,5 +18,6 @@ public class StockMovementReportDTO {
     private StockMovement.MovementType type;
     private BigDecimal quantity;
     private String description;
+    private String baseUnit;
 }
 

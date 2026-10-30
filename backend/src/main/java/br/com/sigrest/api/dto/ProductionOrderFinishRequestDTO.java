@@ -8,6 +8,6 @@ import jakarta.validation.constraints.PositiveOrZero;
  * assume que a produção rendeu exatamente o planejado — comportamento anterior a este DTO.
  */
 public record ProductionOrderFinishRequestDTO(
-        @PositiveOrZero(message = "não pode ser negativa") Integer actualQuantity,
+        @PositiveOrZero(message = "a quantidade real não pode ser negativa") Integer actualQuantity,
         LossReason lossReason
 ) {}

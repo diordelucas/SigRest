@@ -94,6 +94,36 @@ public class AccountReceivableService {
         return convertToResponseDTO(updatedAccount);
     }
 
+    /** Desfaz o recebimento: a conta volta a ficar em aberto e o valor sai do caixa aberto. */
+    @Transactional
+    public AccountReceivableResponseDTO undoReceipt(Long id, User currentUser) {
+        AccountReceivable accountReceivable = accountReceivableRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REC_NAO_ENCONTRADA));
+        if (accountReceivable.getStatus() != AccountReceivable.Status.RECEIVED) {
+            throw new BusinessException(ErrorCode.REC_NAO_RECEBIDA);
+        }
+        CashRegister cashRegister = cashRegisterRepository.findByIsOpenTrue()
+                .orElseThrow(() -> new BusinessException(ErrorCode.CASH_NAO_ABERTO,
+                        "Abra o caixa antes de desfazer o recebimento."));
+
+        accountReceivable.setReceiptDate(null);
+        accountReceivable.setStatus(AccountReceivable.Status.PENDING);
+        AccountReceivable updatedAccount = accountReceivableRepository.save(accountReceivable);
+
+        CashMovement movement = new CashMovement();
+        movement.setCashRegister(cashRegister);
+        movement.setDate(LocalDateTime.now());
+        movement.setType(CashMovement.MovementType.EXPENSE);
+        movement.setAmount(accountReceivable.getAmount());
+        movement.setDescription("Recebimento desfeito: " + accountReceivable.getDescription());
+        movement.setUser(currentUser);
+        cashMovementRepository.save(movement);
+
+        logAtividadeService.registrar("DESFAZER_RECEBIMENTO", "AccountReceivable", accountReceivable.getId(),
+                "Recebimento desfeito: " + accountReceivable.getDescription(), currentUser);
+        return convertToResponseDTO(updatedAccount);
+    }
+
     @Transactional(readOnly = true)
     public List<AccountReceivableResponseDTO> getAllAccountReceivables() {
         return accountReceivableRepository.findAll().stream()

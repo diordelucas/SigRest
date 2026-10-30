@@ -3,6 +3,7 @@ import ProductForm from '../components/ProductForm';
 import ProductList from '../components/ProductList';
 import { useAuth } from '../contexts/AuthContext';
 import { Product } from '../types';
+import { scrollMainToTop } from '../utils/format';
 
 export default function Products() {
   const [updateList, setUpdateList] = useState(false);
@@ -13,7 +14,7 @@ export default function Products() {
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollMainToTop();
   };
 
   const handleEditComplete = () => {

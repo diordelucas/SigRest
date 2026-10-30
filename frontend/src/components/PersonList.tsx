@@ -6,6 +6,9 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
+import { formatCpf, formatPhone, onlyDigits } from '../utils/format';
 
 interface PersonListProps {
   refreshTrigger: number | boolean;
@@ -17,7 +20,8 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }: PersonListProp
   const [persons, setPersons] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const fetchPersons = async () => {
@@ -36,13 +40,20 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }: PersonListProp
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/person/${id}`);
+      toast.success('Cliente excluído com sucesso!');
       setPersons(persons.filter((person) => person.id !== id));
     } catch (error) {
-      setError(getErrorMessage(error, 'Erro ao excluir cliente.'));
+      toast.error(getErrorMessage(error, 'Erro ao excluir cliente.'));
     } finally {
       setConfirmDelete(null);
     }
   };
+
+  // A busca global chega por aqui: /products?q=nome
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null) setSearch(q);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPersons();
@@ -61,14 +72,14 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }: PersonListProp
 
   const filtered = persons.filter((person) => {
     const q = search.toLowerCase();
-    return [person.name, person.cpf, person.phone, person.email, person.city, person.uf].some((v) =>
-      (v ?? '').toLowerCase().includes(q)
-    );
+    const digits = onlyDigits(search);
+    if (digits && (onlyDigits(person.cpf).includes(digits) || onlyDigits(person.phone).includes(digits))) return true;
+    return [person.name, person.email, person.city, person.uf].some((v) => (v ?? '').toLowerCase().includes(q));
   });
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Lista de Clientes</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
@@ -77,7 +88,7 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }: PersonListProp
             placeholder="Pesquisar por nome, CPF, cidade..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-72"
+            className="pl-8 py-2 text-sm w-full sm:w-72"
           />
         </div>
       </div>
@@ -112,8 +123,8 @@ const PersonList = ({ refreshTrigger, onEditPerson, isReadOnly }: PersonListProp
                 <tr key={person.id} className="hover:bg-surface-2 transition-colors">
                   <td className="px-4 py-3 text-sm text-ink">{person.id}</td>
                   <td className="px-4 py-3 text-sm text-ink">{person.name}</td>
-                  <td className="px-4 py-3 text-sm text-ink">{person.cpf}</td>
-                  <td className="px-4 py-3 text-sm text-ink">{person.phone}</td>
+                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">{formatCpf(person.cpf)}</td>
+                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">{formatPhone(person.phone)}</td>
                   <td className="px-4 py-3 text-sm text-ink">{person.email}</td>
                   <td className="px-4 py-3 text-sm text-ink">
                     {person.street && person.number && person.nbhd

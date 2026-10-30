@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api, { getErrorMessage } from '../services/api';
-import { formatBRL } from '../utils/currency';
+import { formatDate, formatMoney } from '../utils/format';
 import { Purchase } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -19,7 +19,7 @@ const PurchaseList = () => {
     const fetchPurchases = async () => {
       try {
         const response = await api.get<Purchase[]>('/purchases');
-        setPurchases(response.data);
+        setPurchases([...response.data].sort((a, b) => b.id - a.id));
       } catch (err) {
         setError(getErrorMessage(err, 'Erro ao carregar compras.'));
       } finally {
@@ -43,15 +43,14 @@ const PurchaseList = () => {
 
   const filtered = purchases.filter((purchase) => {
     const q = search.toLowerCase();
-    const dateStr = purchase.date ? new Date(purchase.date).toLocaleDateString() : '';
-    return [purchase.supplier?.name, dateStr].some((v) => (v ?? '').toLowerCase().includes(q));
+    return [purchase.supplier?.name, formatDate(purchase.date)].some((v) => (v ?? '').toLowerCase().includes(q));
   });
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h2 className="text-lg font-semibold text-ink">Lista de Compras</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
             <Field
@@ -59,7 +58,7 @@ const PurchaseList = () => {
               placeholder="Pesquisar fornecedor, data..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 py-2 text-sm w-56"
+              className="pl-8 py-2 text-sm w-full sm:w-64"
             />
           </div>
           <Button onClick={() => navigate('/purchases/new')}>
@@ -88,12 +87,12 @@ const PurchaseList = () => {
                 {filtered.map((purchase) => (
                   <tr key={purchase.id} className="hover:bg-surface-2 transition-colors">
                     <td className="px-4 py-3 text-sm text-ink">{purchase.id}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{new Date(purchase.date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{purchase.supplier ? purchase.supplier.name : 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">R$ {formatBRL(purchase.total ?? 0)}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{formatDate(purchase.date)}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{purchase.supplier ? purchase.supplier.name : 'Não informado'}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(purchase.total)}</td>
                     <td className="px-4 py-3">
                       <button
-                        className="px-3 py-1.5 text-xs border border-line text-ink font-semibold rounded-lg hover:bg-surface-2 transition-colors"
+                        className="px-3 py-1.5 text-xs border border-line text-ink font-semibold rounded-lg hover:bg-surface-2 transition-colors whitespace-nowrap"
                         onClick={() => navigate(`/purchases/${purchase.id}`)}
                       >
                         Ver Detalhes

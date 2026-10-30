@@ -1,9 +1,11 @@
 package br.com.sigrest.api.controller;
 
+import br.com.sigrest.api.dto.ChangePasswordRequestDTO;
 import br.com.sigrest.api.dto.LoginDTO;
 import br.com.sigrest.api.dto.LoginResponseDTO;
 import br.com.sigrest.api.dto.UserRequestDTO;
 import br.com.sigrest.api.dto.UserResponseDTO;
+import br.com.sigrest.api.dto.UserUpdateRequestDTO;
 import br.com.sigrest.api.entity.User;
 import br.com.sigrest.api.security.LoginRateLimiter;
 import br.com.sigrest.api.security.TokenService;
@@ -13,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -65,9 +68,24 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequestDTO dto,
+                                                  @AuthenticationPrincipal User currentUser){
+        return ResponseEntity.ok(new UserResponseDTO(userService.update(id, dto, currentUser)));
+    }
+
+    /** Qualquer usuário autenticado troca a própria senha, informando a atual. */
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changeOwnPassword(@Valid @RequestBody ChangePasswordRequestDTO dto,
+                                                  @AuthenticationPrincipal User currentUser){
+        userService.changeOwnPassword(currentUser, dto.currentPassword(), dto.newPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        userService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal User currentUser){
+        userService.delete(id, currentUser);
         return ResponseEntity.noContent().build();
     }
 }

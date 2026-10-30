@@ -2,6 +2,7 @@ package br.com.sigrest.api.dto;
 
 import br.com.sigrest.api.entity.Sale;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -14,7 +15,7 @@ public record SaleRequestDTO(
         Long id,
         Date date,
         BigDecimal total,
-        Integer discount,
+        @DecimalMin(value = "0.0", message = "o desconto não pode ser negativo") BigDecimal discount,
         @NotBlank(message = "informe a forma de pagamento") String paymentMethod,
         Long personId,
         @NotEmpty(message = "adicione ao menos um item") @Valid List<SellItemRequestDTO> items,

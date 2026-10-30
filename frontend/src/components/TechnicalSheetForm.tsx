@@ -1,6 +1,9 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { ArrowLeft, Save, Plus, Trash2, Calculator } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
+import { formatBRL } from '../utils/currency';
+import { formatQuantity, formatUnitCost } from '../utils/format';
 import { Product, TechnicalSheet, CostCalculation } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -15,10 +18,14 @@ const UDM_OPTIONS = [
   { value: 'DUZIA', label: 'DZ' },
 ];
 
-const formatBRL = (value: number | string): string => {
-  const num = typeof value === 'number' ? value : parseFloat(value);
-  if (isNaN(num)) return '0,00';
-  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+// Frango comprado em kg pode entrar na receita em g ou kg, nunca em litros.
+const COMPATIBLE_UNITS: Record<string, string[]> = {
+  G: ['G', 'KG'],
+  KG: ['G', 'KG'],
+  ML: ['ML', 'L'],
+  L: ['ML', 'L'],
+  UN: ['UN', 'DUZIA'],
+  DUZIA: ['UN', 'DUZIA'],
 };
 
 interface TechnicalSheetItemForm {
@@ -95,9 +102,18 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
     setItems([...items, { rawMaterialId: '', quantity: '', unit: '' }]);
   };
 
+  const purchaseUnitOf = (rawMaterialId: string) =>
+    products.find((p) => String(p.id) === String(rawMaterialId))?.purchaseUnit ?? null;
+
   const updateItem = (index: number, field: keyof TechnicalSheetItemForm, value: string) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
+    if (field === 'rawMaterialId') {
+      const purchaseUnit = purchaseUnitOf(value);
+      if (purchaseUnit && !COMPATIBLE_UNITS[purchaseUnit].includes(newItems[index].unit)) {
+        newItems[index].unit = purchaseUnit;
+      }
+    }
     setItems(newItems);
   };
 
@@ -119,6 +135,12 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
     }
     if (items.length === 0) {
       setError('Adicione pelo menos um insumo na ficha técnica.');
+      setLoading(false);
+      return;
+    }
+
+    if ((parseFloat(variableExpensesPercent) || 0) + (parseFloat(desiredMarginPercent) || 0) >= 100) {
+      setError('Despesas variáveis e margem desejada, somadas, precisam ficar abaixo de 100%.');
       setLoading(false);
       return;
     }
@@ -169,6 +191,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
       } else {
         await api.post('/technical-sheet', data);
       }
+      toast.success('Ficha técnica salva com sucesso!');
       onSaveSuccess();
     } catch (err) {
       setError(getErrorMessage(err, 'Erro ao salvar ficha técnica. Verifique se o produto final já possui uma ficha cadastrada.'));
@@ -182,6 +205,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
+          aria-label="Voltar para a lista de fichas técnicas"
           className="p-2 border border-line text-ink-muted rounded-lg hover:bg-surface-2 transition-colors"
           onClick={onCancel}
         >
@@ -199,10 +223,10 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="technicalsheetform-nome-da-receita-ficha" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Nome da Receita / Ficha
             </label>
-            <Field
+            <Field id="technicalsheetform-nome-da-receita-ficha"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -210,35 +234,39 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="technicalsheetform-produto-final-marmita-acabado" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Produto Final (Marmita / Acabado)
             </label>
-            <Field
+            <Field id="technicalsheetform-produto-final-marmita-acabado"
               as="select"
               value={finalProductId}
               onChange={(e) => setFinalProductId(e.target.value)}
               required
             >
               <option value="">Selecione o produto final...</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
+              {products
+                .filter((p) => p.tipo !== 'INSUMO')
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="technicalsheetform-rendimento-porcoes" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Rendimento (Porções)
             </label>
-            <Field
+            <Field id="technicalsheetform-rendimento-porcoes"
               type="number"
               min="1"
+              step="1"
               value={rendimento}
               onChange={(e) => setRendimento(e.target.value)}
               placeholder="Ex: 10"
+              required
             />
-            <p className="text-xs text-ink-muted mt-1">Quantas porções esta receita produz.</p>
+            <p className="text-xs text-ink-muted mt-1">Quantas porções as quantidades abaixo produzem.</p>
           </div>
         </div>
 
@@ -290,7 +318,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                         <Field
                           type="number"
                           step="any"
-                          min="0"
+                          min="0.01"
                           className="w-[110px]"
                           value={item.quantity}
                           onChange={(e) => updateItem(index, 'quantity', e.target.value)}
@@ -302,9 +330,13 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                           className="w-[80px]"
                           value={item.unit}
                           onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                          required={!!purchaseUnitOf(item.rawMaterialId)}
                         >
                           <option value="">—</option>
-                          {UDM_OPTIONS.map((u) => (
+                          {UDM_OPTIONS.filter((u) => {
+                            const purchaseUnit = purchaseUnitOf(item.rawMaterialId);
+                            return !purchaseUnit || COMPATIBLE_UNITS[purchaseUnit].includes(u.value);
+                          }).map((u) => (
                             <option key={u.value} value={u.value}>
                               {u.label}
                             </option>
@@ -318,6 +350,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                         className="p-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
                         onClick={() => removeItem(index)}
                         title="Remover Insumo"
+                        aria-label="Remover Insumo"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -332,10 +365,10 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
         <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wider mb-3">Precificação</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="technicalsheetform-custo-de-mao-de-obra" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Custo de Mão de Obra (%)
             </label>
-            <Field
+            <Field id="technicalsheetform-custo-de-mao-de-obra"
               type="number"
               step="0.01"
               min="0"
@@ -346,10 +379,10 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="technicalsheetform-despesas-variaveis" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Despesas Variáveis (%)
             </label>
-            <Field
+            <Field id="technicalsheetform-despesas-variaveis"
               type="number"
               step="0.01"
               min="0"
@@ -361,10 +394,10 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
             <p className="text-xs text-ink-muted mt-1">Impostos, taxas de cartão, etc.</p>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="technicalsheetform-margem-desejada" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Margem Desejada (%)
             </label>
-            <Field
+            <Field id="technicalsheetform-margem-desejada"
               type="number"
               step="0.01"
               min="0"
@@ -417,10 +450,10 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                       {costResult.itemCosts.map((ic) => (
                         <tr key={ic.itemId}>
                           <td className="py-1.5 pr-2 text-ink">{ic.rawMaterialName}</td>
-                          <td className="py-1.5 pr-2 text-right text-ink-muted">{ic.quantity}</td>
+                          <td className="py-1.5 pr-2 text-right text-ink-muted">{formatQuantity(ic.quantity)}</td>
                           <td className="py-1.5 pr-2 text-ink-muted">{ic.unit || '—'}</td>
-                          <td className="py-1.5 pr-2 text-right text-ink-muted font-mono text-xs">
-                            R$ {Number(ic.costPerBaseUnit).toFixed(6)}
+                          <td className="py-1.5 pr-2 text-right text-ink-muted text-xs whitespace-nowrap">
+                            {formatUnitCost(ic.costPerBaseUnit)}
                           </td>
                           <td className="py-1.5 text-right font-semibold text-ink">R$ {formatBRL(ic.itemCost)}</td>
                         </tr>
@@ -431,23 +464,21 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-line">
                   <div className="p-2 bg-surface rounded-lg border border-line">
-                    <p className="text-xs text-ink-muted mb-0.5">Custo Ingredientes</p>
+                    <p className="text-xs text-ink-muted mb-0.5">Ingredientes (receita)</p>
                     <p className="font-semibold text-ink text-sm">R$ {formatBRL(costResult.ingredientsTotalCost)}</p>
                   </div>
                   <div className="p-2 bg-surface rounded-lg border border-line">
-                    <p className="text-xs text-ink-muted mb-0.5">Custo c/ Mão de Obra</p>
+                    <p className="text-xs text-ink-muted mb-0.5">Com Mão de Obra (receita)</p>
                     <p className="font-semibold text-ink text-sm">R$ {formatBRL(costResult.totalCostWithLabour)}</p>
                   </div>
                   <div className="p-2 bg-surface rounded-lg border border-line">
                     <p className="text-xs text-ink-muted mb-0.5">Custo por Porção</p>
                     <p className="font-semibold text-ink text-sm">
-                      {costResult.rendimento && costResult.perServingCost != null
-                        ? `R$ ${formatBRL(costResult.perServingCost)}`
-                        : '—'}
+                      R$ {formatBRL(costResult.servingCostWithLabour)}
                     </p>
                   </div>
                   <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <p className="text-xs text-emerald-600 font-semibold mb-0.5">Preço Sugerido de Venda</p>
+                    <p className="text-xs text-emerald-600 font-semibold mb-0.5">Preço Sugerido por Porção</p>
                     <p className="font-extrabold text-emerald-700 text-lg">
                       R$ {formatBRL(costResult.suggestedSellPrice)}
                     </p>

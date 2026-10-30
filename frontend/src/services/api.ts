@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { ApiErrorResponse } from '../types';
 
+/** Disparado depois de qualquer gravação bem-sucedida: o sino de alertas se atualiza ao ouvir. */
+export const DATA_CHANGED_EVENT = 'sigrest:data-changed';
+
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080',
 });
@@ -55,7 +58,13 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toLowerCase();
+    if (method && method !== 'get' && !response.config.url?.includes('/user/login')) {
+      window.dispatchEvent(new Event(DATA_CHANGED_EVENT));
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('@sigrest:token');

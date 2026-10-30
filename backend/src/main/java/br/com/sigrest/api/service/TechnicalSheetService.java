@@ -5,6 +5,8 @@ import br.com.sigrest.api.dto.TechnicalSheetItemRequestDTO;
 import br.com.sigrest.api.dto.TechnicalSheetRequestDTO;
 import br.com.sigrest.api.dto.TechnicalSheetResponseDTO;
 import br.com.sigrest.api.entity.Product;
+import br.com.sigrest.api.entity.ProductType;
+import br.com.sigrest.api.entity.UnitOfMeasure;
 import br.com.sigrest.api.entity.TechnicalSheet;
 import br.com.sigrest.api.entity.TechnicalSheetItem;
 import br.com.sigrest.api.exception.BusinessException;
@@ -58,6 +60,9 @@ public class TechnicalSheetService {
 
         Product finalProduct = productRepository.findById(dto.finalProductId())
             .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO));
+        if (finalProduct.getTipo() == ProductType.INSUMO) {
+            throw new BusinessException(ErrorCode.TECH_PRODUTO_FINAL_INVALIDO);
+        }
         sheet.setFinalProduct(finalProduct);
 
         if (sheet.getItems() == null) {
@@ -70,8 +75,10 @@ public class TechnicalSheetService {
             for (TechnicalSheetItemRequestDTO itemDto : dto.items()) {
                 TechnicalSheetItem item = new TechnicalSheetItem();
                 item.setTechnicalSheet(sheet);
-                item.setRawMaterial(productRepository.findById(itemDto.rawMaterialId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO, "Insumo não encontrado: " + itemDto.rawMaterialId())));
+                Product rawMaterial = productRepository.findById(itemDto.rawMaterialId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO, "Insumo não encontrado: " + itemDto.rawMaterialId()));
+                validateUnit(rawMaterial, itemDto.unit());
+                item.setRawMaterial(rawMaterial);
                 item.setQuantity(itemDto.quantity());
                 item.setUnit(itemDto.unit());
                 sheet.getItems().add(item);
@@ -79,6 +86,17 @@ public class TechnicalSheetService {
         }
 
         return new TechnicalSheetResponseDTO(repository.save(sheet));
+    }
+
+    /** Frango comprado em kg não pode entrar na receita em litros: a conta de custo e de estoque não faria sentido. */
+    private void validateUnit(Product rawMaterial, UnitOfMeasure unit) {
+        UnitOfMeasure purchaseUnit = rawMaterial.getPurchaseUnit();
+        if (purchaseUnit != null && unit != null
+                && !purchaseUnit.getBaseUnitLabel().equals(unit.getBaseUnitLabel())) {
+            throw new BusinessException(ErrorCode.TECH_UNIDADE_INCOMPATIVEL,
+                    "A unidade de " + rawMaterial.getName() + " é incompatível: o insumo é comprado em "
+                            + purchaseUnit.name() + " e a receita usa " + unit.name() + ".");
+        }
     }
 
     @Transactional
@@ -148,9 +166,14 @@ public class TechnicalSheetService {
                 .subtract(varExp.add(margin))
                 .divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP);
 
+        // A ficha descreve a receita inteira; o preço sugerido é o de uma porção, que é o que se vende.
+        int portions = sheet.getRendimento() != null && sheet.getRendimento() > 0 ? sheet.getRendimento() : 1;
+        BigDecimal servingCostWithLabour = totalCostWithLabour
+                .divide(new BigDecimal(portions), 4, RoundingMode.HALF_UP);
+
         BigDecimal suggestedSellPrice = BigDecimal.ZERO;
         if (markupIndex.compareTo(BigDecimal.ZERO) > 0) {
-            suggestedSellPrice = totalCostWithLabour.divide(markupIndex, 2, RoundingMode.HALF_UP);
+            suggestedSellPrice = servingCostWithLabour.divide(markupIndex, 2, RoundingMode.HALF_UP);
         }
 
         BigDecimal perServingCost = BigDecimal.ZERO;
@@ -170,7 +193,8 @@ public class TechnicalSheetService {
                 totalCostWithLabour,
                 suggestedSellPrice,
                 sheet.getRendimento(),
-                perServingCost
+                perServingCost,
+                servingCostWithLabour
         );
     }
 }

@@ -8,6 +8,7 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import { useAuth } from '../contexts/AuthContext';
 
 const getStatusBadge = (status: ProductionOrderStatus | string) => {
   switch (status) {
@@ -49,6 +50,8 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [search, setSearch] = useState('');
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
   const [finishOrder, setFinishOrder] = useState<ProductionOrder | null>(null);
   const [finishActualQuantity, setFinishActualQuantity] = useState('');
   const [finishLossReason, setFinishLossReason] = useState<LossReason | ''>('');
@@ -81,6 +84,10 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
     const actual = finishActualQuantity === '' ? finishOrder.quantity : Number(finishActualQuantity);
     if (isNaN(actual) || actual < 0) {
       setFinishError('A quantidade real deve ser um número maior ou igual a zero.');
+      return;
+    }
+    if (actual > finishOrder.quantity) {
+      setFinishError('A quantidade real não pode ser maior que a planejada. Se produziu a mais, abra outra ordem.');
       return;
     }
     if (actual < finishOrder.quantity && !finishLossReason) {
@@ -139,9 +146,9 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex justify-between items-center mb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Ordens de Produção</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
             <Field
@@ -149,7 +156,7 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
               placeholder="Pesquisar produto, status..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 py-2 text-sm w-56"
+              className="pl-8 py-2 text-sm w-full sm:w-56"
             />
           </div>
           <Button onClick={onNewOrder}>
@@ -224,13 +231,16 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
                           <CheckCircle2 size={12} /> Finalizar
                         </button>
                       )}
-                      <button
-                        className="p-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
-                        onClick={() => setConfirmDelete(order.id)}
-                        title="Excluir Ordem"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {isAdmin && (
+                        <button
+                          className="p-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
+                          onClick={() => setConfirmDelete(order.id)}
+                          title="Excluir Ordem"
+                          aria-label="Excluir Ordem"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -259,12 +269,13 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
             )}
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                <label htmlFor="productionorderlist-quantidade-real-produzida-planejado" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
                   Quantidade real produzida (planejado: {finishOrder.quantity})
                 </label>
-                <Field
+                <Field id="productionorderlist-quantidade-real-produzida-planejado"
                   type="number"
                   min="0"
+                  max={finishOrder.quantity}
                   step="1"
                   value={finishActualQuantity}
                   onChange={(e) => setFinishActualQuantity(e.target.value)}
@@ -272,10 +283,10 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
               </div>
               {Number(finishActualQuantity) < finishOrder.quantity && (
                 <div className="flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                  <label htmlFor="productionorderlist-motivo-da-quebra" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
                     Motivo da quebra
                   </label>
-                  <Field
+                  <Field id="productionorderlist-motivo-da-quebra"
                     as="select"
                     value={finishLossReason}
                     onChange={(e) => setFinishLossReason(e.target.value as LossReason)}

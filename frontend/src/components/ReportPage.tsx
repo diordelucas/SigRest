@@ -20,6 +20,7 @@ import { lossReasonLabel } from '../utils/lossReason';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import { Table, Th } from './ui/Table';
+import { formatMoney, formatMonth, formatQuantity } from '../utils/format';
 
 type ReportType =
   | ''
@@ -83,8 +84,17 @@ const ReportPage = () => {
     setError(null);
   };
 
+  const periodIsValid = () => {
+    if (selected?.usesPeriod && startDate > endDate) {
+      setReportData(null);
+      setError('A data inicial não pode ser posterior à data final.');
+      return false;
+    }
+    return true;
+  };
+
   const handleExportPdf = async (mode: 'open' | 'download') => {
-    if (!selected) return;
+    if (!selected || !periodIsValid()) return;
     setPdfLoading(true);
     setError(null);
 
@@ -115,6 +125,7 @@ const ReportPage = () => {
   };
 
   const handleGenerateReport = async () => {
+    if (!periodIsValid()) return;
     setLoading(true);
     setError(null);
     setReportData(null);
@@ -136,7 +147,7 @@ const ReportPage = () => {
               endMonth: moment(endDate).endOf('month').format('YYYY-MM-DD'),
             },
           });
-          setReportData(response.data.map((item: any) => ({ ...item, month: moment(item.month).format('MMM YYYY') })));
+          setReportData(response.data.map((item: any) => ({ ...item, month: formatMonth(item.month) })));
           break;
         case 'stock-movement':
           response = await api.get('/reports/stock-movement', { params: { startDate, endDate } });
@@ -146,7 +157,7 @@ const ReportPage = () => {
           break;
         case 'financial-flow':
           response = await api.get('/reports/financial-flow', { params: { startDate, endDate } });
-          setReportData(response.data.map((item: any) => ({ ...item, month: item.month })));
+          setReportData(response.data.map((item: any) => ({ ...item, month: formatMonth(item.month) })));
           break;
         case 'purchase-history':
           response = await api.get('/reports/purchase-history', { params: { startDate, endDate } });
@@ -198,7 +209,12 @@ const ReportPage = () => {
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={reportData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-line))" />
-              <XAxis dataKey="productName" tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-muted))' }} />
+              <XAxis
+                dataKey="productName"
+                interval={0}
+                tickFormatter={(name: string) => (name.length > 16 ? `${name.slice(0, 15)}…` : name)}
+                tick={{ fontSize: 11, fill: 'rgb(var(--color-ink-muted))' }}
+              />
               <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-muted))' }} />
               <Tooltip />
               <Legend />
@@ -246,7 +262,7 @@ const ReportPage = () => {
                         {movement.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">{movement.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatQuantity(movement.quantity)} {movement.baseUnit}</td>
                     <td className="px-4 py-3 text-sm text-ink">{movement.description}</td>
                   </tr>
                 ))}
@@ -294,7 +310,7 @@ const ReportPage = () => {
                           row.saldo >= 0 ? 'text-ink' : 'text-orange-600'
                         }`}
                       >
-                        R$ {formatBRL(row.saldo)}
+                        {formatMoney(row.saldo)}
                       </td>
                     </tr>
                   ))}
@@ -334,19 +350,15 @@ const ReportPage = () => {
           </div>
         );
       case 'loss': {
-        const totalQuantity = reportData.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
-        const totalProducao = reportData
-          .filter((r) => r.source === 'PRODUCAO')
-          .reduce((sum, r) => sum + Number(r.quantity || 0), 0);
-        const totalEstoque = reportData
-          .filter((r) => r.source === 'ESTOQUE')
-          .reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+        // Conta ocorrências: as quantidades vêm em unidades diferentes (un, g, ml) e não podem ser somadas.
+        const totalProducao = reportData.filter((r) => r.source === 'PRODUCAO').length;
+        const totalEstoque = reportData.filter((r) => r.source === 'ESTOQUE').length;
         return (
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="card p-4">
-                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Quebra Total</p>
-                <p className="text-xl font-bold text-ink">{totalQuantity}</p>
+                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Ocorrências</p>
+                <p className="text-xl font-bold text-ink">{reportData.length}</p>
               </div>
               <div className="card p-4">
                 <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Quebra de Produção</p>
@@ -383,7 +395,7 @@ const ReportPage = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-ink">{row.productName}</td>
                     <td className="px-4 py-3 text-sm text-ink">{lossReasonLabel(row.reason)}</td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">{row.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(row.quantity)}</td>
                     <td className="px-4 py-3 text-sm text-ink">{row.description}</td>
                   </tr>
                 ))}
@@ -411,10 +423,10 @@ const ReportPage = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="reportpage-tipo-de-relatorio" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Tipo de Relatório
             </label>
-            <Field
+            <Field id="reportpage-tipo-de-relatorio"
               as="select"
               value={reportType}
               onChange={(e) => handleChangeReportType(e.target.value as ReportType)}
@@ -434,10 +446,10 @@ const ReportPage = () => {
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="reportpage-data-inicial" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Data Inicial
             </label>
-            <Field
+            <Field id="reportpage-data-inicial"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -445,10 +457,10 @@ const ReportPage = () => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="reportpage-data-final" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Data Final
             </label>
-            <Field
+            <Field id="reportpage-data-final"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}

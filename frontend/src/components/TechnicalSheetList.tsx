@@ -6,6 +6,7 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import toast from 'react-hot-toast';
 
 interface TechnicalSheetListProps {
   refreshTrigger: number | boolean;
@@ -37,9 +38,10 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/technical-sheet/${id}`);
+      toast.success('Ficha técnica excluída com sucesso!');
       setSheets(sheets.filter((s) => s.id !== id));
     } catch (err) {
-      setError(getErrorMessage(err, 'Erro ao excluir ficha técnica.'));
+      toast.error(getErrorMessage(err, 'Erro ao excluir ficha técnica.'));
     } finally {
       setConfirmDelete(null);
     }
@@ -65,9 +67,9 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex justify-between items-center mb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Fichas Técnicas (Receitas)</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
             <Field
@@ -75,7 +77,7 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
               placeholder="Pesquisar..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 py-2 text-sm w-56"
+              className="pl-8 py-2 text-sm w-full sm:w-56"
             />
           </div>
           {!isReadOnly && (
@@ -125,6 +127,7 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
                           className="p-1.5 border border-line text-ink rounded-lg hover:bg-surface-2 transition-colors"
                           onClick={() => onEditSheet(sheet)}
                           title="Editar Ficha"
+                          aria-label="Editar Ficha"
                         >
                           <Pencil size={14} />
                         </button>
@@ -132,6 +135,7 @@ const TechnicalSheetList = ({ refreshTrigger, onEditSheet, onNewSheet, isReadOnl
                           className="p-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
                           onClick={() => setConfirmDelete(sheet.id)}
                           title="Excluir Ficha"
+                          aria-label="Excluir Ficha"
                         >
                           <Trash2 size={14} />
                         </button>

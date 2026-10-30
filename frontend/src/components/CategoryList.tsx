@@ -5,6 +5,7 @@ import { Category } from '../types';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import toast from 'react-hot-toast';
 
 interface CategoryListProps {
   refreshTrigger: number | boolean;
@@ -34,9 +35,10 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }: CategoryLi
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/category/${id}`);
+      toast.success('Categoria excluída com sucesso!');
       setCategories(categories.filter((c) => c.id !== id));
     } catch (error) {
-      setError(getErrorMessage(error, 'Erro ao excluir categoria.'));
+      toast.error(getErrorMessage(error, 'Erro ao excluir categoria.'));
     } finally {
       setConfirmDelete(null);
     }
@@ -64,7 +66,7 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }: CategoryLi
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Lista de Categorias</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
@@ -73,7 +75,7 @@ const CategoryList = ({ refreshTrigger, onEditCategory, isReadOnly }: CategoryLi
             placeholder="Pesquisar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-64"
+            className="pl-8 py-2 text-sm w-full sm:w-64"
           />
         </div>
       </div>

@@ -14,7 +14,7 @@ public record TechnicalSheetRequestDTO(
         @NotBlank(message = "informe o nome da ficha") String name,
         @NotNull(message = "selecione o produto final") Long finalProductId,
         @NotEmpty(message = "adicione ao menos um insumo") @Valid List<TechnicalSheetItemRequestDTO> items,
-        @NotNull(message = "informe o rendimento") @Positive(message = "deve ser maior que zero") Integer rendimento,
+        @NotNull(message = "informe o rendimento") @Positive(message = "o rendimento deve ser maior que zero") Integer rendimento,
         BigDecimal labourCostPercent,
         BigDecimal variableExpensesPercent,
         BigDecimal desiredMarginPercent

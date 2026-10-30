@@ -8,6 +8,7 @@ import { CPF_MASK, PHONE_MASK, CEP_MASK } from '../utils/masks';
 import { Person } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
+import { isValidPhone, isValidUF } from '../utils/format';
 
 interface PersonFormProps {
   onUserAdded: () => void;
@@ -72,6 +73,14 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
     }
     if (rawCpf.length !== 11) {
       toast.error('CPF inválido. Verifique os dígitos.');
+      return false;
+    }
+    if (!isValidPhone(phone)) {
+      toast.error('Telefone inválido. Informe o DDD e o número.');
+      return false;
+    }
+    if (!isValidUF(uf)) {
+      toast.error('UF inválida. Informe a sigla de um estado brasileiro.');
       return false;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
@@ -139,12 +148,12 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
       </h2>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="personform-nome-completo" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Nome Completo
             </label>
-            <Field
+            <Field id="personform-nome-completo"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -152,8 +161,8 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CPF</label>
-            <IMaskInput
+            <label htmlFor="personform-cpf" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CPF</label>
+            <IMaskInput id="personform-cpf"
               mask={CPF_MASK}
               value={cpf}
               onAccept={(value: string) => setCpf(value)}
@@ -163,12 +172,12 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="personform-telefone" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Telefone
             </label>
-            <IMaskInput
+            <IMaskInput id="personform-telefone"
               mask={PHONE_MASK}
               value={phone}
               onAccept={(value: string) => setPhone(value)}
@@ -177,10 +186,10 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="personform-e-mail" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               E-mail
             </label>
-            <Field
+            <Field id="personform-e-mail"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -193,11 +202,11 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
           <span className="text-xs text-ink-muted font-medium">ENDEREÇO</span>
         </div>
 
-        <div className="flex gap-4 mb-4">
-          <div className="flex flex-col gap-1 w-[180px]">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CEP</label>
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex flex-col gap-1 w-full sm:w-[180px]">
+            <label htmlFor="personform-cep" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CEP</label>
             <div className="relative">
-              <IMaskInput
+              <IMaskInput id="personform-cep"
                 mask={CEP_MASK}
                 value={cep}
                 onAccept={(value: string) => setCep(value)}
@@ -215,20 +224,20 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
             </div>
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="personform-rua-logradouro" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Rua / Logradouro
             </label>
-            <Field
+            <Field id="personform-rua-logradouro"
               value={street}
               onChange={(e) => setStreet(e.target.value)}
               placeholder="Rua, Avenida..."
             />
           </div>
-          <div className="flex flex-col gap-1 w-[110px]">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+          <div className="flex flex-col gap-1 w-full sm:w-[110px]">
+            <label htmlFor="personform-numero" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Número
             </label>
-            <Field
+            <Field id="personform-numero"
               value={number}
               onChange={(e) => setNumber(e.target.value)}
               placeholder="Nº"
@@ -236,30 +245,30 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
           </div>
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="personform-bairro" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Bairro
             </label>
-            <Field
+            <Field id="personform-bairro"
               value={nbhd}
               onChange={(e) => setNbhd(e.target.value)}
               placeholder="Bairro"
             />
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="personform-cidade" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Cidade
             </label>
-            <Field
+            <Field id="personform-cidade"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Cidade"
             />
           </div>
-          <div className="flex flex-col gap-1 w-[80px]">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">UF</label>
-            <Field
+          <div className="flex flex-col gap-1 w-full sm:w-[80px]">
+            <label htmlFor="personform-uf" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">UF</label>
+            <Field id="personform-uf"
               value={uf}
               onChange={(e) => setUf(e.target.value.toUpperCase())}
               maxLength={2}

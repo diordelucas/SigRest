@@ -79,7 +79,7 @@ ssh -i ~/.ssh/sigrest_oracle ubuntu@IP_DA_VM
 cd SigRest && bash deploy/deploy.sh
 ```
 
-O primeiro build leva alguns minutos. Depois, acesse `https://SEU_DOMINIO`, entre com o administrador e **troque a senha**.
+O primeiro build leva alguns minutos. Depois, acesse `https://SEU_DOMINIO`, entre com o administrador e **troque a senha** no ícone de usuário, no canto superior direito (*Alterar senha*).
 
 ## 6. Atualizar o sistema
 

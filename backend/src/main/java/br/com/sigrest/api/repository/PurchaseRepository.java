@@ -19,6 +19,9 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
     @Query("SELECT COALESCE(SUM(p.total), 0) FROM Purchase p WHERE p.date BETWEEN :start AND :end")
     BigDecimal sumTotalBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
+    @Query("SELECT COALESCE(SUM(p.total), 0) FROM Purchase p WHERE p.cashRegister.id = :cashRegisterId")
+    BigDecimal sumTotalByCashRegister(@Param("cashRegisterId") Long cashRegisterId);
+
     /** Compras do intervalo em ordem cronológica (histórico de compras). */
     List<Purchase> findByDateBetweenOrderByDateAsc(LocalDate start, LocalDate end);
 }
