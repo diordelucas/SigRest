@@ -9,7 +9,7 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
-import { baseUnit, formatDateTime, formatStock } from '../utils/format';
+import { baseUnit, formatDateTime, formatStock, quantityStep } from '../utils/format';
 
 const MOVEMENT_TYPE_STYLES: Record<string, string> = {
   ENTRY: 'bg-emerald-100 text-emerald-800',
@@ -209,8 +209,8 @@ const StockMovementList = () => {
             </label>
             <Field id="stockmovementlist-quantidade"
               type="number"
-              min="0.01"
-              step="0.01"
+              min={quantityStep(products.find((p) => String(p.id) === lossProductId))}
+              step={quantityStep(products.find((p) => String(p.id) === lossProductId))}
               value={lossQuantity}
               onChange={(e) => setLossQuantity(e.target.value)}
               placeholder="Ex: 5"

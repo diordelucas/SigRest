@@ -3,11 +3,12 @@ package br.com.sigrest.api.dto;
 import br.com.sigrest.api.entity.SellItem;
 import java.math.BigDecimal;
 
-public record SellItemResponseDTO(Long id, BigDecimal unitPrice, BigDecimal quantity, BigDecimal reversedQuantity, Long productId, String productName) {
+public record SellItemResponseDTO(Long id, BigDecimal unitPrice, BigDecimal quantity, BigDecimal reversedQuantity, Long productId, String productName, String unit) {
     public SellItemResponseDTO(SellItem item){
         this(item.getId(), item.getUnitPrice(), item.getQuantity(), item.getReversedQuantity(),
              item.getProduct() != null ? item.getProduct().getId() : null,
-             item.getProduct() != null ? item.getProduct().getName() : null);
+             item.getProduct() != null ? item.getProduct().getName() : null,
+             item.getProduct() != null ? item.getProduct().getStockUnit() : "un");
     }
 }
 

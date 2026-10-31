@@ -9,6 +9,7 @@ import br.com.sigrest.api.exception.BusinessException;
 import br.com.sigrest.api.exception.ErrorCode;
 import br.com.sigrest.api.repository.CategoryRepository;
 import br.com.sigrest.api.repository.ProductRepository;
+import br.com.sigrest.api.repository.StockMovementRepository;
 import br.com.sigrest.api.repository.TechnicalSheetRepository;
 import br.com.sigrest.api.service.StockMovementService;
 import br.com.sigrest.api.service.audit.LogAtividadeService;
@@ -36,6 +37,9 @@ public class ProductController {
 
     @Autowired
     private StockMovementService stockMovementService;
+
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
 
     @Autowired
     private LogAtividadeService logAtividadeService;
@@ -76,6 +80,9 @@ public class ProductController {
     public void saveProduct(@Valid @RequestBody ProductRequestDTO data){
         validateProduct(data, null);
         Product productData = new Product(data);
+        if (data.storage() != null) {
+            stockMovementService.validateQuantity(productData, data.storage());
+        }
         productData.setStorage(BigDecimal.ZERO);
         if (productData.getSellPrice() == null) {
             productData.setSellPrice(BigDecimal.ZERO);
@@ -115,6 +122,10 @@ public class ProductController {
         Product product = repository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO));
         BigDecimal previousStock = product.getStorage() != null ? product.getStorage() : BigDecimal.ZERO;
         BigDecimal informedStock = data.storage() != null ? data.storage() : previousStock;
+        // O histórico guarda quantidades na unidade antiga: trocar a unidade depois falsearia os relatórios.
+        if (data.effectiveSaleUnit() != product.getSaleUnit() && stockMovementRepository.existsByProductId(id)) {
+            throw new BusinessException(ErrorCode.PROD_UNIDADE_DE_VENDA_EM_USO);
+        }
         product.setName(data.name());
         product.setCode(data.code());
         product.setMinStorage(data.minStorage());
@@ -123,6 +134,7 @@ public class ProductController {
         product.setTipo(data.tipo());
         product.setPurchaseUnit(data.purchaseUnit());
         product.setPackageQuantity(data.packageQuantity());
+        product.setSaleUnit(data.effectiveSaleUnit());
 
         product.setCategory(categoryRepository.findById(data.categoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CAT_NAO_ENCONTRADA)));
@@ -130,6 +142,7 @@ public class ProductController {
 
         BigDecimal difference = informedStock.subtract(previousStock);
         if (difference.signum() != 0) {
+            stockMovementService.validateQuantity(updatedProduct, difference.abs());
             String description = "Ajuste manual no cadastro do produto";
             if (difference.signum() > 0) {
                 stockMovementService.createStockEntry(updatedProduct, difference, description);

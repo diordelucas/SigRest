@@ -13,9 +13,10 @@ public record CostCalculationResponseDTO(
         BigDecimal desiredMarginPercent,
         BigDecimal totalCostWithLabour,
         BigDecimal suggestedSellPrice,
-        Integer rendimento,
+        BigDecimal rendimento,
         BigDecimal perServingCost,
-        BigDecimal servingCostWithLabour
+        BigDecimal servingCostWithLabour,
+        String unit
 ) {
     public record ItemCostDTO(
             Long itemId,

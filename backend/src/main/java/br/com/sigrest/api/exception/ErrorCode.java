@@ -33,6 +33,8 @@ public enum ErrorCode {
     PROD_EM_USO_NA_FICHA("SIGREST-PROD-004", "Este produto é usado em uma ficha técnica e não pode ser excluído.", HttpStatus.CONFLICT),
     PROD_INSUMO_SEM_UNIDADE("SIGREST-PROD-005", "Informe a unidade de compra e a quantidade por embalagem do insumo.", HttpStatus.BAD_REQUEST),
     PROD_PRECO_VENDA_OBRIGATORIO("SIGREST-PROD-006", "Informe o preço de venda do produto final.", HttpStatus.BAD_REQUEST),
+    PROD_QUANTIDADE_FRACIONADA("SIGREST-PROD-007", "A quantidade informada não é válida para a unidade de venda do produto.", HttpStatus.BAD_REQUEST),
+    PROD_UNIDADE_DE_VENDA_EM_USO("SIGREST-PROD-008", "Este produto já tem movimentação de estoque: a unidade de venda não pode ser alterada.", HttpStatus.CONFLICT),
     CAT_NAO_ENCONTRADA("SIGREST-CAT-001", "Categoria não encontrada.", HttpStatus.NOT_FOUND),
     CAT_NOME_DUPLICADO("SIGREST-CAT-002", "Já existe uma categoria com este nome.", HttpStatus.CONFLICT),
     CAT_EM_USO("SIGREST-CAT-003", "Esta categoria tem produtos ativos e não pode ser excluída.", HttpStatus.CONFLICT),

@@ -75,7 +75,7 @@ public class SaleService {
 
         BigDecimal discount = saleRequestDTO.discount() != null ? saleRequestDTO.discount() : BigDecimal.ZERO;
         BigDecimal subtotal = saleRequestDTO.items().stream()
-                .map(item -> item.unitPrice().multiply(item.quantity()))
+                .map(item -> item.unitPrice().multiply(item.quantity()).setScale(2, RoundingMode.HALF_UP))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (discount.compareTo(subtotal) > 0) {
             throw new BusinessException(ErrorCode.SALE_DESCONTO_INVALIDO);
@@ -107,6 +107,7 @@ public class SaleService {
                 throw new BusinessException(ErrorCode.SALE_PRODUTO_NAO_VENDAVEL,
                         "Só produtos finais podem ser vendidos: " + product.getName());
             }
+            stockMovementService.validateQuantity(product, itemDTO.quantity());
 
             BigDecimal currentStock = product.getStorage() != null ? product.getStorage() : java.math.BigDecimal.ZERO;
             if (currentStock.compareTo(itemDTO.quantity()) < 0) {
@@ -120,7 +121,7 @@ public class SaleService {
             sellItem.setSale(sale);
             sale.getItems().add(sellItem);
 
-            // Deduct stock (vendas de PRODUTO_FINAL são descontadas em UN)
+            // Deduct stock (vendas de PRODUTO_FINAL são descontadas na unidade de venda)
             stockMovementService.createStockExit(product, itemDTO.quantity(), "Venda #" + sale.getId());
         }
         sale.setTotal(subtotal.subtract(discount));
@@ -205,6 +206,7 @@ public class SaleService {
                     .findFirst()
                     .orElseThrow(() -> new BusinessException(ErrorCode.SALE_ESTORNO_INVALIDO,
                             "Este item não pertence à venda #" + sale.getId() + "."));
+            stockMovementService.validateQuantity(item.getProduct(), pedido.quantity());
             BigDecimal total = quantidades.merge(item, pedido.quantity(), BigDecimal::add);
             if (total.compareTo(item.getNetQuantity()) > 0) {
                 throw new BusinessException(ErrorCode.SALE_ESTORNO_INVALIDO,
@@ -224,7 +226,7 @@ public class SaleService {
             return sale.getNetTotal();
         }
         BigDecimal subtotal = sale.getItems().stream()
-                .map(item -> item.getUnitPrice().multiply(item.getQuantity()))
+                .map(SellItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (subtotal.signum() <= 0) {
             return BigDecimal.ZERO;

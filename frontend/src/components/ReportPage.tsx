@@ -21,7 +21,7 @@ import { lossReasonLabel } from '../utils/lossReason';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import { Table, Th } from './ui/Table';
-import { formatMoney, formatMonth, formatQuantity } from '../utils/format';
+import { formatMoney, formatMonth, formatQuantity, withUnitInName } from '../utils/format';
 
 type ReportType =
   | ''
@@ -139,7 +139,7 @@ const ReportPage = () => {
           break;
         case 'top-selling-products':
           response = await api.get('/reports/top-selling-products', { params: { limit: 10, startDate, endDate } });
-          setReportData(response.data);
+          setReportData(response.data.map(withUnitInName));
           break;
         case 'monthly-revenue':
           response = await api.get('/reports/monthly-revenue', {
@@ -398,7 +398,7 @@ const ReportPage = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-ink">{row.productName}</td>
                     <td className="px-4 py-3 text-sm text-ink">{lossReasonLabel(row.reason)}</td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(row.quantity)}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatQuantity(row.quantity)} {row.unit}</td>
                     <td className="px-4 py-3 text-sm text-ink">{row.description}</td>
                   </tr>
                 ))}

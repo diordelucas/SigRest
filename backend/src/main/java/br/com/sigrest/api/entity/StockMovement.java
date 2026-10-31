@@ -31,6 +31,7 @@ public class StockMovement {
     @Enumerated(EnumType.STRING)
     private MovementType type;
 
+    @Column(precision = 38, scale = 3)
     private BigDecimal quantity;
 
     private LocalDateTime date;

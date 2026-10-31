@@ -2,7 +2,7 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import api, { getErrorMessage } from '../services/api';
 import toast from 'react-hot-toast';
 import CurrencyInput from './CurrencyInput';
-import { Category, Product, ProductType, UnitOfMeasure } from '../types';
+import { Category, Product, ProductType, SaleUnit, UnitOfMeasure } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
 
@@ -21,7 +21,8 @@ const UDM_OPTIONS: { value: UnitOfMeasure; label: string }[] = [
   { value: 'DUZIA', label: 'DUZIA — Dúzia' },
 ];
 
-const stockUnit = (tipo: string, purchaseUnit: string): string => {
+const stockUnit = (tipo: string, purchaseUnit: string, saleUnit: SaleUnit): string => {
+  if (tipo === 'PRODUTO_FINAL' && saleUnit === 'KG') return 'kg';
   if (tipo !== 'INSUMO' || !purchaseUnit) return 'un';
   if (['G', 'KG'].includes(purchaseUnit)) return 'g';
   if (['ML', 'L'].includes(purchaseUnit)) return 'ml';
@@ -46,6 +47,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
   const [tipo, setTipo] = useState('');
   const [purchaseUnit, setPurchaseUnit] = useState('');
   const [packageQuantity, setPackageQuantity] = useState('');
+  const [saleUnit, setSaleUnit] = useState<SaleUnit>('UN');
 
   useEffect(() => {
     api
@@ -66,6 +68,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
       setTipo(editingPerson.tipo || '');
       setPurchaseUnit(editingPerson.purchaseUnit || '');
       setPackageQuantity(String(editingPerson.packageQuantity ?? ''));
+      setSaleUnit(editingPerson.saleUnit || 'UN');
     }
   }, [editingPerson]);
 
@@ -80,6 +83,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
     setTipo('');
     setPurchaseUnit('');
     setPackageQuantity('');
+    setSaleUnit('UN');
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -115,6 +119,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
       tipo: tipo || null,
       purchaseUnit: purchaseUnit || null,
       packageQuantity: packageQuantity !== '' ? Number(packageQuantity) : null,
+      saleUnit: tipo === 'PRODUTO_FINAL' ? saleUnit : null,
     };
     try {
       if (editingPerson) {
@@ -138,7 +143,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
     if (onEditComplete) onEditComplete();
   };
 
-  const unit = stockUnit(tipo, purchaseUnit);
+  const unit = stockUnit(tipo, purchaseUnit, saleUnit);
 
   return (
     <div className="card p-6 mb-6">
@@ -221,7 +226,7 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
           <span className="text-xs text-ink-muted font-medium">PREÇOS</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div className={`grid grid-cols-1 ${tipo === 'PRODUTO_FINAL' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4 mb-4`}>
           <div className="flex flex-col gap-1">
             <label htmlFor="productform-" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               {tipo === 'INSUMO' ? 'Preço da Embalagem' : 'Preço de Custo'}
@@ -236,10 +241,27 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
               />
             </div>
           </div>
+          {tipo === 'PRODUTO_FINAL' && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="productform-vendido-por" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                Vendido por
+              </label>
+              <Field id="productform-vendido-por"
+                as="select"
+                data-testid="product-sale-unit"
+                value={saleUnit}
+                onChange={(e) => setSaleUnit(e.target.value as SaleUnit)}
+              >
+                <option value="UN">Unidade (marmita, bandeja de peso fixo)</option>
+                <option value="KG">Quilo (pesado na hora)</option>
+              </Field>
+              <p className="text-xs text-ink-muted mt-1">Não muda depois que o produto tiver movimentação de estoque.</p>
+            </div>
+          )}
           {(tipo === 'PRODUTO_FINAL' || tipo === '') && (
             <div className="flex flex-col gap-1">
               <label htmlFor="productform-preco-de-venda" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-                Preço de Venda
+                Preço de Venda{tipo === 'PRODUTO_FINAL' && saleUnit === 'KG' ? ' (por kg)' : ''}
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>

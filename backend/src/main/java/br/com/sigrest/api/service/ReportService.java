@@ -123,13 +123,14 @@ public class ReportService {
                 .map(entry -> {
                     Long productId = entry.getKey();
                     String productName = entry.getValue().get(0).getProduct().getName(); // Assuming product name is consistent
-                    Long totalQuantitySold = entry.getValue().stream()
-                            .mapToLong(item -> item.getNetQuantity().longValue())
-                            .sum();
-                    BigDecimal totalRevenue = entry.getValue().stream()
-                            .map(item -> item.getUnitPrice().multiply(item.getNetQuantity()))
+                    BigDecimal totalQuantitySold = entry.getValue().stream()
+                            .map(SellItem::getNetQuantity)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
-                    return new ProductSalesDTO(productId, productName, totalQuantitySold, totalRevenue);
+                    BigDecimal totalRevenue = entry.getValue().stream()
+                            .map(SellItem::getNetSubtotal)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    return new ProductSalesDTO(productId, productName, totalQuantitySold,
+                            entry.getValue().get(0).getProduct().getStockUnit(), totalRevenue);
                 })
                 .sorted(Comparator.comparing(ProductSalesDTO::getTotalQuantitySold).reversed())
                 .limit(limit)
@@ -177,8 +178,7 @@ public class ReportService {
                         movement.getType(),
                         movement.getQuantity(),
                         movement.getDescription(),
-                        movement.getProduct().getPurchaseUnit() != null
-                                ? movement.getProduct().getPurchaseUnit().getBaseUnitLabel() : "un"
+                        movement.getProduct().getStockUnit()
                 ))
                 .sorted(Comparator.comparing(StockMovementReportDTO::getDate))
                 .collect(Collectors.toList());
@@ -219,8 +219,8 @@ public class ReportService {
     }
 
     /**
-     * Quebra no período: baixas de estoque tipo LOSS (venceu/queimou/descarte) +
-     * ordens de produção finalizadas cujo rendimento real ficou abaixo do planejado.
+     * Quebra no período: baixas de estoque tipo LOSS (venceu/queimou/descarte) + ordens de produção
+     * finalizadas abaixo do planejado com motivo informado (em produto pesado, sem motivo é só diferença de peso).
      */
     @Transactional(readOnly = true)
     public List<LossReportDTO> getLossReport(LocalDate startDate, LocalDate endDate) {
@@ -239,20 +239,24 @@ public class ReportService {
                         m.getProduct() != null ? m.getProduct().getName() : null,
                         m.getReason() != null ? m.getReason().name() : null,
                         m.getQuantity(),
+                        m.getProduct() != null ? m.getProduct().getStockUnit() : null,
                         m.getDescription()
                 )));
 
         productionOrderRepository.findAll().stream()
                 .filter(o -> o.getStatus() == ProductionOrder.Status.FINISHED)
-                .filter(o -> o.getActualQuantity() != null && o.getActualQuantity() < o.getQuantity())
+                .filter(o -> o.getActualQuantity() != null && o.getActualQuantity().compareTo(o.getQuantity()) < 0)
+                .filter(o -> o.getLossReason() != null)
                 .filter(o -> o.getDate() != null && !o.getDate().isBefore(startDateTime) && !o.getDate().isAfter(endDateTime))
                 .forEach(o -> result.add(new LossReportDTO(
                         "PRODUCAO",
                         o.getDate(),
                         o.getFinalProduct() != null ? o.getFinalProduct().getName() : null,
                         o.getLossReason() != null ? o.getLossReason().name() : null,
-                        BigDecimal.valueOf(o.getQuantity() - o.getActualQuantity()),
-                        "OP #" + o.getId() + " — planejado " + o.getQuantity() + ", real " + o.getActualQuantity()
+                        o.getQuantity().subtract(o.getActualQuantity()),
+                        o.getFinalProduct() != null ? o.getFinalProduct().getStockUnit() : null,
+                        "OP #" + o.getId() + " — planejado " + o.getQuantity().stripTrailingZeros().toPlainString()
+                                + ", real " + o.getActualQuantity().stripTrailingZeros().toPlainString()
                 )));
 
         return result.stream()
@@ -292,10 +296,9 @@ public class ReportService {
                 .map(entry -> new ProductSalesDTO(
                         entry.getKey(),
                         entry.getValue().get(0).getProduct().getName(),
-                        entry.getValue().stream().mapToLong(item -> item.getNetQuantity().longValue()).sum(),
-                        entry.getValue().stream()
-                                .map(item -> item.getUnitPrice().multiply(item.getNetQuantity()))
-                                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                        entry.getValue().stream().map(SellItem::getNetQuantity).reduce(BigDecimal.ZERO, BigDecimal::add),
+                        entry.getValue().get(0).getProduct().getStockUnit(),
+                        entry.getValue().stream().map(SellItem::getNetSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add)
                 ))
                 .sorted(Comparator.comparing(ProductSalesDTO::getTotalQuantitySold).reversed())
                 .limit(limit)
@@ -338,7 +341,7 @@ public class ReportService {
                             product.getName(),
                             product.getCategory() != null ? product.getCategory().getName() : null,
                             product.getTipo(),
-                            product.getPurchaseUnit() != null ? product.getPurchaseUnit().getBaseUnitLabel() : "un",
+                            product.getStockUnit(),
                             storage,
                             product.getMinStorage(),
                             belowMinimum,

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { formatBRL } from '../utils/currency';
-import { formatMoney, formatQuantity } from '../utils/format';
+import { baseUnit, formatMoney, formatQuantity, formatStock, lineTotal, quantityStep } from '../utils/format';
 import { Person, Product } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -91,7 +91,7 @@ const SaleForm = () => {
   };
 
   const calculateSubtotal = () =>
-    sale.items.reduce((sum, item) => sum + (parseFloat(String(item.quantity)) || 0) * (parseFloat(String(item.unitPrice)) || 0), 0);
+    sale.items.reduce((sum, item) => sum + lineTotal(item.unitPrice || 0, item.quantity || 0), 0);
 
   const discountValue = parseFloat(String(sale.discount)) || 0;
   const discountTooHigh = discountValue > calculateSubtotal();
@@ -100,6 +100,7 @@ const SaleForm = () => {
 
   // Insumos e produtos intermediários não são vendidos ao cliente.
   const sellableProducts = products.filter((p) => p.tipo !== 'INSUMO' && p.tipo !== 'PRODUTO_INTERMEDIARIO');
+  const productOf = (item: SaleItemForm) => products.find((p) => String(p.id) === String(item.productId));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -120,7 +121,7 @@ const SaleForm = () => {
         discount: parseFloat(String(sale.discount)) || 0,
         items: sale.items.map((item) => ({
           ...item,
-          quantity: parseInt(String(item.quantity), 10),
+          quantity: parseFloat(String(item.quantity)),
           unitPrice: parseFloat(String(item.unitPrice)),
         })),
         idempotencyKey: idempotencyKeyRef.current,
@@ -218,7 +219,10 @@ const SaleForm = () => {
             <span className="text-xs text-ink-muted font-medium">ITENS DA VENDA</span>
           </div>
 
-          {sale.items.map((item, index) => (
+          {sale.items.map((item, index) => {
+            const product = productOf(item);
+            const weighed = baseUnit(product) === 'kg';
+            return (
             <div key={index} className="bg-surface-2 border border-line rounded-xl p-4 mb-3">
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
                 <div className="col-span-2 flex flex-col gap-1">
@@ -235,22 +239,23 @@ const SaleForm = () => {
                     required
                   >
                     <option value="">Selecione...</option>
-                    {sellableProducts.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
-                        {product.categoryName ? ` · ${product.categoryName}` : ''} ({formatQuantity(product.storage)} un)
-                        {product.minStorage > 0 && product.storage <= product.minStorage ? ' ⚠' : ''}
+                    {sellableProducts.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                        {option.categoryName ? ` · ${option.categoryName}` : ''} ({formatStock(option.storage, option)})
+                        {option.minStorage > 0 && option.storage <= option.minStorage ? ' ⚠' : ''}
                       </option>
                     ))}
                   </Field>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label htmlFor={`saleform-qtd-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Qtd</label>
+                  <label htmlFor={`saleform-qtd-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">{weighed ? 'Peso (kg)' : 'Qtd'}</label>
                   <Field id={`saleform-qtd-${index}`}
                     type="number"
                     name="quantity"
                     data-testid="sale-item-qty"
-                    min="1"
+                    min={quantityStep(product)}
+                    step={quantityStep(product)}
                     className="bg-surface"
                     value={item.quantity}
                     onChange={(e) => handleItemChange(index, e)}
@@ -259,7 +264,7 @@ const SaleForm = () => {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label htmlFor={`saleform-preco-unit-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-                    Preço Unit.
+                    {weighed ? 'Preço por kg' : 'Preço Unit.'}
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
@@ -286,8 +291,14 @@ const SaleForm = () => {
                   </button>
                 </div>
               </div>
+              {weighed && (
+                <p data-testid="sale-item-total" className="text-xs text-ink-muted mt-2 text-right">
+                  {formatQuantity(item.quantity)} kg × {formatMoney(item.unitPrice)} = {formatMoney(lineTotal(item.unitPrice || 0, item.quantity || 0))}
+                </p>
+              )}
             </div>
-          ))}
+            );
+          })}
 
           <Button
             type="button"

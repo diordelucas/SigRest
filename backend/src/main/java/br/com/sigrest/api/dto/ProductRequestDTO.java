@@ -2,6 +2,7 @@ package br.com.sigrest.api.dto;
 
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.ProductType;
+import br.com.sigrest.api.entity.SaleUnit;
 import br.com.sigrest.api.entity.UnitOfMeasure;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -20,7 +21,8 @@ public record ProductRequestDTO(
         @NotNull(message = "selecione uma categoria") Long categoryId,
         @NotNull(message = "selecione o tipo do produto") ProductType tipo,
         UnitOfMeasure purchaseUnit,
-        BigDecimal packageQuantity
+        BigDecimal packageQuantity,
+        SaleUnit saleUnit
 ) {
     public ProductRequestDTO(Product product) {
         this(product.getId(), product.getName(), product.getCode(),
@@ -29,6 +31,12 @@ public record ProductRequestDTO(
                 product.getCategory() != null ? product.getCategory().getId() : null,
                 product.getTipo(),
                 product.getPurchaseUnit(),
-                product.getPackageQuantity());
+                product.getPackageQuantity(),
+                product.getSaleUnit());
+    }
+
+    /** Só produto final escolhe a unidade de venda; sem escolha, vende por unidade. */
+    public SaleUnit effectiveSaleUnit() {
+        return tipo == ProductType.PRODUTO_FINAL && saleUnit != null ? saleUnit : SaleUnit.UN;
     }
 }

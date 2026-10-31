@@ -55,8 +55,11 @@ export const formatUnitCost = (value: number | string | null | undefined): strin
 export const formatQuantity = (value: number | string | null | undefined): string =>
   Number(value ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
 
-/** Unidade em que o estoque do produto é guardado. */
-export const baseUnit = (product: Pick<Product, 'purchaseUnit'> | null | undefined): string => {
+type StockProduct = Pick<Product, 'purchaseUnit' | 'tipo' | 'saleUnit'>;
+
+/** Unidade em que o estoque do produto é guardado: produto final na unidade de venda, os demais na unidade base. */
+export const baseUnit = (product: StockProduct | null | undefined): string => {
+  if (product?.tipo === 'PRODUTO_FINAL') return product.saleUnit === 'KG' ? 'kg' : 'un';
   switch (product?.purchaseUnit) {
     case 'G':
     case 'KG':
@@ -71,8 +74,20 @@ export const baseUnit = (product: Pick<Product, 'purchaseUnit'> | null | undefin
 
 export const formatStock = (
   quantity: number | string | null | undefined,
-  product: Pick<Product, 'purchaseUnit'> | null | undefined
+  product: StockProduct | null | undefined
 ): string => `${formatQuantity(quantity)} ${baseUnit(product)}`;
+
+/** Produto final por unidade só aceita número inteiro; os demais, até o grama. */
+export const quantityStep = (product: Pick<Product, 'tipo' | 'saleUnit'> | null | undefined): string =>
+  product?.tipo === 'PRODUTO_FINAL' && product.saleUnit !== 'KG' ? '1' : '0.001';
+
+/** Valor do item em centavos exatos, como no backend: 1,355 kg a R$ 39,90 dá R$ 54,06. */
+export const lineTotal = (unitPrice: number | string, quantity: number | string): number =>
+  Math.round((Math.round(Number(unitPrice) * 100) * Math.round(Number(quantity) * 1000)) / 1000) / 100;
+
+/** Nos gráficos de produtos, deixa claro quando a quantidade está em quilos. */
+export const withUnitInName = <T extends { productName: string; unit?: string }>(row: T): T =>
+  row.unit === 'kg' ? { ...row, productName: `${row.productName} (kg)` } : row;
 
 export const onlyDigits = (value: string | null | undefined): string => (value ?? '').replace(/\D/g, '');
 

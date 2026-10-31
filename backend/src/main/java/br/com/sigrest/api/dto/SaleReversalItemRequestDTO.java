@@ -8,6 +8,6 @@ import java.math.BigDecimal;
 public record SaleReversalItemRequestDTO(
         @NotNull(message = "informe o item a estornar") Long sellItemId,
         @NotNull(message = "informe a quantidade a estornar")
-        @DecimalMin(value = "0.01", message = "a quantidade a estornar deve ser maior que zero") BigDecimal quantity
+        @DecimalMin(value = "0.001", message = "a quantidade a estornar deve ser maior que zero") BigDecimal quantity
 ) {
 }

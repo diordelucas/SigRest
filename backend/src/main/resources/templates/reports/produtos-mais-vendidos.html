@@ -8,7 +8,8 @@
 <table class="kpis">
   <tr>
     <td><div class="kpi-rotulo">Produtos no ranking</div><div class="kpi-valor" th:text="${produtos.size()}">0</div></td>
-    <td><div class="kpi-rotulo">Unidades vendidas</div><div class="kpi-valor" th:text="${fmt.inteiro(quantidadeTotal)}">0</div></td>
+    <td><div class="kpi-rotulo">Unidades vendidas</div><div class="kpi-valor" th:text="${fmt.quantidade(unidadesVendidas)}">0</div></td>
+    <td th:if="${quilosVendidos.signum() > 0}"><div class="kpi-rotulo">Quilos vendidos</div><div class="kpi-valor" th:text="|${fmt.quantidade(quilosVendidos)} kg|">0 kg</div></td>
     <td><div class="kpi-rotulo">Receita dos produtos</div><div class="kpi-valor" th:text="${fmt.moeda(receitaTotal)}">R$ 0,00</div></td>
   </tr>
 </table>
@@ -28,8 +29,8 @@
       <tr th:each="p, it : ${produtos}">
         <td class="centro" th:text="${it.count}">1</td>
         <td th:text="${p.productName}">Produto</td>
-        <td class="num" th:text="${fmt.inteiro(p.totalQuantitySold)}">0</td>
-        <td><div class="barra-fundo"><div class="barra" th:style="|width: ${fmt.larguraInteira(p.totalQuantitySold, maiorQuantidade)}%|"></div></div></td>
+        <td class="num" th:text="|${fmt.quantidade(p.totalQuantitySold)} ${p.unit}|">0 un</td>
+        <td><div class="barra-fundo"><div class="barra" th:style="|width: ${fmt.largura(p.totalQuantitySold, maiorQuantidade)}%|"></div></div></td>
         <td class="num" th:text="${fmt.moeda(p.totalRevenue)}">R$ 0,00</td>
         <td class="num" th:text="${fmt.participacao(p.totalRevenue, receitaTotal)}">0%</td>
       </tr>

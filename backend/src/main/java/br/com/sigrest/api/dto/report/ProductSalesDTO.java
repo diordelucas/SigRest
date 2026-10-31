@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 public class ProductSalesDTO {
     private Long productId;
     private String productName;
-    private Long totalQuantitySold;
+    private BigDecimal totalQuantitySold;
+    private String unit;
     private BigDecimal totalRevenue;
 }

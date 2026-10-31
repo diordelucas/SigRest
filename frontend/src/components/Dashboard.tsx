@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import moment from 'moment';
 import { formatBRL } from '../utils/currency';
 import { DashboardSummary } from '../types';
-import { formatMoney, formatMonth, formatQuantity } from '../utils/format';
+import { formatMoney, formatMonth, formatQuantity, withUnitInName } from '../utils/format';
 
 interface KpiCardProps {
   icon: ReactNode;
@@ -103,7 +103,7 @@ const Dashboard = () => {
         results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<any>).value.data : [];
 
       setMonthlyRevenue(dataOf(0).map((item) => ({ ...item, month: formatMonth(item.month) })));
-      setTopSellingProducts(dataOf(1));
+      setTopSellingProducts(dataOf(1).map(withUnitInName));
       setSalesByPeriod(dataOf(2).map((item) => ({ ...item, date: moment(item.date).format('DD/MM') })));
       setStockMovement([...dataOf(3)].sort((a, b) => b.movementId - a.movementId));
 

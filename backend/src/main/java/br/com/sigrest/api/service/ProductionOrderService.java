@@ -5,6 +5,7 @@ import br.com.sigrest.api.dto.ProductionOrderRequestDTO;
 import br.com.sigrest.api.entity.LossReason;
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.ProductionOrder;
+import br.com.sigrest.api.entity.SaleUnit;
 import br.com.sigrest.api.entity.TechnicalSheet;
 import br.com.sigrest.api.entity.TechnicalSheetItem;
 import br.com.sigrest.api.exception.BusinessException;
@@ -63,6 +64,7 @@ public class ProductionOrderService {
         Product finalProduct = productRepository.findById(dto.finalProductId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO));
 
+        stockMovementService.validateQuantity(finalProduct, dto.quantity());
         order.setFinalProduct(finalProduct);
         order.setQuantity(dto.quantity());
         order.setNotes(dto.notes());
@@ -86,14 +88,19 @@ public class ProductionOrderService {
             throw new BusinessException(ErrorCode.PORD_PRODUTO_NAO_ASSOCIADO);
         }
 
-        int planned = order.getQuantity();
-        Integer informedActual = dto != null ? dto.actualQuantity() : null;
-        int actual = informedActual != null ? informedActual : planned;
-        if (actual > planned) {
+        BigDecimal planned = order.getQuantity();
+        BigDecimal actual = dto != null && dto.actualQuantity() != null ? dto.actualQuantity() : planned;
+        stockMovementService.validateQuantity(finalProduct, actual);
+
+        // Numa forma do cliente o peso só é conhecido na balança: pode passar do previsto, e pesar menos
+        // só é quebra se houver motivo. Por unidade, o excedente vira outra ordem e a falta sempre é quebra.
+        boolean weighed = finalProduct.getSaleUnit() == SaleUnit.KG;
+        boolean belowPlanned = actual.compareTo(planned) < 0;
+        if (!weighed && actual.compareTo(planned) > 0) {
             throw new BusinessException(ErrorCode.PORD_REAL_MAIOR_QUE_PLANEJADO);
         }
-        LossReason lossReason = actual < planned ? (dto != null ? dto.lossReason() : null) : null;
-        if (actual < planned && lossReason == null) {
+        LossReason lossReason = belowPlanned && dto != null ? dto.lossReason() : null;
+        if (!weighed && belowPlanned && lossReason == null) {
             throw new BusinessException(ErrorCode.PORD_MOTIVO_QUEBRA_OBRIGATORIO);
         }
 
@@ -123,10 +130,10 @@ public class ProductionOrderService {
             stockMovementService.createStockExit(rawMaterial, totalNeeded, desc);
         }
 
-        // 3. Dar entrada no produto acabado (em unidades — PRODUTO_FINAL usa UN), pela quantidade REAL
+        // 3. Dar entrada no produto acabado (na unidade de venda), pela quantidade REAL
         String entryDesc = "Produção OP #" + order.getId() + " - " + sheet.getName();
-        if (actual > 0) {
-            stockMovementService.createStockEntry(finalProduct, BigDecimal.valueOf(actual), entryDesc);
+        if (actual.signum() > 0) {
+            stockMovementService.createStockEntry(finalProduct, actual, entryDesc);
         }
 
         order.setActualQuantity(actual);
@@ -134,8 +141,9 @@ public class ProductionOrderService {
         order.setStatus(ProductionOrder.Status.FINISHED);
         ProductionOrder saved = repository.save(order);
 
-        if (actual < planned) {
-            String detalhes = "Planejado: " + planned + ", Real: " + actual + ", Motivo: " + lossReason;
+        if (lossReason != null) {
+            String detalhes = "Planejado: " + planned.stripTrailingZeros().toPlainString()
+                    + ", Real: " + actual.stripTrailingZeros().toPlainString() + ", Motivo: " + lossReason;
             logAtividadeService.registrar("QUEBRA_PRODUCAO", "ProductionOrder", saved.getId(),
                     detalhes, logAtividadeService.usuarioAtual());
         }
@@ -150,13 +158,14 @@ public class ProductionOrderService {
 
     /**
      * Consumo do insumo para produzir a quantidade da ordem. A ficha descreve a receita inteira, que
-     * rende {@code rendimento} porções: 1,5 kg de frango em 10 porções são 150 g por marmita.
+     * rende {@code rendimento} unidades ou quilos: 1,5 kg de frango em 10 marmitas são 150 g por marmita.
      */
-    private BigDecimal consumption(TechnicalSheetItem item, TechnicalSheet sheet, int orderQuantity) {
-        int rendimento = sheet.getRendimento() != null && sheet.getRendimento() > 0 ? sheet.getRendimento() : 1;
+    private BigDecimal consumption(TechnicalSheetItem item, TechnicalSheet sheet, BigDecimal orderQuantity) {
+        BigDecimal rendimento = sheet.getRendimento() != null && sheet.getRendimento().signum() > 0
+                ? sheet.getRendimento() : BigDecimal.ONE;
         return toBaseUnits(item)
-                .multiply(BigDecimal.valueOf(orderQuantity))
-                .divide(BigDecimal.valueOf(rendimento), 2, RoundingMode.HALF_UP);
+                .multiply(orderQuantity)
+                .divide(rendimento, 2, RoundingMode.HALF_UP);
     }
 
     /**

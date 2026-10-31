@@ -10,7 +10,7 @@ public record TechnicalSheetResponseDTO(
         String name,
         ProductResponseDTO finalProduct,
         List<TechnicalSheetItemResponseDTO> items,
-        Integer rendimento,
+        BigDecimal rendimento,
         BigDecimal labourCostPercent,
         BigDecimal variableExpensesPercent,
         BigDecimal desiredMarginPercent

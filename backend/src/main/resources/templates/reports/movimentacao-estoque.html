@@ -32,12 +32,11 @@
                 th:classappend="${m.type.name() == 'ENTRY'} ? 'selo-ok' : (${m.type.name() == 'LOSS'} ? 'selo-erro' : 'selo-neutro')"
                 th:text="${fmt.tipoMovimento(m.type)}">Entrada</span>
         </td>
-        <td class="num" th:text="${fmt.quantidade(m.quantity)}">0</td>
+        <td class="num" th:text="|${fmt.quantidade(m.quantity)} ${m.baseUnit}|">0 un</td>
         <td th:text="${fmt.texto(m.description)}">Descrição</td>
       </tr>
     </tbody>
   </table>
-  <p class="nota">Quantidades em unidade base do produto (g, ml ou un).</p>
 </th:block>
 </body>
 </html>
