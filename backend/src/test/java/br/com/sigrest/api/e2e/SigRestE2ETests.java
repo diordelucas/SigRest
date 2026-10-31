@@ -124,4 +124,28 @@ class SigRestE2ETests extends BaseE2ETest {
         assertTrue(details.hasStatus("ESTORNO PARCIAL"),
                 "A venda deve ficar como estorno parcial depois de devolver só parte dos itens.");
     }
+
+    @Test
+    @Order(5)
+    @DisplayName("Venda por peso: cadastrar produto por quilo e vender 1,355 kg")
+    void shouldSellByWeight() {
+        loginAsAdmin();
+        new LoginPage(driver, wait, BASE_URL).waitForRedirect("/dashboard");
+
+        String suffix = String.valueOf(System.currentTimeMillis() % 100000);
+        String name = "Lasanha Por Quilo E2E " + suffix;
+        ProductPage productPage = new ProductPage(driver, wait, BASE_URL).open();
+        productPage.fillForm(name, "KG-" + suffix, "1500", "3990", "5", "1").soldByKilo();
+        productPage.save();
+        assertTrue(productPage.isSaveSuccessful(), "O produto por quilo deve ser cadastrado.");
+
+        new CashRegisterPage(driver, wait, BASE_URL).ensureOpen("10000");
+        SalePage salePage = new SalePage(driver, wait, BASE_URL).open();
+        salePage.selectPaymentMethod("PIX").addProduct(name, "1.355");
+        assertTrue(salePage.weighedItemTotal().contains("54,06"),
+                "1,355 kg a R$ 39,90 deve dar R$ 54,06: " + salePage.weighedItemTotal());
+        salePage.finalizeSale();
+
+        assertTrue(salePage.isSaleSuccessful(), "A venda por peso deve ser registrada.");
+    }
 }

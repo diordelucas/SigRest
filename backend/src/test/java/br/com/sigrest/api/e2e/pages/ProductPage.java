@@ -27,6 +27,7 @@ public class ProductPage {
     private final By sellPriceInput = By.cssSelector("[data-testid='product-sellprice']");
     private final By storageInput = By.cssSelector("[data-testid='product-storage']");
     private final By minStorageInput = By.cssSelector("[data-testid='product-minstorage']");
+    private final By saleUnitSelect = By.cssSelector("[data-testid='product-sale-unit']");
     private final By submitButton = By.cssSelector("[data-testid='product-submit']");
     private final By successToast =
             By.xpath("//*[contains(text(),'Produto cadastrado com sucesso')]");
@@ -62,6 +63,12 @@ public class ProductPage {
         type(sellPriceInput, sellPrice);
         type(storageInput, storage);
         type(minStorageInput, minStorage);
+        return this;
+    }
+
+    /** Sells the product by weight instead of by unit. */
+    public ProductPage soldByKilo() {
+        new Select(wait.until(ExpectedConditions.elementToBeClickable(saleUnitSelect))).selectByValue("KG");
         return this;
     }
 

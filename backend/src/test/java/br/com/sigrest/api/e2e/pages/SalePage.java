@@ -27,6 +27,7 @@ public class SalePage {
     private final By productSelect = By.cssSelector("[data-testid='sale-item-product']");
     private final By quantityInput = By.cssSelector("[data-testid='sale-item-qty']");
     private final By submitButton = By.cssSelector("[data-testid='sale-submit']");
+    private final By itemTotal = By.cssSelector("[data-testid='sale-item-total']");
     private final By successToast =
             By.xpath("//*[contains(text(),'Venda registrada com sucesso')]");
 
@@ -65,6 +66,11 @@ public class SalePage {
         qty.clear();
         qty.sendKeys(quantity);
         return this;
+    }
+
+    /** Text of the weight x price calculation shown on items sold by the kilo. */
+    public String weighedItemTotal() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(itemTotal)).getText();
     }
 
     /** Applies a monetary discount to the sale. */

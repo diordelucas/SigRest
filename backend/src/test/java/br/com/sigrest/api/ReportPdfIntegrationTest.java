@@ -109,7 +109,7 @@ class ReportPdfIntegrationTest {
         TechnicalSheet ficha = new TechnicalSheet();
         ficha.setName("Lasanha à bolonhesa - receita");
         ficha.setFinalProduct(lasanha);
-        ficha.setRendimento(1);
+        ficha.setRendimento(BigDecimal.ONE);
         ficha.setLabourCostPercent(new BigDecimal("30"));
         ficha.setVariableExpensesPercent(new BigDecimal("15"));
         ficha.setDesiredMarginPercent(new BigDecimal("30"));
