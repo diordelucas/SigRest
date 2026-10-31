@@ -4,6 +4,7 @@ import api, { getErrorMessage } from '../services/api';
 import { TechnicalSheet } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
+import toast from 'react-hot-toast';
 
 interface ProductionOrderFormProps {
   onSaveSuccess: () => void;
@@ -47,6 +48,7 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
 
     try {
       await api.post('/production-order', data);
+      toast.success('Ordem de produção aberta com sucesso!');
       onSaveSuccess();
     } catch (err) {
       setError(getErrorMessage(err, 'Erro ao abrir ordem de produção.'));
@@ -60,6 +62,7 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
+          aria-label="Voltar para a lista de ordens"
           className="p-2 border border-line text-ink-muted rounded-lg hover:bg-surface-2 transition-colors"
           onClick={onCancel}
         >
@@ -75,10 +78,10 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="productionorderform-produto-final-com-ficha-tecnica" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Produto Final (com Ficha Técnica)
             </label>
-            <Field
+            <Field id="productionorderform-produto-final-com-ficha-tecnica"
               as="select"
               value={finalProductId}
               onChange={(e) => setFinalProductId(e.target.value)}
@@ -93,10 +96,10 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="productionorderform-quantidade-a-produzir" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Quantidade a Produzir
             </label>
-            <Field
+            <Field id="productionorderform-quantidade-a-produzir"
               type="number"
               min="1"
               step="1"
@@ -109,10 +112,10 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
         </div>
 
         <div className="flex flex-col gap-1 mb-6">
-          <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+          <label htmlFor="productionorderform-observacoes-lote-perdas-rendimento-etc" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
             Observações (Lote, Perdas, Rendimento, etc)
           </label>
-          <Field
+          <Field id="productionorderform-observacoes-lote-perdas-rendimento-etc"
             as="textarea"
             rows={4}
             value={notes}

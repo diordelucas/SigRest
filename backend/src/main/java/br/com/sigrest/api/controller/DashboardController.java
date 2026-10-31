@@ -3,6 +3,7 @@ package br.com.sigrest.api.controller;
 import br.com.sigrest.api.dto.DashboardSummaryDTO;
 import br.com.sigrest.api.service.DashboardService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ public class DashboardController {
     }
 
     /** KPIs do dashboard: faturamento do dia, nº de vendas, faturamento do mês, estoque baixo. */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryDTO> getSummary() {
         return ResponseEntity.ok(dashboardService.getSummary());

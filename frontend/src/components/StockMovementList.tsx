@@ -9,6 +9,7 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import { baseUnit, formatDateTime, formatStock } from '../utils/format';
 
 const MOVEMENT_TYPE_STYLES: Record<string, string> = {
   ENTRY: 'bg-emerald-100 text-emerald-800',
@@ -40,7 +41,7 @@ const StockMovementList = () => {
   const fetchStockMovements = async () => {
     try {
       const response = await api.get<StockMovement[]>('/stock-movements');
-      setMovements(response.data);
+      setMovements([...response.data].sort((a, b) => b.id - a.id));
     } catch (err) {
       setError(getErrorMessage(err, 'Erro ao carregar movimentações de estoque.'));
     } finally {
@@ -111,9 +112,9 @@ const StockMovementList = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h2 className="text-lg font-semibold text-ink">Histórico de Movimentações de Estoque</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
             <Field
@@ -121,7 +122,7 @@ const StockMovementList = () => {
               placeholder="Pesquisar produto, descrição..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 py-2 text-sm w-56"
+              className="pl-8 py-2 text-sm w-full sm:w-56"
             />
           </div>
           <Button variant="secondary" onClick={openLossModal}>
@@ -152,10 +153,10 @@ const StockMovementList = () => {
                 {filtered.map((movement) => (
                   <tr key={movement.id} className="hover:bg-surface-2 transition-colors">
                     <td className="px-4 py-3 text-sm text-ink">{movement.id}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{new Date(movement.date).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{formatDateTime(movement.date)}</td>
                     <td className="px-4 py-3 text-sm text-ink">
                       <div className="flex items-center gap-2">
-                        <span>{movement.product ? movement.product.name : 'N/A'}</span>
+                        <span>{movement.product ? movement.product.name : 'Não informado'}</span>
                         {movement.product?.categoryName && <CategoryTag name={movement.product.categoryName} />}
                       </div>
                     </td>
@@ -168,7 +169,7 @@ const StockMovementList = () => {
                         {MOVEMENT_TYPE_LABELS[movement.type] ?? movement.type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">{movement.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatStock(movement.quantity, movement.product)}</td>
                     <td className="px-4 py-3 text-sm text-ink">{lossReasonLabel(movement.reason)}</td>
                     <td className="px-4 py-3 text-sm text-ink">{movement.description}</td>
                   </tr>
@@ -192,19 +193,21 @@ const StockMovementList = () => {
         )}
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Produto</label>
-            <Field as="select" value={lossProductId} onChange={(e) => setLossProductId(e.target.value)}>
+            <label htmlFor="stockmovementlist-produto" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Produto</label>
+            <Field id="stockmovementlist-produto" as="select" value={lossProductId} onChange={(e) => setLossProductId(e.target.value)}>
               <option value="">Selecione...</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {p.name} ({formatStock(p.storage, p)})
                 </option>
               ))}
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Quantidade</label>
-            <Field
+            <label htmlFor="stockmovementlist-quantidade" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+              Quantidade{lossProductId ? ` (em ${baseUnit(products.find((p) => String(p.id) === lossProductId))})` : ''}
+            </label>
+            <Field id="stockmovementlist-quantidade"
               type="number"
               min="0.01"
               step="0.01"
@@ -214,8 +217,8 @@ const StockMovementList = () => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Motivo</label>
-            <Field as="select" value={lossReason} onChange={(e) => setLossReason(e.target.value as LossReason)}>
+            <label htmlFor="stockmovementlist-motivo" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">Motivo</label>
+            <Field id="stockmovementlist-motivo" as="select" value={lossReason} onChange={(e) => setLossReason(e.target.value as LossReason)}>
               <option value="">Selecione...</option>
               {Object.entries(LOSS_REASON_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -225,10 +228,10 @@ const StockMovementList = () => {
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
+            <label htmlFor="stockmovementlist-observacoes-opcional" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
               Observações (opcional)
             </label>
-            <Field
+            <Field id="stockmovementlist-observacoes-opcional"
               as="textarea"
               rows={2}
               value={lossDescription}

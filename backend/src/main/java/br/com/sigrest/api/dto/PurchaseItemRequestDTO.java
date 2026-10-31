@@ -13,10 +13,10 @@ public class PurchaseItemRequestDTO {
     private Long productId;
 
     @NotNull(message = "informe a quantidade")
-    @Positive(message = "deve ser maior que zero")
-    private Integer quantity;
+    @DecimalMin(value = "0.01", message = "a quantidade deve ser maior que zero")
+    private BigDecimal quantity;
 
     @NotNull(message = "informe o preço unitário")
-    @DecimalMin(value = "0.0", message = "não pode ser negativo")
+    @DecimalMin(value = "0.0", message = "o preço unitário não pode ser negativo")
     private BigDecimal unitPrice;
 }

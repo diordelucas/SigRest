@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import moment from 'moment';
 import { formatBRL } from '../utils/currency';
 import { DashboardSummary } from '../types';
+import { formatMoney, formatMonth, formatQuantity } from '../utils/format';
 
 interface KpiCardProps {
   icon: ReactNode;
@@ -101,10 +102,10 @@ const Dashboard = () => {
       const dataOf = (i: number): any[] =>
         results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<any>).value.data : [];
 
-      setMonthlyRevenue(dataOf(0).map((item) => ({ ...item, month: moment(item.month).format('MMM YYYY') })));
+      setMonthlyRevenue(dataOf(0).map((item) => ({ ...item, month: formatMonth(item.month) })));
       setTopSellingProducts(dataOf(1));
       setSalesByPeriod(dataOf(2).map((item) => ({ ...item, date: moment(item.date).format('DD/MM') })));
-      setStockMovement(dataOf(3));
+      setStockMovement([...dataOf(3)].sort((a, b) => b.movementId - a.movementId));
 
       setLoading(false);
     };
@@ -128,7 +129,7 @@ const Dashboard = () => {
           icon={<DollarSign size={22} className="text-white" />}
           accent="bg-primary-500"
           label="Faturamento do Dia"
-          value={`R$ ${formatBRL(summary.todayRevenue ?? 0)}`}
+          value={formatMoney(summary.todayRevenue)}
         />
         <KpiCard
           icon={<ShoppingCart size={22} className="text-white" />}
@@ -140,7 +141,7 @@ const Dashboard = () => {
           icon={<TrendingUp size={22} className="text-white" />}
           accent="bg-emerald-500"
           label="Faturamento do Mês"
-          value={`R$ ${formatBRL(summary.monthRevenue ?? 0)}`}
+          value={formatMoney(summary.monthRevenue)}
         />
         <KpiCard
           icon={<AlertTriangle size={22} className="text-white" />}
@@ -155,19 +156,19 @@ const Dashboard = () => {
           icon={<ArrowUpCircle size={22} className="text-white" />}
           accent="bg-emerald-500"
           label="A Receber (em aberto)"
-          value={`R$ ${formatBRL(summary.totalReceivable ?? 0)}`}
+          value={formatMoney(summary.totalReceivable)}
         />
         <KpiCard
           icon={<ArrowDownCircle size={22} className="text-white" />}
           accent="bg-rose-500"
           label="A Pagar (em aberto)"
-          value={`R$ ${formatBRL(summary.totalPayable ?? 0)}`}
+          value={formatMoney(summary.totalPayable)}
         />
         <KpiCard
           icon={<Scale size={22} className="text-white" />}
           accent={(summary.balanceForecast ?? 0) >= 0 ? 'bg-teal-500' : 'bg-orange-500'}
           label="Saldo Previsto"
-          value={`R$ ${formatBRL(summary.balanceForecast ?? 0)}`}
+          value={formatMoney(summary.balanceForecast)}
         />
       </div>
 
@@ -226,7 +227,9 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-line))" vertical={false} />
                 <XAxis
                   dataKey="productName"
-                  tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-muted))' }}
+                  interval={0}
+                  tickFormatter={(name: string) => (name.length > 16 ? `${name.slice(0, 15)}…` : name)}
+                  tick={{ fontSize: 11, fill: 'rgb(var(--color-ink-muted))' }}
                   axisLine={{ stroke: 'rgb(var(--color-line))' }}
                   tickLine={false}
                 />
@@ -318,7 +321,7 @@ const Dashboard = () => {
                     {movement.productName}:{' '}
                     <span className={movement.type === 'ENTRY' ? 'text-emerald-600' : 'text-rose-600'}>
                       {movement.type === 'ENTRY' ? '+' : '-'}
-                      {movement.quantity}
+                      {formatQuantity(movement.quantity)} {movement.baseUnit}
                     </span>{' '}
                     ({movement.description})
                   </p>

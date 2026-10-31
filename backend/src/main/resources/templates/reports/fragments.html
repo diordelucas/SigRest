@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!--
+  Partes comuns dos relatórios em PDF: estilos, cabeçalho e rodapé repetidos em toda página.
+  O HTML gerado é lido pelo OpenHTMLtoPDF com parser XML: mantenha as tags fechadas
+  (<br />, <meta ... />) e use &#160; em vez de &nbsp;.
+-->
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:fragment="head">
+  <meta charset="UTF-8" />
+  <title th:text="${titulo}">Relatório</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 30mm 14mm 18mm 14mm;
+      @top-center { content: element(cabecalho); }
+      @bottom-center { content: element(rodape); }
+    }
+
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1f2937; }
+
+    .cabecalho { position: running(cabecalho); }
+    .cabecalho table { width: 100%; border-collapse: collapse; border-bottom: 2px solid #ea580c; }
+    .cabecalho td { vertical-align: bottom; padding: 0 0 6px 0; }
+    .cabecalho .empresa { font-size: 12pt; font-weight: bold; color: #c2410c; }
+    .cabecalho .sistema { font-size: 7.5pt; color: #6b7280; }
+    .cabecalho .titulo { font-size: 13pt; font-weight: bold; text-align: right; }
+    .cabecalho .periodo { font-size: 8pt; color: #4b5563; text-align: right; }
+
+    .rodape { position: running(rodape); font-size: 7.5pt; color: #6b7280; }
+    .rodape table { width: 100%; border-collapse: collapse; border-top: 1px solid #d1d5db; }
+    .rodape td { padding-top: 4px; }
+    .rodape .pagina { text-align: right; }
+    .rodape .pagina span::after { content: "Página " counter(page) " de " counter(pages); }
+
+    h2 { font-size: 10.5pt; color: #c2410c; margin: 16px 0 6px 0; border-bottom: 1px solid #fed7aa; padding-bottom: 2px; }
+    h3 { font-size: 10pt; margin: 0 0 4px 0; }
+    .nota { font-size: 7.5pt; color: #6b7280; margin: 2px 0 6px 0; }
+
+    table.kpis { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 0 -6px 6px -6px; }
+    table.kpis td { background-color: #fff7ed; border: 1px solid #fed7aa; padding: 6px 8px; width: 25%; }
+    .kpi-rotulo { font-size: 7pt; text-transform: uppercase; color: #9a3412; }
+    .kpi-valor { font-size: 12pt; font-weight: bold; margin-top: 2px; }
+
+    table.dados { width: 100%; border-collapse: collapse; -fs-table-paginate: paginate; }
+    table.dados th { background-color: #f3f4f6; text-align: left; font-size: 7.5pt; text-transform: uppercase;
+                     color: #4b5563; padding: 4px 5px; border-bottom: 1px solid #d1d5db; }
+    table.dados th.num { text-align: right; }
+    table.dados th.centro { text-align: center; }
+    table.dados td { padding: 3px 5px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    table.dados tr { page-break-inside: avoid; }
+    table.dados tfoot td { font-weight: bold; background-color: #f9fafb; border-top: 1px solid #9ca3af; border-bottom: none; }
+    table.compacta { font-size: 8pt; }
+
+    .num { text-align: right; white-space: nowrap; }
+    .centro { text-align: center; }
+    .positivo { color: #047857; }
+    .negativo { color: #b91c1c; }
+    .alerta { color: #b45309; font-weight: bold; }
+    .muted { color: #6b7280; }
+
+    .barra-fundo { width: 100%; height: 8px; background-color: #f3f4f6; }
+    .barra { height: 8px; background-color: #f97316; }
+    .barra.entrada { background-color: #10b981; }
+    .barra.saida { background-color: #f43f5e; }
+    .barra-fundo + .barra-fundo { margin-top: 2px; }
+
+    .selo { padding: 1px 5px; font-size: 7pt; font-weight: bold; border-radius: 3px; }
+    .selo-ok { background-color: #d1fae5; color: #065f46; }
+    .selo-alerta { background-color: #fef3c7; color: #92400e; }
+    .selo-erro { background-color: #fee2e2; color: #991b1b; }
+    .selo-neutro { background-color: #e5e7eb; color: #374151; }
+
+    .vazio { margin: 24px 0; padding: 16px; text-align: center; color: #6b7280; border: 1px dashed #d1d5db; }
+    .bloco { page-break-inside: avoid; margin-bottom: 14px; }
+  </style>
+  <style th:if="${paisagem}">
+    @page { size: A4 landscape; }
+  </style>
+</head>
+<body>
+
+<div th:fragment="cabecalho" class="cabecalho">
+  <table>
+    <tr>
+      <td>
+        <div class="empresa" th:text="${empresa}">Empresa</div>
+        <div class="sistema">Relatório gerencial · SIGREST Gestão</div>
+      </td>
+      <td>
+        <div class="titulo" th:text="${titulo}">Título</div>
+        <div class="periodo" th:text="${periodo}">Período</div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div th:fragment="rodape" class="rodape">
+  <table>
+    <tr>
+      <td>
+        Gerado em <span th:text="${geradoEm}">01/01/2026 00:00</span><th:block th:if="${geradoPor}"> por <span th:text="${geradoPor}">usuário</span></th:block>
+      </td>
+      <td class="pagina"><span></span></td>
+    </tr>
+  </table>
+</div>
+
+<div th:fragment="vazio(mensagem)" class="vazio" th:text="${mensagem}">Nenhum registro encontrado.</div>
+
+</body>
+</html>

@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -71,7 +68,7 @@ public class CashRegisterService {
     }
 
     @Transactional
-    public CashRegisterResponseDTO closeCashRegister(Long cashRegisterId, Long closedByUserId) {
+    public CashRegisterResponseDTO closeCashRegister(Long cashRegisterId, Long closedByUserId, BigDecimal countedBalance) {
         CashRegister cashRegister = cashRegisterRepository.findById(cashRegisterId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CASH_NAO_ENCONTRADO));
 
@@ -82,15 +79,15 @@ public class CashRegisterService {
         User closedBy = userRepository.findById(closedByUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NAO_ENCONTRADO));
 
-        LocalDateTime closingTime = LocalDateTime.now();
-        cashRegister.setClosingTime(closingTime);
+        cashRegister.setClosingTime(LocalDateTime.now());
+        cashRegister.setCountedBalance(countedBalance);
         cashRegister.setClosedBy(closedBy);
         cashRegister.setOpen(false);
 
-        // Closing balance = opening + manual movements + sales - purchases
+        // Saldo final = abertura + movimentações manuais + vendas em dinheiro - compras
         BigDecimal movements = cashMovementService.getTotalMovementsForCashRegister(cashRegisterId);
-        BigDecimal sales = sumSalesInPeriod(cashRegister.getOpeningTime(), closingTime);
-        BigDecimal purchases = sumPurchasesInPeriod(cashRegister.getOpeningTime(), closingTime);
+        BigDecimal sales = nullSafe(saleRepository.sumCashSalesByCashRegister(cashRegisterId));
+        BigDecimal purchases = nullSafe(purchaseRepository.sumTotalByCashRegister(cashRegisterId));
         cashRegister.setClosingBalance(
                 nullSafe(cashRegister.getOpeningBalance())
                         .add(movements)
@@ -100,7 +97,8 @@ public class CashRegisterService {
 
         CashRegister updatedCashRegister = cashRegisterRepository.save(cashRegister);
         logAtividadeService.registrar("FECHAR_CAIXA", "CashRegister", updatedCashRegister.getId(),
-                "Caixa fechado com saldo final de " + updatedCashRegister.getClosingBalance(), closedBy);
+                "Caixa fechado com saldo final de " + updatedCashRegister.getClosingBalance()
+                        + (countedBalance != null ? " e valor contado de " + countedBalance : ""), closedBy);
         return convertToResponseDTO(updatedCashRegister);
     }
 
@@ -126,15 +124,19 @@ public class CashRegisterService {
     }
 
     private CashRegisterResponseDTO convertToResponseDTO(CashRegister cashRegister) {
-        LocalDateTime from = cashRegister.getOpeningTime();
-        LocalDateTime to = cashRegister.isOpen() ? LocalDateTime.now() : cashRegister.getClosingTime();
 
         BigDecimal opening = nullSafe(cashRegister.getOpeningBalance());
         BigDecimal movements = cashRegister.getId() != null
                 ? cashMovementService.getTotalMovementsForCashRegister(cashRegister.getId())
                 : BigDecimal.ZERO;
-        BigDecimal sales = from != null ? sumSalesInPeriod(from, to) : BigDecimal.ZERO;
-        BigDecimal purchases = from != null ? sumPurchasesInPeriod(from, to) : BigDecimal.ZERO;
+        BigDecimal sales = BigDecimal.ZERO;
+        BigDecimal otherPayments = BigDecimal.ZERO;
+        BigDecimal purchases = BigDecimal.ZERO;
+        if (cashRegister.getId() != null) {
+            sales = nullSafe(saleRepository.sumCashSalesByCashRegister(cashRegister.getId()));
+            otherPayments = nullSafe(saleRepository.sumOtherPaymentsByCashRegister(cashRegister.getId()));
+            purchases = nullSafe(purchaseRepository.sumTotalByCashRegister(cashRegister.getId()));
+        }
 
         CashRegisterResponseDTO dto = new CashRegisterResponseDTO();
         dto.setId(cashRegister.getId());
@@ -143,7 +145,12 @@ public class CashRegisterService {
         dto.setOpeningBalance(cashRegister.getOpeningBalance());
         dto.setClosingBalance(cashRegister.getClosingBalance());
         dto.setOpen(cashRegister.isOpen());
+        dto.setCountedBalance(cashRegister.getCountedBalance());
+        if (cashRegister.getCountedBalance() != null && cashRegister.getClosingBalance() != null) {
+            dto.setDifference(cashRegister.getCountedBalance().subtract(cashRegister.getClosingBalance()));
+        }
         dto.setSalesTotal(sales);
+        dto.setOtherPaymentsTotal(otherPayments);
         dto.setPurchasesTotal(purchases);
         dto.setMovementsTotal(movements);
         dto.setCurrentBalance(opening.add(movements).add(sales).subtract(purchases));
@@ -163,19 +170,6 @@ public class CashRegisterService {
                     cashRegister.getClosedBy().getRole()));
         }
         return dto;
-    }
-
-    private BigDecimal sumSalesInPeriod(LocalDateTime from, LocalDateTime to) {
-        ZoneId zone = ZoneId.systemDefault();
-        Date fromDate = Date.from(from.atZone(zone).toInstant());
-        Date toDate = Date.from(to.atZone(zone).toInstant());
-        return nullSafe(saleRepository.sumTotalBetween(fromDate, toDate));
-    }
-
-    private BigDecimal sumPurchasesInPeriod(LocalDateTime from, LocalDateTime to) {
-        LocalDate fromDate = from.toLocalDate();
-        LocalDate toDate = to.toLocalDate();
-        return nullSafe(purchaseRepository.sumTotalBetween(fromDate, toDate));
     }
 
     private BigDecimal nullSafe(BigDecimal value) {

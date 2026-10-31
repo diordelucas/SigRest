@@ -5,6 +5,7 @@ import api, { getErrorMessage } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CurrencyInput from './CurrencyInput';
 import { formatBRL } from '../utils/currency';
+import { formatDateTime, formatMoney, formatSignedMoney } from '../utils/format';
 import { CashRegister, CashMovement, CashMovementType } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -30,6 +31,8 @@ const CashRegisterForm = () => {
   const [movement, setMovement] = useState<MovementForm>(EMPTY_MOVEMENT);
   const [submittingMovement, setSubmittingMovement] = useState(false);
   const [movements, setMovements] = useState<CashMovement[]>([]);
+  const [countedBalance, setCountedBalance] = useState<number | ''>('');
+  const [lastClosed, setLastClosed] = useState<CashRegister | null>(null);
 
   const fetchCashRegister = useCallback(async (): Promise<CashRegister | null> => {
     try {
@@ -88,11 +91,16 @@ const CashRegisterForm = () => {
         });
         setCurrentCashRegister(response.data);
         setMovements([]);
+        setLastClosed(null);
         setOpeningBalance('');
         toast.success('Caixa aberto com sucesso!');
       } else if (dialogAction === 'close' && currentCashRegister) {
-        const response = await api.post<CashRegister>(`/cash-registers/close/${currentCashRegister.id}`);
+        const response = await api.post<CashRegister>(`/cash-registers/close/${currentCashRegister.id}`, {
+          countedBalance: countedBalance === '' ? null : Number(countedBalance),
+        });
         setCurrentCashRegister(response.data);
+        setLastClosed(response.data);
+        setCountedBalance('');
         setMovements([]);
         toast.success('Caixa fechado com sucesso!');
       }
@@ -150,7 +158,7 @@ const CashRegisterForm = () => {
               <p>
                 <span className="font-semibold text-ink">ID:</span> {currentCashRegister.id} &nbsp;|&nbsp;{' '}
                 <span className="font-semibold text-ink">Aberto em:</span>{' '}
-                {new Date(currentCashRegister.openingTime).toLocaleString()} &nbsp;|&nbsp;{' '}
+                {formatDateTime(currentCashRegister.openingTime)} &nbsp;|&nbsp;{' '}
                 <span className="font-semibold text-ink">Operador:</span>{' '}
                 {currentCashRegister.openedBy?.name || 'N/A'}
               </p>
@@ -159,37 +167,43 @@ const CashRegisterForm = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
               <div className="p-3 bg-surface-2 border border-line rounded-xl">
                 <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Saldo Inicial</p>
-                <p className="text-base font-bold text-ink">R$ {formatBRL(currentCashRegister.openingBalance ?? 0)}</p>
+                <p className="text-base font-bold text-ink">{formatMoney(currentCashRegister.openingBalance)}</p>
               </div>
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">+ Vendas</p>
-                <p className="text-base font-bold text-emerald-600">R$ {formatBRL(currentCashRegister.salesTotal ?? 0)}</p>
+                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">+ Vendas em dinheiro</p>
+                <p className="text-base font-bold text-emerald-600">{formatMoney(currentCashRegister.salesTotal)}</p>
               </div>
               <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl">
                 <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">− Compras</p>
-                <p className="text-base font-bold text-rose-600">R$ {formatBRL(currentCashRegister.purchasesTotal ?? 0)}</p>
+                <p className="text-base font-bold text-rose-600">{formatMoney(currentCashRegister.purchasesTotal)}</p>
               </div>
               <div className="p-3 bg-sky-500/10 border border-sky-500/30 rounded-xl">
                 <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">± Mov. Manuais</p>
-                <p className="text-base font-bold text-sky-600">
-                  {(currentCashRegister.movementsTotal ?? 0) >= 0 ? '+' : ''}R${' '}
-                  {formatBRL(currentCashRegister.movementsTotal ?? 0)}
-                </p>
+                <p className="text-base font-bold text-sky-600">{formatSignedMoney(currentCashRegister.movementsTotal)}</p>
               </div>
             </div>
 
-            <div className="p-4 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-xl mb-5 flex items-center justify-between">
-              <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider">Saldo Atual do Caixa</p>
-              <p className="text-2xl font-extrabold text-emerald-600">R$ {formatBRL(currentCashRegister.currentBalance ?? 0)}</p>
+            <div
+              className={`p-4 border-2 rounded-xl mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1 ${
+                (currentCashRegister.currentBalance ?? 0) < 0
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-600'
+                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+              }`}
+            >
+              <p className="text-sm font-semibold uppercase tracking-wider">Saldo Atual do Caixa</p>
+              <p className="text-2xl font-extrabold">{formatMoney(currentCashRegister.currentBalance)}</p>
             </div>
+            <p className="text-xs text-ink-muted mb-5">
+              PIX e cartão deste caixa: {formatMoney(currentCashRegister.otherPaymentsTotal)} (não entram no saldo, esse dinheiro não passa pela gaveta).
+            </p>
 
             <div className="border-t border-line pt-5 mb-5">
               <h3 className="text-sm font-semibold text-ink mb-4">Registrar Movimentação</h3>
               <form onSubmit={handleMovementSubmit}>
-                <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Tipo</label>
-                    <Field
+                    <label htmlFor="cashregisterform-tipo" className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Tipo</label>
+                    <Field id="cashregisterform-tipo"
                       as="select"
                       value={movement.type}
                       onChange={(e) => setMovement({ ...movement, type: e.target.value as CashMovementType })}
@@ -199,10 +213,10 @@ const CashRegisterForm = () => {
                     </Field>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Valor</label>
+                    <label htmlFor="cashregisterform-valor" className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Valor</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                      <CurrencyInput
+                      <CurrencyInput id="cashregisterform-valor"
                         className="input-field pl-8"
                         value={movement.amount}
                         onChange={(val) => setMovement({ ...movement, amount: val })}
@@ -211,8 +225,8 @@ const CashRegisterForm = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Descrição</label>
-                    <Field
+                    <label htmlFor="cashregisterform-descricao" className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Descrição</label>
+                    <Field id="cashregisterform-descricao"
                       type="text"
                       value={movement.description}
                       onChange={(e) => setMovement({ ...movement, description: e.target.value })}
@@ -246,11 +260,11 @@ const CashRegisterForm = () => {
                         )}
                         <div>
                           <p className="text-ink">{m.description || '—'}</p>
-                          <p className="text-xs text-ink-muted">{new Date(m.date).toLocaleString()}</p>
+                          <p className="text-xs text-ink-muted">{formatDateTime(m.date)}</p>
                         </div>
                       </div>
                       <span className={`font-semibold shrink-0 ml-4 ${m.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {m.type === 'INCOME' ? '+' : '-'}R$ {formatBRL(m.amount)}
+                        {m.type === 'INCOME' ? '+' : '-'}{formatMoney(m.amount)}
                       </span>
                     </div>
                   ))}
@@ -269,14 +283,45 @@ const CashRegisterForm = () => {
           </div>
         ) : (
           <div>
+            {lastClosed && (
+              <div className="mb-4 p-4 bg-surface-2 border border-line rounded-xl text-sm">
+                <p className="font-semibold text-ink mb-2">Caixa {lastClosed.id} fechado</p>
+                <dl className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <dt className="text-xs text-ink-muted">Saldo final calculado</dt>
+                    <dd className="font-semibold text-ink">{formatMoney(lastClosed.closingBalance)}</dd>
+                  </div>
+                  {lastClosed.countedBalance != null && (
+                    <>
+                      <div>
+                        <dt className="text-xs text-ink-muted">Valor contado</dt>
+                        <dd className="font-semibold text-ink">{formatMoney(lastClosed.countedBalance)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-ink-muted">Diferença</dt>
+                        <dd
+                          className={`font-semibold ${
+                            Number(lastClosed.difference) === 0
+                              ? 'text-emerald-600'
+                              : 'text-rose-600'
+                          }`}
+                        >
+                          {formatSignedMoney(lastClosed.difference)}
+                        </dd>
+                      </div>
+                    </>
+                  )}
+                </dl>
+              </div>
+            )}
             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-600 text-sm">
-              Nenhum caixa está aberto no momento.
+              Nenhum caixa está aberto no momento. Vendas só podem ser registradas com o caixa aberto.
             </div>
             <div className="flex flex-col gap-1 mb-6">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Saldo Inicial</label>
+              <label htmlFor="cashregisterform-saldo-inicial" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Saldo Inicial</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                <CurrencyInput
+                <CurrencyInput id="cashregisterform-saldo-inicial"
                   data-testid="cash-opening-balance"
                   className="input-field pl-8"
                   value={openingBalance}
@@ -300,14 +345,58 @@ const CashRegisterForm = () => {
         message={
           dialogAction === 'open'
             ? `Deseja realmente abrir o caixa com saldo inicial de R$ ${formatBRL(openingBalance)}?`
-            : `Deseja realmente fechar o caixa ${currentCashRegister?.id}?`
+            : undefined
         }
         onCancel={() => {
           setOpenDialog(false);
           setDialogAction(null);
         }}
         onConfirm={confirmAction}
-      />
+      >
+        {dialogAction === 'close' && currentCashRegister && (
+          <div className="text-sm">
+            <dl className="space-y-1 mb-4">
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Saldo inicial</dt>
+                <dd className="text-ink">{formatMoney(currentCashRegister.openingBalance)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Vendas em dinheiro</dt>
+                <dd className="text-ink">{formatMoney(currentCashRegister.salesTotal)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Compras</dt>
+                <dd className="text-ink">-{formatMoney(currentCashRegister.purchasesTotal)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Movimentações</dt>
+                <dd className="text-ink">{formatSignedMoney(currentCashRegister.movementsTotal)}</dd>
+              </div>
+              <div className="flex justify-between border-t border-line pt-1 font-semibold">
+                <dt className="text-ink">Saldo esperado</dt>
+                <dd className="text-ink">{formatMoney(currentCashRegister.currentBalance)}</dd>
+              </div>
+            </dl>
+            <label htmlFor="cash-counted-balance" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              Valor contado na gaveta (opcional)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
+              <CurrencyInput
+                id="cash-counted-balance"
+                className="input-field pl-8"
+                value={countedBalance}
+                onChange={setCountedBalance}
+              />
+            </div>
+            {countedBalance !== '' && (
+              <p className="text-xs text-ink-muted mt-2">
+                Diferença: {formatSignedMoney(Number(countedBalance) - Number(currentCashRegister.currentBalance ?? 0))}
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

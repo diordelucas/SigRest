@@ -16,7 +16,7 @@ public class CashMovementRequestDTO {
     private CashMovement.MovementType type;
 
     @NotNull(message = "informe o valor")
-    @DecimalMin(value = "0.01", message = "deve ser maior que zero")
+    @DecimalMin(value = "0.01", message = "o valor deve ser maior que zero")
     private BigDecimal amount;
 
     private String description;

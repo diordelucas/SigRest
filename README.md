@@ -68,6 +68,33 @@ Esta abordagem levanta o banco de dados, o backend e o frontend simultaneamente.
     *   **Backend:** `http://localhost:8080`
     *   **Banco de Dados:** `localhost:5432`
 
+### Produção (Oracle Cloud)
+
+O passo a passo para publicar o sistema numa VM gratuita da Oracle, com HTTPS, backup diário e deploy automático a cada merge na `main`, está em [DEPLOY.md](DEPLOY.md).
+
+### Modo desenvolvimento (recarga automática)
+
+Para programar sem reconstruir as imagens a cada alteração, suba o modo dev. O código das pastas `backend/` e `frontend/` é montado direto nos containers:
+
+```powershell
+./dev.ps1        # Windows (PowerShell)
+```
+```bash
+./dev.sh         # Linux/macOS
+```
+
+*   **Frontend:** ao salvar um arquivo em `frontend/src`, a página recarrega sozinha em poucos segundos.
+*   **Backend:** ao salvar um arquivo em `backend/src/main` (Java, templates dos relatórios, `.properties`), a API recompila e reinicia sozinha. Acompanhe com `docker logs -f sigrest_backend`. O Maven recompila o módulo inteiro, então leva cerca de 1 minuto numa máquina com pouca memória.
+*   A primeira subida baixa as dependências (Maven e npm) para volumes do Docker e demora alguns minutos. Nas próximas, sobe em segundos.
+*   Mudou o `pom.xml`? Reinicie o backend com `docker restart sigrest_backend`. Mudou o `package.json`? Reinicie o frontend com `docker restart sigrest_frontend`: as dependências novas são instaladas na subida.
+*   Para voltar ao modo normal (imagens de produção), use `docker compose up -d --build`.
+
+**Backend ainda mais rápido: rodar pela IDE.** Quando o trabalho for principalmente no backend, rode a API direto no IntelliJ, que recompila só o que mudou, e deixe o resto no Docker:
+
+1.  `docker stop sigrest_backend` (o banco e o frontend continuam rodando).
+2.  No IntelliJ, execute a classe `sigrestAPI` com as variáveis de ambiente `DB_URL=jdbc:postgresql://localhost:<POSTGRES_PORT>/<POSTGRES_DB>`, `DB_USERNAME`, `DB_PASSWORD` (os mesmos valores do `.env`) e `SERVER_PORT=<BACKEND_PORT>`, para o frontend continuar achando a API.
+3.  Ative *Settings → Build → Compiler → Build project automatically* e *Advanced Settings → Allow auto-make to start even if developed application is currently running*. O `spring-boot-devtools` reinicia a API sozinho a cada alteração salva.
+
 ---
 
 ### Opção 2: Execução Manual dos Componentes

@@ -47,8 +47,8 @@ export default function LoginForm() {
         )}
 
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-ink-muted">E-mail</label>
-          <Field
+          <label htmlFor="loginform-e-mail" className="text-sm font-semibold text-ink-muted">E-mail</label>
+          <Field id="loginform-e-mail"
             type="email"
             data-testid="login-email"
             value={email}
@@ -59,9 +59,9 @@ export default function LoginForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-ink-muted">Senha</label>
+          <label htmlFor="loginform-senha" className="text-sm font-semibold text-ink-muted">Senha</label>
           <div className="relative">
-            <Field
+            <Field id="loginform-senha"
               type={showPassword ? 'text' : 'password'}
               data-testid="login-password"
               value={password}
@@ -72,6 +72,7 @@ export default function LoginForm() {
             />
             <button
               type="button"
+              aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink transition-colors p-1"
               onClick={() => setShowPassword(!showPassword)}
             >

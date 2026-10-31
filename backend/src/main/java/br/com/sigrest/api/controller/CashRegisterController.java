@@ -1,5 +1,6 @@
 package br.com.sigrest.api.controller;
 
+import br.com.sigrest.api.dto.CashRegisterCloseRequestDTO;
 import br.com.sigrest.api.dto.CashRegisterRequestDTO;
 import br.com.sigrest.api.dto.CashRegisterResponseDTO;
 import br.com.sigrest.api.entity.User;
@@ -34,8 +35,10 @@ public class CashRegisterController {
 
     @PostMapping("/close/{id}")
     public ResponseEntity<CashRegisterResponseDTO> closeCashRegister(@PathVariable Long id,
+                                                                       @Valid @RequestBody(required = false) CashRegisterCloseRequestDTO data,
                                                                        @AuthenticationPrincipal User currentUser) {
-        CashRegisterResponseDTO closedCashRegister = cashRegisterService.closeCashRegister(id, currentUser.getId());
+        CashRegisterResponseDTO closedCashRegister = cashRegisterService.closeCashRegister(id, currentUser.getId(),
+                data != null ? data.countedBalance() : null);
         return ResponseEntity.ok(closedCashRegister);
     }
 

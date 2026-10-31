@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- Template único para contas a pagar e a receber: os rótulos vêm do ReportPdfService. -->
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Total no período</div><div class="kpi-valor" th:text="${fmt.moeda(total)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo" th:text="${rotuloLiquidado}">Pago</div><div class="kpi-valor positivo" th:text="${fmt.moeda(liquidado)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo">A vencer</div><div class="kpi-valor" th:text="${fmt.moeda(aVencer)}">R$ 0,00</div></td>
+    <td>
+      <div class="kpi-rotulo">Vencido (<span th:text="${quantidadeVencidas}">0</span>)</div>
+      <div class="kpi-valor negativo" th:text="${fmt.moeda(vencido)}">R$ 0,00</div>
+    </td>
+  </tr>
+</table>
+
+<th:block th:if="${contas.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhuma conta com vencimento no período.')}"></div></th:block>
+
+<th:block th:unless="${contas.isEmpty()}">
+  <h2>Contas por vencimento</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr>
+        <th>Vencimento</th><th>Descrição</th><th th:text="${rotuloParte}">Parte</th><th>Situação</th>
+        <th class="num">Atraso</th><th th:text="${rotuloLiquidacao}">Liquidação</th><th class="num">Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="c : ${contas}">
+        <td th:text="${fmt.data(c.dueDate)}">01/01/2026</td>
+        <td th:text="${fmt.texto(c.description)}">Descrição</td>
+        <td th:text="${fmt.texto(c.partyName)}">Nome</td>
+        <td>
+          <span class="selo"
+                th:classappend="${c.status == 'OVERDUE'} ? 'selo-erro' : (${c.status == 'PENDING'} ? 'selo-alerta' : 'selo-ok')"
+                th:text="${fmt.statusConta(c.status)}">A vencer</span>
+        </td>
+        <td class="num" th:text="${c.daysOverdue > 0 ? c.daysOverdue + ' dia(s)' : '—'}">—</td>
+        <td th:text="${fmt.data(c.settlementDate)}">—</td>
+        <td class="num" th:text="${fmt.moeda(c.amount)}">R$ 0,00</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6">Total</td>
+        <td class="num" th:text="${fmt.moeda(total)}">R$ 0,00</td>
+      </tr>
+    </tfoot>
+  </table>
+  <p class="nota">Contas filtradas pela data de vencimento. Conta em aberto com vencimento anterior a hoje aparece como vencida.</p>
+</th:block>
+</body>
+</html>

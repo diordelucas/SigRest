@@ -2,9 +2,13 @@ package br.com.sigrest.api.repository;
 
 import br.com.sigrest.api.entity.TechnicalSheet;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 import java.util.Optional;
 
 public interface TechnicalSheetRepository extends JpaRepository<TechnicalSheet, Long> {
     Optional<TechnicalSheet> findByFinalProductId(Long finalProductId);
+
+    /** Fichas em que o produto é o resultado ou um dos ingredientes. */
+    List<TechnicalSheet> findDistinctByFinalProductIdOrItemsRawMaterialId(Long finalProductId, Long rawMaterialId);
 }
 

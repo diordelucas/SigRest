@@ -1,5 +1,7 @@
 package br.com.sigrest.api.util;
 
+import java.util.Set;
+
 /**
  * Normalização e validação de dígito verificador de CPF/CNPJ (inspirado em
  * {@code Documentos.java} do mpg-gestao — ver PLANO_ACAO_COMPLETO.md, item 8).
@@ -11,6 +13,19 @@ package br.com.sigrest.api.util;
 public final class Documentos {
 
     private Documentos() {
+    }
+
+    private static final Set<String> UFS = Set.of("AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
+            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO");
+
+    /** Telefone brasileiro com DDD: 10 dígitos (fixo) ou 11 (celular). */
+    public static boolean isValidTelefone(String telefone) {
+        int digitos = apenasDigitos(telefone).length();
+        return digitos == 10 || digitos == 11;
+    }
+
+    public static boolean isValidUF(String uf) {
+        return uf != null && UFS.contains(uf.trim().toUpperCase());
     }
 
     /** Remove tudo que não for dígito. */

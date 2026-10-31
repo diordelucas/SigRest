@@ -14,7 +14,7 @@ public class AccountPayableRequestDTO {
     private String description;
 
     @NotNull(message = "informe o valor")
-    @DecimalMin(value = "0.01", message = "deve ser maior que zero")
+    @DecimalMin(value = "0.01", message = "o valor deve ser maior que zero")
     private BigDecimal amount;
 
     @NotNull(message = "informe o vencimento")

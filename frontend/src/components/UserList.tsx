@@ -6,6 +6,8 @@ import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UserListProps {
   refreshTrigger: number | boolean;
@@ -18,6 +20,7 @@ const UserList = ({ refreshTrigger, onEditUser }: UserListProps) => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const { currentUser } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -35,9 +38,10 @@ const UserList = ({ refreshTrigger, onEditUser }: UserListProps) => {
   const handleDelete = async (id: number) => {
     try {
       await api.delete(`/user/${id}`);
+      toast.success('Usuário excluído com sucesso!');
       await fetchUsers();
     } catch (error) {
-      setError(getErrorMessage(error, 'Erro ao excluir usuário.'));
+      toast.error(getErrorMessage(error, 'Erro ao excluir usuário.'));
     } finally {
       setConfirmDelete(null);
     }
@@ -65,7 +69,7 @@ const UserList = ({ refreshTrigger, onEditUser }: UserListProps) => {
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-ink">Lista de Usuários</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
@@ -74,7 +78,7 @@ const UserList = ({ refreshTrigger, onEditUser }: UserListProps) => {
             placeholder="Pesquisar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-64"
+            className="pl-8 py-2 text-sm w-full sm:w-64"
           />
         </div>
       </div>
@@ -123,12 +127,14 @@ const UserList = ({ refreshTrigger, onEditUser }: UserListProps) => {
                       >
                         <Pencil size={12} /> Editar
                       </button>
+                      {currentUser?.email !== user.email && (
                       <button
                         className="px-3 py-1.5 text-xs bg-rose-500 text-white font-semibold rounded-lg hover:bg-rose-600 transition-colors flex items-center gap-1"
                         onClick={() => setConfirmDelete(user.id)}
                       >
                         <Trash2 size={12} /> Excluir
                       </button>
+                      )}
                     </div>
                   </td>
                 </tr>

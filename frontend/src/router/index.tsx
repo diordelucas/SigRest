@@ -17,8 +17,10 @@ import StockMovementList from '../components/StockMovementList';
 
 import SaleList from '../components/SaleList';
 import SaleForm from '../components/SaleForm';
+import SaleDetails from '../components/SaleDetails';
 import PurchaseList from '../components/PurchaseList';
 import PurchaseForm from '../components/PurchaseForm';
+import PurchaseDetails from '../components/PurchaseDetails';
 
 import CashRegisterForm from '../components/CashRegisterForm';
 import CashRegisterList from '../components/CashRegisterList';
@@ -143,12 +145,20 @@ export const router = createBrowserRouter([
         element: <SaleForm />,
       },
       {
+        path: 'sales/:id',
+        element: <SaleDetails />,
+      },
+      {
         path: 'purchases',
         element: <PurchaseList />,
       },
       {
         path: 'purchases/new',
         element: <PurchaseForm />,
+      },
+      {
+        path: 'purchases/:id',
+        element: <PurchaseDetails />,
       },
       {
         path: 'stock-movements',
@@ -160,7 +170,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'technical-sheets/new',
-        element: <NewTechnicalSheetWrapper />,
+        element: (
+          <AdminRoute>
+            <NewTechnicalSheetWrapper />
+          </AdminRoute>
+        ),
       },
       {
         path: 'production-orders',

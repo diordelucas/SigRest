@@ -21,7 +21,7 @@ public class PurchaseItem {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    private Integer quantity;
+    private BigDecimal quantity;
 
     private BigDecimal unitPrice;
 

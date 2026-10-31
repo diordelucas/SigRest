@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import api, { getErrorMessage } from '../services/api';
+import { BarChart3, Download, FileText } from 'lucide-react';
+import api, { fetchPdf, getErrorMessage } from '../services/api';
 import {
   LineChart,
   Line,
@@ -19,6 +20,7 @@ import { lossReasonLabel } from '../utils/lossReason';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import { Table, Th } from './ui/Table';
+import { formatMoney, formatMonth, formatQuantity } from '../utils/format';
 
 type ReportType =
   | ''
@@ -28,17 +30,102 @@ type ReportType =
   | 'stock-movement'
   | 'financial-flow'
   | 'purchase-history'
-  | 'loss';
+  | 'loss'
+  | 'accounts-payable'
+  | 'accounts-receivable'
+  | 'stock-position'
+  | 'technical-sheets'
+  | 'activity-log';
+
+interface ReportOption {
+  label: string;
+  group: string;
+  /** Endpoint do PDF gerado no backend (templates Thymeleaf). */
+  pdfPath: string;
+  /** Também tem visualização em tela (gráfico/tabela), além do PDF. */
+  hasScreen: boolean;
+  /** Usa o filtro de período (data inicial/final). */
+  usesPeriod: boolean;
+}
+
+const REPORTS: Record<Exclude<ReportType, ''>, ReportOption> = {
+  'sales-by-period': { label: 'Vendas por Período', group: 'Vendas', pdfPath: '/reports/pdf/sales', hasScreen: true, usesPeriod: true },
+  'top-selling-products': { label: 'Produtos Mais Vendidos', group: 'Vendas', pdfPath: '/reports/pdf/top-selling-products', hasScreen: true, usesPeriod: true },
+  'monthly-revenue': { label: 'Faturamento Mensal', group: 'Vendas', pdfPath: '/reports/pdf/monthly-revenue', hasScreen: true, usesPeriod: true },
+  'financial-flow': { label: 'Fluxo Financeiro', group: 'Financeiro', pdfPath: '/reports/pdf/financial-flow', hasScreen: true, usesPeriod: true },
+  'accounts-payable': { label: 'Contas a Pagar', group: 'Financeiro', pdfPath: '/reports/pdf/accounts-payable', hasScreen: false, usesPeriod: true },
+  'accounts-receivable': { label: 'Contas a Receber', group: 'Financeiro', pdfPath: '/reports/pdf/accounts-receivable', hasScreen: false, usesPeriod: true },
+  'purchase-history': { label: 'Histórico de Compras', group: 'Compras e Estoque', pdfPath: '/reports/pdf/purchases', hasScreen: true, usesPeriod: true },
+  'stock-position': { label: 'Posição de Estoque', group: 'Compras e Estoque', pdfPath: '/reports/pdf/stock-position', hasScreen: false, usesPeriod: false },
+  'stock-movement': { label: 'Movimentação de Estoque', group: 'Compras e Estoque', pdfPath: '/reports/pdf/stock-movement', hasScreen: true, usesPeriod: true },
+  loss: { label: 'Quebra (Produção e Estoque)', group: 'Compras e Estoque', pdfPath: '/reports/pdf/loss', hasScreen: true, usesPeriod: true },
+  'technical-sheets': { label: 'Custo e Margem das Fichas Técnicas', group: 'Produção', pdfPath: '/reports/pdf/technical-sheets', hasScreen: false, usesPeriod: false },
+  'activity-log': { label: 'Trilha de Auditoria', group: 'Administração', pdfPath: '/reports/pdf/activity-log', hasScreen: false, usesPeriod: true },
+};
+
+const REPORT_GROUPS = Array.from(new Set(Object.values(REPORTS).map((r) => r.group)));
 
 const ReportPage = () => {
   const [reportType, setReportType] = useState<ReportType>('');
   const [startDate, setStartDate] = useState(moment().startOf('month').format('YYYY-MM-DD'));
   const [endDate, setEndDate] = useState(moment().format('YYYY-MM-DD'));
+  const [onlyBelowMinimum, setOnlyBelowMinimum] = useState(false);
   const [reportData, setReportData] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const selected = reportType ? REPORTS[reportType] : null;
+
+  const handleChangeReportType = (type: ReportType) => {
+    // Os dados em tela têm formato diferente por relatório: limpa para não renderizar o anterior com o layout novo.
+    setReportType(type);
+    setReportData(null);
+    setError(null);
+  };
+
+  const periodIsValid = () => {
+    if (selected?.usesPeriod && startDate > endDate) {
+      setReportData(null);
+      setError('A data inicial não pode ser posterior à data final.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleExportPdf = async (mode: 'open' | 'download') => {
+    if (!selected || !periodIsValid()) return;
+    setPdfLoading(true);
+    setError(null);
+
+    const params: Record<string, string | boolean> = selected.usesPeriod ? { startDate, endDate } : {};
+    if (reportType === 'stock-position') params.onlyBelowMinimum = onlyBelowMinimum;
+
+    // A aba é aberta já no clique: se fosse aberta depois do await, o bloqueador de pop-up barraria.
+    const pdfWindow = mode === 'open' ? window.open('', '_blank') : null;
+    pdfWindow?.document.write('<p style="font-family: sans-serif; padding: 24px;">Gerando relatório...</p>');
+    try {
+      const { blob, fileName } = await fetchPdf(selected.pdfPath, params);
+      const url = URL.createObjectURL(blob);
+      if (pdfWindow) {
+        pdfWindow.location.href = url;
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      pdfWindow?.close();
+      setError(getErrorMessage(err, 'Erro ao gerar o PDF do relatório.'));
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   const handleGenerateReport = async () => {
+    if (!periodIsValid()) return;
     setLoading(true);
     setError(null);
     setReportData(null);
@@ -50,7 +137,7 @@ const ReportPage = () => {
           setReportData(response.data.map((item: any) => ({ ...item, date: moment(item.date).format('DD/MM/YYYY') })));
           break;
         case 'top-selling-products':
-          response = await api.get('/reports/top-selling-products', { params: { limit: 10 } });
+          response = await api.get('/reports/top-selling-products', { params: { limit: 10, startDate, endDate } });
           setReportData(response.data);
           break;
         case 'monthly-revenue':
@@ -60,7 +147,7 @@ const ReportPage = () => {
               endMonth: moment(endDate).endOf('month').format('YYYY-MM-DD'),
             },
           });
-          setReportData(response.data.map((item: any) => ({ ...item, month: moment(item.month).format('MMM YYYY') })));
+          setReportData(response.data.map((item: any) => ({ ...item, month: formatMonth(item.month) })));
           break;
         case 'stock-movement':
           response = await api.get('/reports/stock-movement', { params: { startDate, endDate } });
@@ -70,16 +157,15 @@ const ReportPage = () => {
           break;
         case 'financial-flow':
           response = await api.get('/reports/financial-flow', { params: { startDate, endDate } });
-          setReportData(response.data.map((item: any) => ({ ...item, month: item.month })));
+          setReportData(response.data.map((item: any) => ({ ...item, month: formatMonth(item.month) })));
           break;
         case 'purchase-history':
-          response = await api.get('/purchases');
+          response = await api.get('/reports/purchase-history', { params: { startDate, endDate } });
           setReportData(
             response.data.map((item: any) => ({
               ...item,
               date: moment(item.date).format('DD/MM/YYYY'),
-              supplierName: item.supplier?.name || '—',
-              itemCount: item.items?.length ?? 0,
+              supplierName: item.supplierName || '—',
             }))
           );
           break;
@@ -123,7 +209,12 @@ const ReportPage = () => {
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={reportData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-line))" />
-              <XAxis dataKey="productName" tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-muted))' }} />
+              <XAxis
+                dataKey="productName"
+                interval={0}
+                tickFormatter={(name: string) => (name.length > 16 ? `${name.slice(0, 15)}…` : name)}
+                tick={{ fontSize: 11, fill: 'rgb(var(--color-ink-muted))' }}
+              />
               <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-muted))' }} />
               <Tooltip />
               <Legend />
@@ -171,7 +262,7 @@ const ReportPage = () => {
                         {movement.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">{movement.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatQuantity(movement.quantity)} {movement.baseUnit}</td>
                     <td className="px-4 py-3 text-sm text-ink">{movement.description}</td>
                   </tr>
                 ))}
@@ -219,7 +310,7 @@ const ReportPage = () => {
                           row.saldo >= 0 ? 'text-ink' : 'text-orange-600'
                         }`}
                       >
-                        R$ {formatBRL(row.saldo)}
+                        {formatMoney(row.saldo)}
                       </td>
                     </tr>
                   ))}
@@ -242,7 +333,7 @@ const ReportPage = () => {
               </thead>
               <tbody className="divide-y divide-line">
                 {reportData.map((purchase) => (
-                  <tr key={purchase.id} className="hover:bg-surface-2">
+                  <tr key={purchase.purchaseId} className="hover:bg-surface-2">
                     <td className="px-4 py-3 text-sm text-ink">{purchase.date}</td>
                     <td className="px-4 py-3 text-sm text-ink">{purchase.supplierName}</td>
                     <td className="px-4 py-3 text-sm text-ink text-right">{purchase.itemCount}</td>
@@ -254,24 +345,20 @@ const ReportPage = () => {
               </tbody>
             </Table>
             {reportData.length === 0 && (
-              <p className="text-sm text-ink-muted text-center py-8">Nenhuma compra registrada.</p>
+              <p className="text-sm text-ink-muted text-center py-8">Nenhuma compra registrada no período.</p>
             )}
           </div>
         );
       case 'loss': {
-        const totalQuantity = reportData.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
-        const totalProducao = reportData
-          .filter((r) => r.source === 'PRODUCAO')
-          .reduce((sum, r) => sum + Number(r.quantity || 0), 0);
-        const totalEstoque = reportData
-          .filter((r) => r.source === 'ESTOQUE')
-          .reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+        // Conta ocorrências: as quantidades vêm em unidades diferentes (un, g, ml) e não podem ser somadas.
+        const totalProducao = reportData.filter((r) => r.source === 'PRODUCAO').length;
+        const totalEstoque = reportData.filter((r) => r.source === 'ESTOQUE').length;
         return (
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="card p-4">
-                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Quebra Total</p>
-                <p className="text-xl font-bold text-ink">{totalQuantity}</p>
+                <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Ocorrências</p>
+                <p className="text-xl font-bold text-ink">{reportData.length}</p>
               </div>
               <div className="card p-4">
                 <p className="text-xs text-ink-muted uppercase tracking-wider mb-1">Quebra de Produção</p>
@@ -308,7 +395,7 @@ const ReportPage = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-ink">{row.productName}</td>
                     <td className="px-4 py-3 text-sm text-ink">{lossReasonLabel(row.reason)}</td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">{row.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(row.quantity)}</td>
                     <td className="px-4 py-3 text-sm text-ink">{row.description}</td>
                   </tr>
                 ))}
@@ -334,53 +421,92 @@ const ReportPage = () => {
           <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-sm">{error}</div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="reportpage-tipo-de-relatorio" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Tipo de Relatório
             </label>
-            <Field
+            <Field id="reportpage-tipo-de-relatorio"
               as="select"
               value={reportType}
-              onChange={(e) => setReportType(e.target.value as ReportType)}
+              onChange={(e) => handleChangeReportType(e.target.value as ReportType)}
             >
-              <option value="">Nenhum</option>
-              <option value="sales-by-period">Vendas por Período</option>
-              <option value="top-selling-products">Produtos Mais Vendidos</option>
-              <option value="monthly-revenue">Faturamento Mensal</option>
-              <option value="stock-movement">Movimentação de Estoque</option>
-              <option value="financial-flow">Fluxo Financeiro</option>
-              <option value="purchase-history">Histórico de Compras</option>
-              <option value="loss">Quebra (Produção e Estoque)</option>
+              <option value="">Selecione...</option>
+              {REPORT_GROUPS.map((group) => (
+                <optgroup key={group} label={group}>
+                  {(Object.keys(REPORTS) as Exclude<ReportType, ''>[])
+                    .filter((type) => REPORTS[type].group === group)
+                    .map((type) => (
+                      <option key={type} value={type}>
+                        {REPORTS[type].label}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="reportpage-data-inicial" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Data Inicial
             </label>
-            <Field
+            <Field id="reportpage-data-inicial"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              disabled={selected ? !selected.usesPeriod : false}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="reportpage-data-final" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Data Final
             </label>
-            <Field type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <Field id="reportpage-data-final"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={selected ? !selected.usesPeriod : false}
+            />
           </div>
-          <div>
+        </div>
+
+        {reportType === 'stock-position' && (
+          <label className="flex items-center gap-2 text-sm text-ink mb-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onlyBelowMinimum}
+              onChange={(e) => setOnlyBelowMinimum(e.target.checked)}
+            />
+            Somente produtos abaixo do estoque mínimo
+          </label>
+        )}
+
+        {selected && !selected.usesPeriod && (
+          <p className="text-xs text-ink-muted mb-4">Este relatório mostra a posição atual e não usa o período.</p>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          {(!selected || selected.hasScreen) && (
             <Button
-              className="w-full"
+              variant="secondary"
               onClick={handleGenerateReport}
               disabled={loading || !reportType}
               loading={loading}
               loadingText="Gerando..."
             >
-              Gerar
+              <BarChart3 size={16} /> Ver na tela
             </Button>
-          </div>
+          )}
+          <Button
+            onClick={() => handleExportPdf('open')}
+            disabled={pdfLoading || !reportType}
+            loading={pdfLoading}
+            loadingText="Gerando PDF..."
+          >
+            <FileText size={16} /> Gerar PDF
+          </Button>
+          <Button variant="secondary" onClick={() => handleExportPdf('download')} disabled={pdfLoading || !reportType}>
+            <Download size={16} /> Baixar PDF
+          </Button>
         </div>
 
         {reportData && (

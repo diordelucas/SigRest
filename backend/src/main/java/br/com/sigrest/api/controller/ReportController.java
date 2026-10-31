@@ -4,6 +4,7 @@ import br.com.sigrest.api.dto.report.FinancialFlowDTO;
 import br.com.sigrest.api.dto.report.LossReportDTO;
 import br.com.sigrest.api.dto.report.MonthlyRevenueDTO;
 import br.com.sigrest.api.dto.report.ProductSalesDTO;
+import br.com.sigrest.api.dto.report.PurchaseHistoryDTO;
 import br.com.sigrest.api.dto.report.SalesByPeriodDTO;
 import br.com.sigrest.api.dto.report.StockMovementReportDTO;
 import br.com.sigrest.api.service.ReportService;
@@ -33,10 +34,15 @@ public class ReportController {
         return ResponseEntity.ok(sales);
     }
 
+    /** Sem período, considera todas as vendas (uso do dashboard); com período, só as vendas do intervalo. */
     @GetMapping("/top-selling-products")
     public ResponseEntity<List<ProductSalesDTO>> getTopSellingProducts(
-            @RequestParam(defaultValue = "5") int limit) {
-        List<ProductSalesDTO> topProducts = reportService.getTopSellingProducts(limit);
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        List<ProductSalesDTO> topProducts = startDate != null && endDate != null
+                ? reportService.getTopSellingProducts(startDate, endDate, limit)
+                : reportService.getTopSellingProducts(limit);
         return ResponseEntity.ok(topProducts);
     }
 
@@ -61,6 +67,13 @@ public class ReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(reportService.getFinancialFlow(startDate, endDate));
+    }
+
+    @GetMapping("/purchase-history")
+    public ResponseEntity<List<PurchaseHistoryDTO>> getPurchaseHistory(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(reportService.getPurchaseHistory(startDate, endDate));
     }
 
     @GetMapping("/loss")

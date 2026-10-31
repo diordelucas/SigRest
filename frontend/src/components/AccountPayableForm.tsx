@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { Supplier } from '../types';
+import CurrencyInput from './CurrencyInput';
 import Button from './ui/Button';
 import Field from './ui/Field';
 
 interface AccountPayableFormState {
   description: string;
-  amount: string;
+  amount: number | '';
   dueDate: string;
   supplierId: string;
 }
@@ -43,7 +44,7 @@ const AccountPayableForm = () => {
     try {
       await api.post('/accounts-payable', {
         ...accountPayable,
-        amount: parseFloat(accountPayable.amount),
+        amount: Number(accountPayable.amount),
       });
       toast.success('Conta a pagar registrada com sucesso!');
       setAccountPayable({ description: '', amount: '', dueDate: '', supplierId: '' });
@@ -69,10 +70,10 @@ const AccountPayableForm = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1 mb-4">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="accountpayableform-descricao" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Descrição
             </label>
-            <Field
+            <Field id="accountpayableform-descricao"
               name="description"
               value={accountPayable.description}
               onChange={handleChange}
@@ -83,27 +84,23 @@ const AccountPayableForm = () => {
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Valor</label>
+              <label htmlFor="accountpayableform-valor" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Valor</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                <Field
-                  type="number"
+                <CurrencyInput id="accountpayableform-valor"
                   name="amount"
-                  step="0.01"
-                  min="0"
-                  className="pl-8"
+                  className="input-field pl-8"
                   value={accountPayable.amount}
-                  onChange={handleChange}
+                  onChange={(val) => setAccountPayable({ ...accountPayable, amount: val })}
                   required
-                  placeholder="0.00"
                 />
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="accountpayableform-data-de-vencimento" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Data de Vencimento
               </label>
-              <Field
+              <Field id="accountpayableform-data-de-vencimento"
                 type="date"
                 name="dueDate"
                 value={accountPayable.dueDate}
@@ -114,10 +111,10 @@ const AccountPayableForm = () => {
           </div>
 
           <div className="flex flex-col gap-1 mb-6">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="accountpayableform-fornecedor" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Fornecedor
             </label>
-            <Field
+            <Field id="accountpayableform-fornecedor"
               as="select"
               name="supplierId"
               value={accountPayable.supplierId}

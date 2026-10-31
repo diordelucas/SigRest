@@ -8,6 +8,7 @@ import { CNPJ_MASK, PHONE_MASK, CEP_MASK } from '../utils/masks';
 import { Supplier } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
+import { isValidPhone, isValidUF } from '../utils/format';
 
 interface SupplierFormProps {
   onSupplierAdded: () => void;
@@ -83,6 +84,14 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (phone && !isValidPhone(phone)) {
+      toast.error('Telefone inválido. Informe o DDD e o número.');
+      return;
+    }
+    if (uf && !isValidUF(uf)) {
+      toast.error('UF inválida. Informe a sigla de um estado brasileiro.');
+      return;
+    }
     const data = {
       name,
       cnpj: cnpj.replace(/\D/g, ''),
@@ -119,12 +128,12 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
       </h2>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-nome-razao-social" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Nome / Razão Social
             </label>
-            <Field
+            <Field id="supplierform-nome-razao-social"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -132,8 +141,8 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CNPJ</label>
-            <IMaskInput
+            <label htmlFor="supplierform-cnpj" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CNPJ</label>
+            <IMaskInput id="supplierform-cnpj"
               mask={CNPJ_MASK}
               value={cnpj}
               onAccept={(value: string) => setCnpj(value)}
@@ -143,12 +152,12 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-telefone" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Telefone
             </label>
-            <IMaskInput
+            <IMaskInput id="supplierform-telefone"
               mask={PHONE_MASK}
               value={phone}
               onAccept={(value: string) => setPhone(value)}
@@ -157,10 +166,10 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-e-mail" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               E-mail
             </label>
-            <Field
+            <Field id="supplierform-e-mail"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -168,10 +177,10 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-inscricao-estadual" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Inscrição Estadual
             </label>
-            <Field
+            <Field id="supplierform-inscricao-estadual"
               value={registration}
               onChange={(e) => setRegistration(e.target.value)}
               placeholder="Inscrição Estadual"
@@ -183,11 +192,11 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
           <span className="text-xs text-ink-muted font-medium">ENDEREÇO</span>
         </div>
 
-        <div className="flex gap-4 mb-4">
-          <div className="flex flex-col gap-1 w-[180px]">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CEP</label>
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex flex-col gap-1 w-full sm:w-[180px]">
+            <label htmlFor="supplierform-cep" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">CEP</label>
             <div className="relative">
-              <IMaskInput
+              <IMaskInput id="supplierform-cep"
                 mask={CEP_MASK}
                 value={cep}
                 onAccept={(value: string) => setCep(value)}
@@ -205,20 +214,20 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
             </div>
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-rua-logradouro" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Rua / Logradouro
             </label>
-            <Field
+            <Field id="supplierform-rua-logradouro"
               value={street}
               onChange={(e) => setStreet(e.target.value)}
               placeholder="Rua, Avenida..."
             />
           </div>
-          <div className="flex flex-col gap-1 w-[110px]">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+          <div className="flex flex-col gap-1 w-full sm:w-[110px]">
+            <label htmlFor="supplierform-numero" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Número
             </label>
-            <Field
+            <Field id="supplierform-numero"
               value={number}
               onChange={(e) => setNumber(e.target.value)}
               placeholder="Nº"
@@ -226,30 +235,30 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
           </div>
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-bairro" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Bairro
             </label>
-            <Field
+            <Field id="supplierform-bairro"
               value={nbhd}
               onChange={(e) => setNbhd(e.target.value)}
               placeholder="Bairro"
             />
           </div>
           <div className="flex flex-col gap-1 flex-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="supplierform-cidade" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Cidade
             </label>
-            <Field
+            <Field id="supplierform-cidade"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Cidade"
             />
           </div>
-          <div className="flex flex-col gap-1 w-[80px]">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">UF</label>
-            <Field
+          <div className="flex flex-col gap-1 w-full sm:w-[80px]">
+            <label htmlFor="supplierform-uf" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">UF</label>
+            <Field id="supplierform-uf"
               value={uf}
               onChange={(e) => setUf(e.target.value.toUpperCase())}
               maxLength={2}

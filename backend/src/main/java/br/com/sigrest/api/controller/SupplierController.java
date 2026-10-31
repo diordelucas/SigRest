@@ -12,6 +12,7 @@ import br.com.sigrest.api.repository.SupplierRepository;
 import br.com.sigrest.api.util.Documentos;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,9 +31,20 @@ public class SupplierController {
         }
     }
 
+    private void validateContact(String phone, String uf) {
+        if (phone != null && !phone.isBlank() && !Documentos.isValidTelefone(phone)) {
+            throw new BusinessException(ErrorCode.GEN_TELEFONE_INVALIDO);
+        }
+        if (uf != null && !uf.isBlank() && !Documentos.isValidUF(uf)) {
+            throw new BusinessException(ErrorCode.GEO_UF_INVALIDA);
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public void saveSupplier(@Valid @RequestBody SupplierRequestDTO data) {
         validateCnpj(data.cnpj());
+        validateContact(data.phone(), data.uf());
         Supplier supplier = new Supplier(data);
 
         if (data.street() != null || data.city() != null || data.uf() != null) {
@@ -67,9 +79,11 @@ public class SupplierController {
         return new SupplierResponseDTO(supplier);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public SupplierResponseDTO updateSupplier(@PathVariable Long id, @Valid @RequestBody SupplierRequestDTO data) {
         validateCnpj(data.cnpj());
+        validateContact(data.phone(), data.uf());
         Supplier supplier = repository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUPP_NAO_ENCONTRADO));
 
@@ -101,6 +115,7 @@ public class SupplierController {
     }
 
     /** Nunca remove fisicamente: so desativa, preservando o historico de compras deste fornecedor. */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteSupplier(@PathVariable Long id) {
         Supplier supplier = repository.findById(id)

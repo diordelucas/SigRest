@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -88,6 +89,9 @@ public class ProductionOrderService {
         int planned = order.getQuantity();
         Integer informedActual = dto != null ? dto.actualQuantity() : null;
         int actual = informedActual != null ? informedActual : planned;
+        if (actual > planned) {
+            throw new BusinessException(ErrorCode.PORD_REAL_MAIOR_QUE_PLANEJADO);
+        }
         LossReason lossReason = actual < planned ? (dto != null ? dto.lossReason() : null) : null;
         if (actual < planned && lossReason == null) {
             throw new BusinessException(ErrorCode.PORD_MOTIVO_QUEBRA_OBRIGATORIO);
@@ -100,7 +104,7 @@ public class ProductionOrderService {
         // 1. Calcular total necessário por insumo (em unidade base) e validar estoque
         for (TechnicalSheetItem item : sheet.getItems()) {
             Product rawMaterial = item.getRawMaterial();
-            BigDecimal totalNeeded = toBaseUnits(item).multiply(BigDecimal.valueOf(order.getQuantity()));
+            BigDecimal totalNeeded = consumption(item, sheet, order.getQuantity());
 
             BigDecimal currentStock = rawMaterial.getStorage() != null ? rawMaterial.getStorage() : BigDecimal.ZERO;
             if (currentStock.compareTo(totalNeeded) < 0) {
@@ -114,7 +118,7 @@ public class ProductionOrderService {
         // 2. Dar baixa nos insumos (em unidade base)
         for (TechnicalSheetItem item : sheet.getItems()) {
             Product rawMaterial = item.getRawMaterial();
-            BigDecimal totalNeeded = toBaseUnits(item).multiply(BigDecimal.valueOf(order.getQuantity()));
+            BigDecimal totalNeeded = consumption(item, sheet, order.getQuantity());
             String desc = "Consumo OP #" + order.getId() + " - " + sheet.getName();
             stockMovementService.createStockExit(rawMaterial, totalNeeded, desc);
         }
@@ -142,6 +146,17 @@ public class ProductionOrderService {
     public void delete(Long id) {
         ProductionOrder order = findById(id);
         repository.delete(order);
+    }
+
+    /**
+     * Consumo do insumo para produzir a quantidade da ordem. A ficha descreve a receita inteira, que
+     * rende {@code rendimento} porções: 1,5 kg de frango em 10 porções são 150 g por marmita.
+     */
+    private BigDecimal consumption(TechnicalSheetItem item, TechnicalSheet sheet, int orderQuantity) {
+        int rendimento = sheet.getRendimento() != null && sheet.getRendimento() > 0 ? sheet.getRendimento() : 1;
+        return toBaseUnits(item)
+                .multiply(BigDecimal.valueOf(orderQuantity))
+                .divide(BigDecimal.valueOf(rendimento), 2, RoundingMode.HALF_UP);
     }
 
     /**

@@ -7,7 +7,14 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT p FROM product p WHERE p.active = true AND p.storage <= p.minStorage")
+    @Query("SELECT p FROM product p WHERE p.active = true AND p.minStorage > 0 AND p.storage <= p.minStorage")
     List<Product> findLowStockProducts();
-}
 
+    List<Product> findByActiveTrueOrderByNameAsc();
+
+    boolean existsByCodeIgnoreCaseAndActiveTrue(String code);
+
+    boolean existsByCodeIgnoreCaseAndActiveTrueAndIdNot(String code, Long id);
+
+    long countByCategoryIdAndActiveTrue(Long categoryId);
+}

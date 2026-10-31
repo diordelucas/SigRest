@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import UserForm from '../components/UserForm';
 import UserList from '../components/UserList';
 import { User } from '../types';
+import { scrollMainToTop } from '../utils/format';
 
 export default function Users() {
   const [updateList, setUpdateList] = useState(false);
@@ -10,7 +11,7 @@ export default function Users() {
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollMainToTop();
   };
 
   const handleEditComplete = () => {

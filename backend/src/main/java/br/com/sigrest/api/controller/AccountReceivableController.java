@@ -30,6 +30,12 @@ public class AccountReceivableController {
     }
 
     // O responsavel pelo recebimento e quem esta autenticado — usado para lancar o movimento de caixa.
+    @PutMapping("/undo-receipt/{id}")
+    public ResponseEntity<AccountReceivableResponseDTO> undoReceipt(@PathVariable Long id,
+                                                                    @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(accountReceivableService.undoReceipt(id, currentUser));
+    }
+
     @PutMapping("/receive/{id}")
     public ResponseEntity<AccountReceivableResponseDTO> receiveAccountReceivable(@PathVariable Long id,
                                                                                     @AuthenticationPrincipal User currentUser) {

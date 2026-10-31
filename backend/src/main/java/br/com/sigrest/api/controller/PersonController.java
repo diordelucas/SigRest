@@ -12,6 +12,7 @@ import br.com.sigrest.api.repository.PersonRepository;
 import br.com.sigrest.api.util.Documentos;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,9 +31,20 @@ public class PersonController {
         }
     }
 
+    private void validateContact(String phone, String uf) {
+        if (phone != null && !phone.isBlank() && !Documentos.isValidTelefone(phone)) {
+            throw new BusinessException(ErrorCode.GEN_TELEFONE_INVALIDO);
+        }
+        if (uf != null && !uf.isBlank() && !Documentos.isValidUF(uf)) {
+            throw new BusinessException(ErrorCode.GEO_UF_INVALIDA);
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public void savePerson(@Valid @RequestBody PersonRequestDTO data){
         validateCpf(data.cpf());
+        validateContact(data.phone(), data.uf());
         Person personData = new Person(data);
 
         // Criar e associar o endereÃ§o se os dados estiverem presentes
@@ -77,9 +89,11 @@ public class PersonController {
             return personList;
         }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public PersonResponseDTO updatePerson(@PathVariable Long id, @Valid @RequestBody PersonRequestDTO data) {
         validateCpf(data.cpf());
+        validateContact(data.phone(), data.uf());
         Person person = repository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.PERSON_NAO_ENCONTRADA));
         person.setName(data.name());
         person.setCpf(data.cpf());
@@ -116,6 +130,7 @@ public class PersonController {
     }
 
     /** Nunca remove fisicamente: so desativa, preservando o historico de vendas deste cliente. */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deletePerson(@PathVariable Long id) {
         Person person = repository.findById(id)

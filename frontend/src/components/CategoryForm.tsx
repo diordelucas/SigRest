@@ -3,6 +3,7 @@ import api, { getErrorMessage } from '../services/api';
 import { Category } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
+import toast from 'react-hot-toast';
 
 interface CategoryFormProps {
   onCategoryAdded: () => void;
@@ -30,14 +31,17 @@ const CategoryForm = ({ onCategoryAdded, editingCategory, onEditComplete }: Cate
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError('');
     const data = { name, description };
     try {
       if (editingCategory) {
         await api.put(`/category/${editingCategory.id}`, data);
+        toast.success('Categoria atualizada com sucesso!');
         clearForm();
         onEditComplete();
       } else {
         await api.post('/category', data);
+        toast.success('Categoria cadastrada com sucesso!');
         clearForm();
         onCategoryAdded();
       }
@@ -48,6 +52,7 @@ const CategoryForm = ({ onCategoryAdded, editingCategory, onEditComplete }: Cate
 
   const handleCancel = () => {
     clearForm();
+    setError('');
     if (onEditComplete) onEditComplete();
   };
 
@@ -66,21 +71,23 @@ const CategoryForm = ({ onCategoryAdded, editingCategory, onEditComplete }: Cate
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Nome</label>
-            <Field
+            <label htmlFor="categoryform-nome" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Nome</label>
+            <Field id="categoryform-nome"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              maxLength={255}
               placeholder="Nome da categoria"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="categoryform-descricao" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Descrição
             </label>
-            <Field
+            <Field id="categoryform-descricao"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              maxLength={255}
               placeholder="Descrição (opcional)"
             />
           </div>

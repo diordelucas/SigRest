@@ -92,11 +92,23 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
       toast.error('Selecione a categoria do produto.');
       return;
     }
+    if (!tipo) {
+      toast.error('Selecione o tipo do produto.');
+      return;
+    }
+    if (tipo === 'INSUMO' && (!purchaseUnit || !packageQuantity || Number(packageQuantity) <= 0)) {
+      toast.error('Informe a unidade de compra e a quantidade por embalagem do insumo.');
+      return;
+    }
+    if (tipo === 'PRODUTO_FINAL' && (sellPrice === '' || Number(sellPrice) <= 0)) {
+      toast.error('Informe o preço de venda do produto final.');
+      return;
+    }
     const productData = {
       name,
       code,
       price,
-      sellPrice,
+      sellPrice: tipo === 'PRODUTO_FINAL' ? sellPrice : 0,
       storage,
       minStorage,
       categoryId: Number(categoryId),
@@ -137,49 +149,72 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="productform-nome-do-produto" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Nome do Produto
             </label>
-            <Field
+            <Field id="productform-nome-do-produto"
               data-testid="product-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              maxLength={255}
               placeholder="Nome do produto"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="productform-codigo" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Código
             </label>
-            <Field
+            <Field id="productform-codigo"
               data-testid="product-code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               required
+              maxLength={60}
               placeholder="Código"
             />
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 mb-4">
-          <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-            Categoria (Tipo de Produto)
-          </label>
-          <Field
-            as="select"
-            data-testid="product-category"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            required
-          >
-            <option value="">Selecione a categoria...</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </Field>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="productform-categoria" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              Categoria
+            </label>
+            <Field id="productform-categoria"
+              as="select"
+              data-testid="product-category"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              required
+            >
+              <option value="">Selecione a categoria...</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </Field>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="productform-tipo-de-produto" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              Tipo de Produto
+            </label>
+            <Field id="productform-tipo-de-produto"
+              as="select"
+              data-testid="product-type"
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              required
+            >
+              <option value="">Selecione o tipo...</option>
+              {TIPOS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </Field>
+          </div>
         </div>
 
         <div className="border-t border-line my-4 flex items-center gap-3">
@@ -188,12 +223,12 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-              Preço de Custo
+            <label htmlFor="productform-" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              {tipo === 'INSUMO' ? 'Preço da Embalagem' : 'Preço de Custo'}
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-              <CurrencyInput
+              <CurrencyInput id="productform-"
                 data-testid="product-price"
                 className="input-field pl-8"
                 value={price}
@@ -201,20 +236,22 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
               />
             </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-              Preço de Venda
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-              <CurrencyInput
-                data-testid="product-sellprice"
-                className="input-field pl-8"
-                value={sellPrice}
-                onChange={setSellPrice}
-              />
+          {(tipo === 'PRODUTO_FINAL' || tipo === '') && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="productform-preco-de-venda" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                Preço de Venda
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
+                <CurrencyInput id="productform-preco-de-venda"
+                  data-testid="product-sellprice"
+                  className="input-field pl-8"
+                  value={sellPrice}
+                  onChange={setSellPrice}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="border-t border-line my-4 flex items-center gap-3">
@@ -223,11 +260,11 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="productform-estoque-atual" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Estoque Atual{unit !== 'un' ? ` (${unit})` : ''}
             </label>
             <div className="relative">
-              <Field
+              <Field id="productform-estoque-atual"
                 data-testid="product-storage"
                 type="number"
                 min="0"
@@ -239,13 +276,16 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm">{unit}</span>
             </div>
+            {editingPerson && (
+              <p className="text-xs text-ink-muted mt-1">Alterar aqui registra um ajuste nas movimentações de estoque.</p>
+            )}
           </div>
           <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="productform-estoque-minimo" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Estoque Mínimo{unit !== 'un' ? ` (${unit})` : ''}
             </label>
             <div className="relative">
-              <Field
+              <Field id="productform-estoque-minimo"
                 data-testid="product-minstorage"
                 type="number"
                 min="0"
@@ -257,43 +297,27 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm">{unit}</span>
             </div>
-            <p className="text-xs text-ink-muted mt-1">Abaixo deste valor, o produto aparece em alertas.</p>
+            <p className="text-xs text-ink-muted mt-1">Com o estoque neste valor ou abaixo, o produto aparece nos alertas.</p>
           </div>
         </div>
 
-        <div className="border-t border-line my-4 flex items-center gap-3">
-          <span className="text-xs text-ink-muted font-medium">CLASSIFICAÇÃO E UNIDADE DE COMPRA</span>
-        </div>
+        {tipo === 'INSUMO' && (
+          <>
+            <div className="border-t border-line my-4 flex items-center gap-3">
+              <span className="text-xs text-ink-muted font-medium">UNIDADE DE COMPRA</span>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-              Tipo de Produto
-            </label>
-            <Field
-              as="select"
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
-            >
-              <option value="">Selecione o tipo...</option>
-              {TIPOS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </Field>
-          </div>
-
-          {tipo === 'INSUMO' && (
-            <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div className="flex flex-col gap-1">
-                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                <label htmlFor="productform-unidade-de-compra-udm" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                   Unidade de Compra (UDM)
                 </label>
-                <Field
+                <Field id="productform-unidade-de-compra-udm"
                   as="select"
+                  data-testid="product-purchase-unit"
                   value={purchaseUnit}
                   onChange={(e) => setPurchaseUnit(e.target.value)}
+                  required
                 >
                   <option value="">Selecione a UDM...</option>
                   {UDM_OPTIONS.map((u) => (
@@ -305,24 +329,26 @@ const ProductForm = ({ onUserAdded, editingPerson, onEditComplete }: ProductForm
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                <label htmlFor="productform-qtde-por-embalagem" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                   Qtde por Embalagem
                 </label>
-                <Field
+                <Field id="productform-qtde-por-embalagem"
                   type="number"
                   step="any"
-                  min="0"
+                  min="0.01"
+                  data-testid="product-package-quantity"
                   value={packageQuantity}
                   onChange={(e) => setPackageQuantity(e.target.value)}
+                  required
                   placeholder={purchaseUnit ? `Ex: 5 (5 ${purchaseUnit} por embalagem)` : 'Ex: 5'}
                 />
                 <p className="text-xs text-ink-muted mt-1">
                   Quantas {purchaseUnit || 'unidades'} contém a embalagem comprada.
                 </p>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
 
         <div className="flex gap-2">
           <Button type="submit" data-testid="product-submit">

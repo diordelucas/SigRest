@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { Person } from '../types';
+import CurrencyInput from './CurrencyInput';
 import Button from './ui/Button';
 import Field from './ui/Field';
 
 interface AccountReceivableFormState {
   description: string;
-  amount: string;
+  amount: number | '';
   dueDate: string;
   personId: string;
 }
@@ -43,7 +44,7 @@ const AccountReceivableForm = () => {
     try {
       await api.post('/accounts-receivable', {
         ...accountReceivable,
-        amount: parseFloat(accountReceivable.amount),
+        amount: Number(accountReceivable.amount),
       });
       toast.success('Conta a receber registrada com sucesso!');
       setAccountReceivable({ description: '', amount: '', dueDate: '', personId: '' });
@@ -69,10 +70,10 @@ const AccountReceivableForm = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1 mb-4">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+            <label htmlFor="accountreceivableform-descricao" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
               Descrição
             </label>
-            <Field
+            <Field id="accountreceivableform-descricao"
               name="description"
               value={accountReceivable.description}
               onChange={handleChange}
@@ -83,27 +84,23 @@ const AccountReceivableForm = () => {
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Valor</label>
+              <label htmlFor="accountreceivableform-valor" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Valor</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                <Field
-                  type="number"
+                <CurrencyInput id="accountreceivableform-valor"
                   name="amount"
-                  step="0.01"
-                  min="0"
-                  className="pl-8"
+                  className="input-field pl-8"
                   value={accountReceivable.amount}
-                  onChange={handleChange}
+                  onChange={(val) => setAccountReceivable({ ...accountReceivable, amount: val })}
                   required
-                  placeholder="0.00"
                 />
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="accountreceivableform-data-de-vencimento" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Data de Vencimento
               </label>
-              <Field
+              <Field id="accountreceivableform-data-de-vencimento"
                 type="date"
                 name="dueDate"
                 value={accountReceivable.dueDate}
@@ -114,8 +111,8 @@ const AccountReceivableForm = () => {
           </div>
 
           <div className="flex flex-col gap-1 mb-6">
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Cliente</label>
-            <Field
+            <label htmlFor="accountreceivableform-cliente" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Cliente</label>
+            <Field id="accountreceivableform-cliente"
               as="select"
               name="personId"
               value={accountReceivable.personId}

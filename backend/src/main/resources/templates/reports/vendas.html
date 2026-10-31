@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Vendas</div><div class="kpi-valor" th:text="${quantidadeVendas}">0</div></td>
+    <td><div class="kpi-rotulo">Faturamento</div><div class="kpi-valor" th:text="${fmt.moeda(faturamento)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo">Ticket médio</div><div class="kpi-valor" th:text="${fmt.moeda(ticketMedio)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo">Descontos concedidos</div><div class="kpi-valor" th:text="${fmt.moeda(descontos)}">R$ 0,00</div></td>
+  </tr>
+</table>
+
+<th:block th:if="${vendas.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhuma venda registrada no período.')}"></div></th:block>
+
+<th:block th:unless="${vendas.isEmpty()}">
+  <h2>Por forma de pagamento</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Forma de pagamento</th><th class="num">Vendas</th><th class="num">Total</th><th class="num">Participação</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="g : ${porFormaPagamento}">
+        <td th:text="${g.label}">PIX</td>
+        <td class="num" th:text="${g.count}">0</td>
+        <td class="num" th:text="${fmt.moeda(g.total)}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.participacao(g.total, faturamento)}">0%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Por dia</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Data</th><th class="num">Vendas</th><th class="num">Faturamento</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="d : ${porDia}">
+        <td th:text="${fmt.data(d.date)}">01/01/2026</td>
+        <td class="num" th:text="${d.totalSales}">0</td>
+        <td class="num" th:text="${fmt.moeda(d.totalRevenue)}">R$ 0,00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Vendas do período</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr>
+        <th>Nº</th><th>Data/hora</th><th>Cliente</th><th>Pagamento</th>
+        <th class="num">Itens</th><th class="num">Desconto</th><th class="num">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="v : ${vendas}">
+        <td th:text="${v.saleId}">1</td>
+        <td th:text="${fmt.dataHora(v.date)}">01/01/2026 12:00</td>
+        <td th:text="${v.customerName != null ? v.customerName : 'Consumidor final'}">Cliente</td>
+        <td th:text="${fmt.formaPagamento(v.paymentMethod)}">PIX</td>
+        <td class="num" th:text="${v.itemCount}">1</td>
+        <td class="num" th:text="${v.discount.signum() > 0 ? fmt.moeda(v.discount) : '—'}">—</td>
+        <td class="num" th:text="${fmt.moeda(v.total)}">R$ 0,00</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">Total do período</td>
+        <td class="num" th:text="${fmt.moeda(descontos)}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.moeda(faturamento)}">R$ 0,00</td>
+      </tr>
+    </tfoot>
+  </table>
+</th:block>
+</body>
+</html>

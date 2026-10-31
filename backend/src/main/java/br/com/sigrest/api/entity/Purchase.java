@@ -28,6 +28,11 @@ public class Purchase {
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
+    /** Caixa aberto no momento da compra. Sem caixa aberto, a compra não passa por nenhum caixa. */
+    @ManyToOne
+    @JoinColumn(name = "cash_register_id")
+    private CashRegister cashRegister;
+
     @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseItem> items = new ArrayList<>();
 

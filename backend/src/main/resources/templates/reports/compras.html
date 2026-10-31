@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Compras</div><div class="kpi-valor" th:text="${compras.size()}">0</div></td>
+    <td><div class="kpi-rotulo">Total comprado</div><div class="kpi-valor" th:text="${fmt.moeda(total)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo">Média por compra</div><div class="kpi-valor" th:text="${fmt.moeda(mediaPorCompra)}">R$ 0,00</div></td>
+  </tr>
+</table>
+
+<th:block th:if="${compras.isEmpty()}"><div th:replace="~{reports/fragments :: vazio('Nenhuma compra registrada no período.')}"></div></th:block>
+
+<th:block th:unless="${compras.isEmpty()}">
+  <h2>Por fornecedor</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Fornecedor</th><th class="num">Compras</th><th class="num">Total</th><th class="num">Participação</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="g : ${porFornecedor}">
+        <td th:text="${g.label}">Fornecedor</td>
+        <td class="num" th:text="${g.count}">0</td>
+        <td class="num" th:text="${fmt.moeda(g.total)}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.participacao(g.total, total)}">0%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Compras do período</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th class="num">Itens</th><th class="num">Total</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="c : ${compras}">
+        <td th:text="${c.purchaseId}">1</td>
+        <td th:text="${fmt.data(c.date)}">01/01/2026</td>
+        <td th:text="${fmt.texto(c.supplierName)}">Fornecedor</td>
+        <td class="num" th:text="${c.itemCount}">0</td>
+        <td class="num" th:text="${fmt.moeda(c.total)}">R$ 0,00</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4">Total do período</td>
+        <td class="num" th:text="${fmt.moeda(total)}">R$ 0,00</td>
+      </tr>
+    </tfoot>
+  </table>
+</th:block>
+</body>
+</html>

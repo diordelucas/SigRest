@@ -14,7 +14,8 @@ public record CostCalculationResponseDTO(
         BigDecimal totalCostWithLabour,
         BigDecimal suggestedSellPrice,
         Integer rendimento,
-        BigDecimal perServingCost
+        BigDecimal perServingCost,
+        BigDecimal servingCostWithLabour
 ) {
     public record ItemCostDTO(
             Long itemId,

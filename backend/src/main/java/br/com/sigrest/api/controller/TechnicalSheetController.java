@@ -18,6 +18,7 @@ public class TechnicalSheetController {
     @Autowired
     private TechnicalSheetService service;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public TechnicalSheetResponseDTO save(@Valid @RequestBody TechnicalSheetRequestDTO data) {
         return service.save(data);
@@ -38,6 +39,7 @@ public class TechnicalSheetController {
         return service.calculateCost(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public TechnicalSheetResponseDTO update(@PathVariable Long id, @Valid @RequestBody TechnicalSheetRequestDTO data) {
         TechnicalSheetRequestDTO dto = new TechnicalSheetRequestDTO(

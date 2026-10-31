@@ -22,6 +22,7 @@ public class CashRegister {
     private LocalDateTime closingTime;
     private BigDecimal openingBalance;
     private BigDecimal closingBalance;
+    private BigDecimal countedBalance;
 
     @ManyToOne
     @JoinColumn(name = "opened_by_user_id")

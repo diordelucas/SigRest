@@ -4,6 +4,7 @@ import TechnicalSheetList from '../components/TechnicalSheetList';
 import TechnicalSheetForm from '../components/TechnicalSheetForm';
 import { useAuth } from '../contexts/AuthContext';
 import { TechnicalSheet } from '../types';
+import { scrollMainToTop } from '../utils/format';
 
 export default function TechnicalSheets() {
   const [editingTechnicalSheet, setEditingTechnicalSheet] = useState<TechnicalSheet | null>(null);
@@ -31,7 +32,7 @@ export default function TechnicalSheets() {
       onEditSheet={(sheet) => {
         if (isAdmin) {
           setEditingTechnicalSheet(sheet);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          scrollMainToTop();
         }
       }}
       onNewSheet={() => {

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Produtos</div><div class="kpi-valor" th:text="${produtos.size()}">0</div></td>
+    <td>
+      <div class="kpi-rotulo">Abaixo do mínimo</div>
+      <div class="kpi-valor" th:classappend="${quantidadeAbaixoDoMinimo > 0} ? 'negativo'" th:text="${quantidadeAbaixoDoMinimo}">0</div>
+    </td>
+    <td><div class="kpi-rotulo">Valor estimado em estoque</div><div class="kpi-valor" th:text="${fmt.moeda(valorTotal)}">R$ 0,00</div></td>
+  </tr>
+</table>
+
+<th:block th:if="${produtos.isEmpty()}">
+  <div th:replace="~{reports/fragments :: vazio(${apenasAbaixoDoMinimo} ? 'Nenhum produto abaixo do estoque mínimo.' : 'Nenhum produto ativo cadastrado.')}"></div>
+</th:block>
+
+<th:block th:unless="${produtos.isEmpty()}">
+  <h2>Valor em estoque por tipo</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Tipo</th><th class="num">Produtos</th><th class="num">Valor estimado</th><th class="num">Participação</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="g : ${porTipo}">
+        <td th:text="${g.label}">Insumo</td>
+        <td class="num" th:text="${g.count}">0</td>
+        <td class="num" th:text="${fmt.moeda(g.total)}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.participacao(g.total, valorTotal)}">0%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Produtos</h2>
+  <table class="dados compacta">
+    <thead>
+      <tr>
+        <th>Código</th><th>Produto</th><th>Categoria</th><th>Tipo</th>
+        <th class="num">Estoque</th><th class="num">Mínimo</th><th class="num">Custo unitário</th>
+        <th class="num">Valor estimado</th><th class="centro">Situação</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="p : ${produtos}">
+        <td th:text="${fmt.texto(p.code)}">001</td>
+        <td th:text="${p.name}">Produto</td>
+        <td th:text="${fmt.texto(p.categoryName)}">Categoria</td>
+        <td th:text="${fmt.tipoProduto(p.tipo)}">Insumo</td>
+        <td class="num" th:text="|${fmt.quantidade(p.storage)} ${p.baseUnit}|">0 g</td>
+        <td class="num" th:text="${p.minStorage != null ? fmt.quantidade(p.minStorage) + ' ' + p.baseUnit : '—'}">0 g</td>
+        <td class="num" th:text="${p.unitCost != null ? 'R$ ' + fmt.decimal(p.unitCost, 4) + '/' + p.baseUnit : '—'}">R$ 0,0000/g</td>
+        <td class="num" th:text="${fmt.moeda(p.stockValue)}">R$ 0,00</td>
+        <td class="centro">
+          <span th:if="${p.belowMinimum}" class="selo selo-erro">Repor</span>
+          <span th:unless="${p.belowMinimum}" class="selo selo-ok">OK</span>
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="7">Valor total estimado</td>
+        <td class="num" th:text="${fmt.moeda(valorTotal)}">R$ 0,00</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  <p class="nota">Estoque em unidade base (g, ml ou un). Custo unitário = preço da embalagem de compra dividido pelo
+    conteúdo dela; valor estimado = estoque × custo unitário.</p>
+</th:block>
+</body>
+</html>

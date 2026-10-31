@@ -6,12 +6,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.sql.SQLException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,8 +54,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidacao(MethodArgumentNotValidException ex) {
         String mensagem = ex.getBindingResult().getFieldErrors().stream()
-                .map(erro -> erro.getField() + ": " + erro.getDefaultMessage())
-                .collect(Collectors.joining("; "));
+                .map(erro -> {
+                    String texto = erro.getDefaultMessage();
+                    return texto == null || texto.isEmpty() ? texto
+                            : Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
+                })
+                .distinct()
+                .collect(Collectors.joining(". "));
         if (mensagem.isBlank()) {
             mensagem = ErrorCode.GEN_VALIDACAO_FALHOU.getMensagemPadrao();
         }
@@ -71,10 +78,33 @@ public class GlobalExceptionHandler {
         return responseFor(ErrorCode.STOCK_CONFLITO_CONCORRENCIA);
     }
 
-    /** Violação de constraint do banco (ex.: índice único) que escapou da validação de negócio. */
+    /**
+     * Violação de constraint do banco que escapou da validação de negócio. Cada SQLSTATE vira uma
+     * mensagem própria: antes, campo longo demais também respondia "Já existe um registro".
+     */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleIntegridade(DataIntegrityViolationException ex) {
-        return responseFor(ErrorCode.GEN_CONFLITO_DADOS);
+        String sqlState = ex.getMostSpecificCause() instanceof SQLException sql ? sql.getSQLState() : null;
+        log.warn("Violacao de integridade [sqlState={}]: {}", sqlState, ex.getMostSpecificCause().getMessage());
+        if (sqlState == null) {
+            return responseFor(ErrorCode.GEN_DADOS_NAO_SALVOS);
+        }
+        return switch (sqlState) {
+            case "23505" -> responseFor(ErrorCode.GEN_CONFLITO_DADOS);
+            case "22001" -> responseFor(ErrorCode.GEN_CAMPO_MUITO_LONGO);
+            case "23503" -> responseFor(ErrorCode.GEN_REGISTRO_EM_USO);
+            default -> responseFor(ErrorCode.GEN_DADOS_NAO_SALVOS);
+        };
+    }
+
+    /**
+     * Acesso negado por {@code @PreAuthorize} (ex.: OPERADOR em rota de ADMIN). A exceção nasce
+     * dentro do controller, então cai aqui e não no accessDeniedHandler do WebSecurityConfig —
+     * sem este handler, viraria 500 no handler genérico abaixo.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAcessoNegado(AccessDeniedException ex) {
+        return responseFor(ErrorCode.AUTH_PERMISSAO_INSUFICIENTE);
     }
 
     @ExceptionHandler(Exception.class)

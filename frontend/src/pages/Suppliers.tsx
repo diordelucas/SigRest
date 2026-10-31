@@ -3,6 +3,7 @@ import SupplierForm from '../components/SupplierForm';
 import SupplierList from '../components/SupplierList';
 import { useAuth } from '../contexts/AuthContext';
 import { Supplier } from '../types';
+import { scrollMainToTop } from '../utils/format';
 
 export default function Suppliers() {
   const [updateList, setUpdateList] = useState(false);
@@ -13,7 +14,7 @@ export default function Suppliers() {
 
   const handleEditSupplier = (supplier: Supplier) => {
     setEditingSupplier(supplier);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollMainToTop();
   };
 
   const handleEditComplete = () => {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, FormEvent, ChangeEvent } from 'react';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
+import { formatMoney, formatQuantity, todayISO } from '../utils/format';
 import { Supplier, Product } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -21,7 +23,7 @@ interface PurchaseFormState {
 const PurchaseForm = () => {
   const navigate = useNavigate();
   const [purchase, setPurchase] = useState<PurchaseFormState>({
-    date: new Date().toISOString().split('T')[0],
+    date: todayISO(),
     supplierId: '',
     items: [],
   });
@@ -95,16 +97,17 @@ const PurchaseForm = () => {
         total: parseFloat(calculateTotal()),
         items: purchase.items.map((item) => ({
           ...item,
-          quantity: parseInt(String(item.quantity), 10),
+          quantity: parseFloat(String(item.quantity)),
           unitPrice: parseFloat(String(item.unitPrice)),
         })),
         idempotencyKey: idempotencyKeyRef.current,
       };
       await api.post('/purchases', purchaseToSubmit);
       idempotencyKeyRef.current = crypto.randomUUID();
+      toast.success('Compra registrada com sucesso!');
       navigate('/purchases');
     } catch (err) {
-      setError(getErrorMessage(err, 'Erro ao registrar compra.'));
+      toast.error(getErrorMessage(err, 'Erro ao registrar compra.'));
     } finally {
       setSubmitting(false);
     }
@@ -128,6 +131,7 @@ const PurchaseForm = () => {
         <div className="flex items-center gap-3 mb-6">
           <button
             type="button"
+            aria-label="Voltar para a lista de compras"
             className="p-2 border border-line text-ink-muted rounded-lg hover:bg-surface-2 transition-colors"
             onClick={() => navigate('/purchases')}
           >
@@ -139,10 +143,10 @@ const PurchaseForm = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="purchaseform-data-da-compra" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Data da Compra
               </label>
-              <Field
+              <Field id="purchaseform-data-da-compra"
                 type="date"
                 name="date"
                 value={purchase.date}
@@ -151,10 +155,10 @@ const PurchaseForm = () => {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              <label htmlFor="purchaseform-fornecedor" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Fornecedor
               </label>
-              <Field
+              <Field id="purchaseform-fornecedor"
                 as="select"
                 name="supplierId"
                 value={purchase.supplierId}
@@ -175,14 +179,16 @@ const PurchaseForm = () => {
             <span className="text-xs text-ink-muted font-medium">ITENS DA COMPRA</span>
           </div>
 
-          {purchase.items.map((item, index) => (
+          {purchase.items.map((item, index) => {
+            const selected = products.find((p) => String(p.id) === String(item.productId));
+            return (
             <div key={index} className="bg-surface-2 border border-line rounded-xl p-4 mb-3">
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
                 <div className="col-span-2 flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                  <label htmlFor={`purchaseform-produto-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                     Produto
                   </label>
-                  <Field
+                  <Field id={`purchaseform-produto-${index}`}
                     as="select"
                     name="productId"
                     className="bg-surface"
@@ -200,26 +206,34 @@ const PurchaseForm = () => {
                   </Field>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                  <label htmlFor={`purchaseform-quantidade-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                     Quantidade
                   </label>
-                  <Field
+                  <Field id={`purchaseform-quantidade-${index}`}
                     type="number"
                     name="quantity"
-                    min="1"
+                    min="0.01"
+                    step="0.01"
                     className="bg-surface"
                     value={item.quantity}
                     onChange={(e) => handleItemChange(index, e)}
                     required
                   />
+                  {selected?.purchaseUnit && selected.packageQuantity ? (
+                    <p className="text-xs text-ink-muted mt-1">
+                      Embalagens de {formatQuantity(selected.packageQuantity)} {selected.purchaseUnit}
+                    </p>
+                  ) : selected ? (
+                    <p className="text-xs text-ink-muted mt-1">Em unidades</p>
+                  ) : null}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                  <label htmlFor={`purchaseform-preco-unit-${index}`} className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                     Preço Unit.
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted text-sm font-medium">R$</span>
-                    <Field
+                    <Field id={`purchaseform-preco-unit-${index}`}
                       type="number"
                       name="unitPrice"
                       step="0.01"
@@ -234,6 +248,7 @@ const PurchaseForm = () => {
                 <div className="flex items-end pb-0.5">
                   <button
                     type="button"
+                    aria-label="Remover item"
                     className="p-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
                     onClick={() => handleRemoveItem(index)}
                   >
@@ -242,7 +257,8 @@ const PurchaseForm = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <Button type="button" variant="secondary" className="mt-2" onClick={handleAddItem}>
             <Plus size={14} /> Adicionar Item
@@ -251,7 +267,7 @@ const PurchaseForm = () => {
           <div className="mt-6 text-right">
             <p className="text-base font-semibold text-ink">
               Total da Compra:{' '}
-              <span className="text-primary-600 dark:text-primary-400">R$ {calculateTotal()}</span>
+              <span className="text-primary-600 dark:text-primary-400">{formatMoney(calculateTotal())}</span>
             </p>
           </div>
 

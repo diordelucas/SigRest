@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import api, { getErrorMessage } from '../services/api';
-import { formatBRL } from '../utils/currency';
+import { formatDateTime, formatMoney, formatSignedMoney } from '../utils/format';
 import { CashRegister } from '../types';
 import Field from './ui/Field';
 import { Table, Th } from './ui/Table';
@@ -46,7 +46,7 @@ const CashRegisterList = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h2 className="text-lg font-semibold text-ink">Histórico de Caixas</h2>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
@@ -55,7 +55,7 @@ const CashRegisterList = () => {
             placeholder="Pesquisar usuário, status..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 py-2 text-sm w-64"
+            className="pl-8 py-2 text-sm w-full sm:w-64"
           />
         </div>
       </div>
@@ -74,6 +74,8 @@ const CashRegisterList = () => {
                   <Th>Fechamento</Th>
                   <Th className="text-right">Saldo Inicial</Th>
                   <Th className="text-right">Saldo Final</Th>
+                  <Th className="text-right">Contado</Th>
+                  <Th className="text-right">Diferença</Th>
                   <Th>Status</Th>
                   <Th>Aberto por</Th>
                   <Th>Fechado por</Th>
@@ -83,13 +85,23 @@ const CashRegisterList = () => {
                 {filtered.map((cr) => (
                   <tr key={cr.id} className="hover:bg-surface-2 transition-colors">
                     <td className="px-4 py-3 text-sm text-ink">{cr.id}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{new Date(cr.openingTime).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{formatDateTime(cr.openingTime)}</td>
                     <td className="px-4 py-3 text-sm text-ink">
-                      {cr.closingTime ? new Date(cr.closingTime).toLocaleString() : 'N/A'}
+                      {cr.closingTime ? formatDateTime(cr.closingTime) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">R$ {formatBRL(cr.openingBalance ?? 0)}</td>
-                    <td className="px-4 py-3 text-sm text-ink text-right">
-                      {cr.closingBalance != null ? `R$ ${formatBRL(cr.closingBalance)}` : 'N/A'}
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(cr.openingBalance)}</td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">
+                      {cr.closingBalance != null ? formatMoney(cr.closingBalance) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">
+                      {cr.countedBalance != null ? formatMoney(cr.countedBalance) : '-'}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-sm text-right whitespace-nowrap ${
+                        cr.difference != null && Number(cr.difference) !== 0 ? 'text-rose-600 font-semibold' : 'text-ink'
+                      }`}
+                    >
+                      {cr.difference != null ? formatSignedMoney(cr.difference) : '-'}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -100,8 +112,8 @@ const CashRegisterList = () => {
                         {cr.open ? 'ABERTO' : 'FECHADO'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink">{cr.openedBy?.name || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{cr.closedBy?.name || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{cr.openedBy?.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{cr.closedBy?.name || '-'}</td>
                   </tr>
                 ))}
               </tbody>

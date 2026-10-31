@@ -3,6 +3,7 @@ import PersonForm from '../components/PersonForm';
 import PersonList from '../components/PersonList';
 import { useAuth } from '../contexts/AuthContext';
 import { Person } from '../types';
+import { scrollMainToTop } from '../utils/format';
 
 export default function People() {
   const [updateList, setUpdateList] = useState(false);
@@ -13,7 +14,7 @@ export default function People() {
 
   const handleEditPerson = (person: Person) => {
     setEditingPerson(person);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollMainToTop();
   };
 
   const handleEditComplete = () => {

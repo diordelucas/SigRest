@@ -11,6 +11,7 @@ import br.com.sigrest.api.entity.PurchaseItem;
 import br.com.sigrest.api.entity.Supplier;
 import br.com.sigrest.api.exception.BusinessException;
 import br.com.sigrest.api.exception.ErrorCode;
+import br.com.sigrest.api.repository.CashRegisterRepository;
 import br.com.sigrest.api.repository.ProductRepository;
 import br.com.sigrest.api.repository.PurchaseRepository;
 import br.com.sigrest.api.repository.SupplierRepository;
@@ -39,6 +40,9 @@ public class PurchaseService {
     private StockMovementService stockMovementService;
 
     @Autowired
+    private CashRegisterRepository cashRegisterRepository;
+
+    @Autowired
     private LogAtividadeService logAtividadeService;
 
     @Transactional
@@ -54,6 +58,7 @@ public class PurchaseService {
         Purchase purchase = new Purchase();
         purchase.setDate(purchaseRequestDTO.getDate());
         purchase.setIdempotencyKey(idempotencyKey);
+        cashRegisterRepository.findByIsOpenTrue().ifPresent(purchase::setCashRegister);
 
         Supplier supplier = supplierRepository.findById(purchaseRequestDTO.getSupplierId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUPP_NAO_ENCONTRADO));
@@ -75,7 +80,7 @@ public class PurchaseService {
             purchaseItem.setPurchase(purchase);
             purchase.getItems().add(purchaseItem);
 
-            total = total.add(itemDTO.getUnitPrice().multiply(BigDecimal.valueOf(itemDTO.getQuantity())));
+            total = total.add(itemDTO.getUnitPrice().multiply(itemDTO.getQuantity()));
 
             // Calcular entrada de estoque em unidade base
             // Se o produto tem UDM de compra configurada: qtde_pacotes × unidades_base/pacote
@@ -95,14 +100,14 @@ public class PurchaseService {
      * Converte a quantidade de pacotes comprados para a unidade base do produto.
      * Ex: 2 pacotes de 5 KG → 2 × 5 × 1000 = 10.000 g
      */
-    private BigDecimal toBaseUnits(Product product, int numberOfPackages) {
+    private BigDecimal toBaseUnits(Product product, BigDecimal numberOfPackages) {
         if (product.getPurchaseUnit() != null && product.getPackageQuantity() != null
                 && product.getPackageQuantity().compareTo(BigDecimal.ZERO) > 0) {
-            return BigDecimal.valueOf(numberOfPackages)
+            return numberOfPackages
                     .multiply(product.getPackageQuantity())
                     .multiply(product.getPurchaseUnit().getConversionFactor());
         }
-        return BigDecimal.valueOf(numberOfPackages);
+        return numberOfPackages;
     }
 
     @Transactional(readOnly = true)

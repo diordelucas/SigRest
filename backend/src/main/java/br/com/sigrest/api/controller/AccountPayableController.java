@@ -37,6 +37,12 @@ public class AccountPayableController {
         return ResponseEntity.ok(paidAccount);
     }
 
+    @PutMapping("/undo-payment/{id}")
+    public ResponseEntity<AccountPayableResponseDTO> undoPayment(@PathVariable Long id,
+                                                                 @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(accountPayableService.undoPayment(id, currentUser));
+    }
+
     @GetMapping
     public ResponseEntity<List<AccountPayableResponseDTO>> getAllAccountPayables() {
         List<AccountPayableResponseDTO> accounts = accountPayableService.getAllAccountPayables();

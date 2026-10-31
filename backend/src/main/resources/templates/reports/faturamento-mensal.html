@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{reports/fragments :: head}"></head>
+<body>
+<div th:replace="~{reports/fragments :: cabecalho}"></div>
+<div th:replace="~{reports/fragments :: rodape}"></div>
+
+<table class="kpis">
+  <tr>
+    <td><div class="kpi-rotulo">Faturamento no período</div><div class="kpi-valor" th:text="${fmt.moeda(total)}">R$ 0,00</div></td>
+    <td><div class="kpi-rotulo">Média mensal</div><div class="kpi-valor" th:text="${fmt.moeda(mediaMensal)}">R$ 0,00</div></td>
+    <td>
+      <div class="kpi-rotulo">Melhor mês</div>
+      <div class="kpi-valor" th:text="${melhorMes != null ? fmt.mes(melhorMes.month) : '—'}">—</div>
+    </td>
+  </tr>
+</table>
+
+<h2>Faturamento por mês</h2>
+<table class="dados">
+  <thead>
+    <tr><th>Mês</th><th style="width: 50%;"></th><th class="num">Faturamento</th><th class="num">Participação</th></tr>
+  </thead>
+  <tbody>
+    <tr th:each="m : ${meses}">
+      <td th:text="${fmt.mes(m.month)}">Jan/2026</td>
+      <td><div class="barra-fundo"><div class="barra" th:style="|width: ${fmt.largura(m.totalRevenue, maiorValor)}%|"></div></div></td>
+      <td class="num" th:text="${fmt.moeda(m.totalRevenue)}">R$ 0,00</td>
+      <td class="num" th:text="${fmt.participacao(m.totalRevenue, total)}">0%</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2">Total</td>
+      <td class="num" th:text="${fmt.moeda(total)}">R$ 0,00</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+<p class="nota">Considera o total das vendas (já com desconto) de cada mês completo do intervalo.</p>
+</body>
+</html>
