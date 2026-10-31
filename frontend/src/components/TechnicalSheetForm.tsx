@@ -105,7 +105,11 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
   const purchaseUnitOf = (rawMaterialId: string) =>
     products.find((p) => String(p.id) === String(rawMaterialId))?.purchaseUnit ?? null;
 
-  const updateItem = (index: number, field: keyof TechnicalSheetItemForm, value: string) => {
+  // Só insumos entram na lista; o item já salvo fica para a ficha antiga não abrir com o campo em branco.
+  const ingredientOptions = (rawMaterialId: string) =>
+    products.filter((p) => p.tipo === 'INSUMO' || String(p.id) === String(rawMaterialId));
+
+  const updateItem =(index: number, field: keyof TechnicalSheetItemForm, value: string) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     if (field === 'rawMaterialId') {
@@ -308,14 +312,12 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                         required
                       >
                         <option value="">Selecione o insumo...</option>
-                        {products
-                          .filter((p) => String(p.id) !== String(finalProductId))
-                          .map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                              {p.purchaseUnit ? ` (${p.purchaseUnit})` : ''}
-                            </option>
-                          ))}
+                        {ingredientOptions(item.rawMaterialId).map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                            {p.purchaseUnit ? ` (${p.purchaseUnit})` : ''}
+                          </option>
+                        ))}
                       </Field>
                     </td>
                     <td className="px-4 py-3">
