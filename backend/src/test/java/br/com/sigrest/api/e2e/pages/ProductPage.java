@@ -3,6 +3,7 @@ package br.com.sigrest.api.e2e.pages;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 /**
@@ -20,6 +21,8 @@ public class ProductPage {
     // ---- Selectors -------------------------------------------------------
     private final By nameInput = By.cssSelector("[data-testid='product-name']");
     private final By codeInput = By.cssSelector("[data-testid='product-code']");
+    private final By categorySelect = By.cssSelector("[data-testid='product-category']");
+    private final By typeSelect = By.cssSelector("[data-testid='product-type']");
     private final By priceInput = By.cssSelector("[data-testid='product-price']");
     private final By sellPriceInput = By.cssSelector("[data-testid='product-sellprice']");
     private final By storageInput = By.cssSelector("[data-testid='product-storage']");
@@ -41,11 +44,20 @@ public class ProductPage {
         return this;
     }
 
-    /** Fills the whole product form with the supplied values. */
+    /**
+     * Fills the form of a final product, the only type that can be sold. Uses the first category,
+     * so at least one must exist. Prices are typed as digits: the currency mask reads them as cents.
+     */
     public ProductPage fillForm(String name, String code, String costPrice,
                                 String sellPrice, String storage, String minStorage) {
         type(nameInput, name);
         type(codeInput, code);
+        Select category = new Select(wait.until(ExpectedConditions.elementToBeClickable(categorySelect)));
+        if (category.getOptions().size() < 2) {
+            throw new IllegalStateException("Register at least one category before running this test.");
+        }
+        category.selectByIndex(1);
+        new Select(wait.until(ExpectedConditions.elementToBeClickable(typeSelect))).selectByValue("PRODUTO_FINAL");
         type(priceInput, costPrice);
         type(sellPriceInput, sellPrice);
         type(storageInput, storage);

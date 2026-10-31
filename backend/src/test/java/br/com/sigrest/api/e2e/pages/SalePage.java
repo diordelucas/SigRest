@@ -10,9 +10,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 /**
  * Page Object for the Sale registration screen ({@code /sales/new}).
  *
- * <p>Wraps the {@code SaleForm} React component. A valid sale needs at least
- * one registered person (client) and one product in the database — see the
- * preconditions documented in {@code SigRestE2ETests}.
+ * <p>Wraps the {@code SaleForm} React component. A valid sale needs an open cash
+ * register and a final product with stock — see {@code SigRestE2ETests}.
  */
 public class SalePage {
 
@@ -37,16 +36,10 @@ public class SalePage {
         this.baseUrl = baseUrl;
     }
 
-    /** Navigates to the new-sale page and waits for the client dropdown. */
+    /** Navigates to the new-sale page and waits for the client dropdown (optional field). */
     public SalePage open() {
         driver.get(baseUrl + "/sales/new");
         wait.until(ExpectedConditions.visibilityOfElementLocated(personSelect));
-        return this;
-    }
-
-    /** Selects the first real client option (index 0 is the placeholder). */
-    public SalePage selectFirstClient() {
-        selectFirstRealOption(personSelect);
         return this;
     }
 
@@ -58,10 +51,15 @@ public class SalePage {
         return this;
     }
 
-    /** Adds an empty item row and selects the first available product in it. */
-    public SalePage addFirstProduct(String quantity) {
+    /** Adds an item row with the product whose option text contains the given name. */
+    public SalePage addProduct(String productName, String quantity) {
         wait.until(ExpectedConditions.elementToBeClickable(addItemButton)).click();
-        selectFirstRealOption(productSelect);
+        Select product = new Select(wait.until(ExpectedConditions.elementToBeClickable(productSelect)));
+        product.getOptions().stream()
+                .filter(option -> option.getText().contains(productName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Product not found in the sale form: " + productName))
+                .click();
 
         WebElement qty = wait.until(ExpectedConditions.visibilityOfElementLocated(quantityInput));
         qty.clear();
@@ -90,23 +88,5 @@ public class SalePage {
     /** Waits until the SPA redirects to the sales list after a successful sale. */
     public void waitForRedirectToList() {
         wait.until(ExpectedConditions.urlContains("/sales"));
-    }
-
-    // ---- Internal helper -------------------------------------------------
-
-    /**
-     * Selects the first non-placeholder option of a {@code <select>}.
-     * The forms render index 0 as a "Selecione..." placeholder, so we use index 1.
-     */
-    private void selectFirstRealOption(By locator) {
-        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
-        Select select = new Select(element);
-        // Guard: ensure the dropdown actually has a selectable option beyond the placeholder.
-        if (select.getOptions().size() < 2) {
-            throw new IllegalStateException(
-                    "Dropdown " + locator + " has no selectable data option. "
-                            + "Seed at least one record before running this test.");
-        }
-        select.selectByIndex(1);
     }
 }
