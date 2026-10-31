@@ -25,12 +25,12 @@ Internet ──HTTPS──► Caddy ─┬─ /        ─► nginx (build do Re
 
 1. Menu ☰ → **Compute → Instances → Create instance**.
 2. **Image**: *Canonical Ubuntu 22.04* (ou 24.04).
-3. **Shape**: *Ampere* → **VM.Standard.A1.Flex**, com **2 OCPUs e 12 GB de memória**. O plano gratuito permite até 4 OCPUs e 24 GB no total.
+3. **Shape**: *Ampere* → **VM.Standard.A1.Flex**, com **2 OCPUs e 12 GB de memória**, o limite total do plano gratuito. Não passe disso: ao fim do período de teste, VMs acima do limite são desativadas e apagadas depois de 30 dias.
 4. **Networking**: deixe criar uma VCN nova com sub-rede pública e marque **Assign a public IPv4 address**.
 5. **Add SSH keys**: *Upload public key files* → selecione `C:\Users\georg\.ssh\sigrest_oracle.pub`. A chave já foi gerada neste computador; a parte privada fica só aqui.
 6. **Create**. Quando a VM estiver *Running*, copie o **Public IP address**.
 
-> **"Out of capacity"?** As VMs ARM gratuitas às vezes esgotam na região. Tente outro *Availability Domain* na mesma tela, ou tente de novo mais tarde (de madrugada costuma funcionar).
+> **"Out of capacity"?** As VMs ARM gratuitas às vezes esgotam na região. Se a tela mostrar outro *Availability Domain*, tente nele. Em São Paulo só existe o AD 1: peça menos recursos (**1 OCPU e 6 GB**), não escolha *Fault domain* e tente de novo em outros horários. A outra saída indicada pela Oracle é o upgrade para *Pay As You Go*: os recursos *Always Free* continuam gratuitos, mas o que passar do limite é cobrado no cartão.
 
 ## 3. Abrir as portas 80 e 443 na rede da Oracle
 
