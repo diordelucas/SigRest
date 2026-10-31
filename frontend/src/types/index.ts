@@ -13,7 +13,7 @@ export type CashMovementType = 'INCOME' | 'EXPENSE';
 export type ProductionOrderStatus = 'OPEN' | 'FINISHED' | 'CANCELLED';
 export type AccountPayableStatus = 'PENDING' | 'PAID' | 'OVERDUE';
 export type AccountReceivableStatus = 'PENDING' | 'RECEIVED' | 'OVERDUE';
-export type SaleStatus = 'COMPLETED' | 'REVERSED';
+export type SaleStatus = 'COMPLETED' | 'PARTIALLY_REVERSED' | 'REVERSED';
 
 /** Espelha ErrorResponse do backend (br.com.sigrest.api.exception). */
 export interface ApiErrorResponse {
@@ -64,6 +64,7 @@ export interface FlatAddress {
   nbhd?: string | null;
   city?: string | null;
   uf?: string | null;
+  cep?: string | null;
 }
 
 export interface Person extends FlatAddress {
@@ -94,6 +95,7 @@ export interface SellItem {
   id: number;
   unitPrice: number;
   quantity: number;
+  reversedQuantity: number;
   productId: number;
   productName: string;
 }
@@ -106,10 +108,19 @@ export interface Sale {
   paymentMethod: string;
   personName: string | null;
   status: SaleStatus;
-  reversalDate: string | null;
-  reversalReason: string | null;
-  reversedByName: string | null;
+  reversedAmount: number;
+  netTotal: number;
+  reversals: SaleReversal[];
   items: SellItem[];
+}
+
+export interface SaleReversal {
+  id: number;
+  date: string;
+  reason: string;
+  amount: number;
+  userName: string | null;
+  items: { productName: string | null; quantity: number }[];
 }
 
 export interface PurchaseItem {
@@ -123,6 +134,7 @@ export interface Purchase {
   id: number;
   date: string;
   total: number;
+  paymentMethod: string;
   supplier: Supplier | null;
   items: PurchaseItem[];
 }
@@ -202,6 +214,7 @@ export interface CashRegister {
   salesTotal: number;
   otherPaymentsTotal: number;
   purchasesTotal: number;
+  otherPurchasesTotal: number;
   movementsTotal: number;
   openedBy: User | null;
   closedBy: User | null;

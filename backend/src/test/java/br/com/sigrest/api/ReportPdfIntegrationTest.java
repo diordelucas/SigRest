@@ -128,6 +128,7 @@ class ReportPdfIntegrationTest {
         Purchase compra = new Purchase();
         compra.setDate(LocalDate.now());
         compra.setSupplier(fornecedor);
+        compra.setPaymentMethod("PIX");
         compra.setTotal(new BigDecimal("25.00"));
         PurchaseItem itemCompra = new PurchaseItem();
         itemCompra.setProduct(farinha);

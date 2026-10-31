@@ -89,7 +89,7 @@ public class ReportService {
     public List<SalesByPeriodDTO> getSalesByPeriod(LocalDate startDate, LocalDate endDate) {
         validarPeriodo(startDate, endDate);
         List<Sale> sales = saleRepository.findAll().stream()
-                .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
+                .filter(sale -> sale.getStatus() != SaleStatus.REVERSED)
                 .filter(sale -> {
                     LocalDate saleDate = sale.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     return !saleDate.isBefore(startDate) && !saleDate.isAfter(endDate);
@@ -103,7 +103,7 @@ public class ReportService {
                 .map(entry -> new SalesByPeriodDTO(
                         entry.getKey(),
                         (long) entry.getValue().size(),
-                        entry.getValue().stream().map(Sale::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        entry.getValue().stream().map(Sale::getNetTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
                 ))
                 .sorted(Comparator.comparing(SalesByPeriodDTO::getDate))
                 .collect(Collectors.toList());
@@ -114,8 +114,9 @@ public class ReportService {
         List<Sale> sales = saleRepository.findAll();
 
         Map<Long, List<SellItem>> itemsByProduct = sales.stream()
-                .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
+                .filter(sale -> sale.getStatus() != SaleStatus.REVERSED)
                 .flatMap(sale -> sale.getItems().stream())
+                .filter(item -> item.getNetQuantity().signum() > 0)
                 .collect(Collectors.groupingBy(item -> item.getProduct().getId()));
 
         return itemsByProduct.entrySet().stream()
@@ -123,10 +124,10 @@ public class ReportService {
                     Long productId = entry.getKey();
                     String productName = entry.getValue().get(0).getProduct().getName(); // Assuming product name is consistent
                     Long totalQuantitySold = entry.getValue().stream()
-                            .mapToLong(item -> item.getQuantity().longValue())
+                            .mapToLong(item -> item.getNetQuantity().longValue())
                             .sum();
                     BigDecimal totalRevenue = entry.getValue().stream()
-                            .map(item -> item.getUnitPrice().multiply(item.getQuantity()))
+                            .map(item -> item.getUnitPrice().multiply(item.getNetQuantity()))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     return new ProductSalesDTO(productId, productName, totalQuantitySold, totalRevenue);
                 })
@@ -139,7 +140,7 @@ public class ReportService {
     public List<MonthlyRevenueDTO> getMonthlyRevenue(LocalDate startMonth, LocalDate endMonth) {
         validarPeriodo(startMonth, endMonth);
         List<Sale> sales = saleRepository.findAll().stream()
-                .filter(sale -> sale.getStatus() == SaleStatus.COMPLETED)
+                .filter(sale -> sale.getStatus() != SaleStatus.REVERSED)
                 .filter(sale -> {
                     LocalDate saleDate = sale.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     YearMonth saleYearMonth = YearMonth.from(saleDate);
@@ -153,7 +154,7 @@ public class ReportService {
         return salesByMonth.entrySet().stream()
                 .map(entry -> new MonthlyRevenueDTO(
                         entry.getKey(),
-                        entry.getValue().stream().map(Sale::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
+                        entry.getValue().stream().map(Sale::getNetTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
                 ))
                 .sorted(Comparator.comparing(MonthlyRevenueDTO::getMonth))
                 .collect(Collectors.toList());
@@ -273,7 +274,7 @@ public class ReportService {
                         sale.getPaymentMethod(),
                         sale.getItems() != null ? sale.getItems().size() : 0,
                         nullSafe(sale.getDiscount()),
-                        nullSafe(sale.getTotal())
+                        sale.getNetTotal()
                 ))
                 .collect(Collectors.toList());
     }
@@ -284,16 +285,16 @@ public class ReportService {
         validarPeriodo(startDate, endDate);
         Map<Long, List<SellItem>> itemsByProduct = findSalesBetween(startDate, endDate).stream()
                 .flatMap(sale -> sale.getItems().stream())
-                .filter(item -> item.getProduct() != null)
+                .filter(item -> item.getProduct() != null && item.getNetQuantity().signum() > 0)
                 .collect(Collectors.groupingBy(item -> item.getProduct().getId()));
 
         return itemsByProduct.entrySet().stream()
                 .map(entry -> new ProductSalesDTO(
                         entry.getKey(),
                         entry.getValue().get(0).getProduct().getName(),
-                        entry.getValue().stream().mapToLong(item -> item.getQuantity().longValue()).sum(),
+                        entry.getValue().stream().mapToLong(item -> item.getNetQuantity().longValue()).sum(),
                         entry.getValue().stream()
-                                .map(item -> item.getUnitPrice().multiply(item.getQuantity()))
+                                .map(item -> item.getUnitPrice().multiply(item.getNetQuantity()))
                                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 ))
                 .sorted(Comparator.comparing(ProductSalesDTO::getTotalQuantitySold).reversed())
@@ -305,7 +306,7 @@ public class ReportService {
         ZoneId zone = ZoneId.systemDefault();
         Date start = Date.from(startDate.atStartOfDay(zone).toInstant());
         Date end = Date.from(endDate.atTime(LocalTime.MAX).atZone(zone).toInstant());
-        return saleRepository.findByDateBetweenAndStatusOrderByDateAsc(start, end, SaleStatus.COMPLETED);
+        return saleRepository.findByDateBetweenAndStatusNotOrderByDateAsc(start, end, SaleStatus.REVERSED);
     }
 
     @Transactional(readOnly = true)
@@ -316,6 +317,7 @@ public class ReportService {
                         purchase.getId(),
                         purchase.getDate(),
                         purchase.getSupplier() != null ? purchase.getSupplier().getName() : null,
+                        purchase.getPaymentMethod(),
                         purchase.getItems() != null ? purchase.getItems().size() : 0,
                         nullSafe(purchase.getTotal())
                 ))

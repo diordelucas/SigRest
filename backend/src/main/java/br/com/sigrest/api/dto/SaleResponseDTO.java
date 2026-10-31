@@ -15,18 +15,18 @@ public record SaleResponseDTO(
         String paymentMethod,
         String personName,
         SaleStatus status,
-        Date reversalDate,
-        String reversalReason,
-        String reversedByName,
+        BigDecimal reversedAmount,
+        BigDecimal netTotal,
+        List<SaleReversalResponseDTO> reversals,
         List<SellItemResponseDTO> items
 ) {
     public SaleResponseDTO(Sale sale){
         this(sale.getId(), sale.getDate(), sale.getTotal(), sale.getDiscount(), sale.getPaymentMethod(),
              sale.getPerson() != null ? sale.getPerson().getName() : null,
              sale.getStatus(),
-             sale.getReversalDate(),
-             sale.getReversalReason(),
-             sale.getReversedBy() != null ? sale.getReversedBy().getName() : null,
+             sale.getReversedAmount(),
+             sale.getNetTotal(),
+             sale.getReversals().stream().map(SaleReversalResponseDTO::new).collect(Collectors.toList()),
              sale.getItems() != null ? sale.getItems().stream().map(SellItemResponseDTO::new).collect(Collectors.toList()) : null);
     }
 }

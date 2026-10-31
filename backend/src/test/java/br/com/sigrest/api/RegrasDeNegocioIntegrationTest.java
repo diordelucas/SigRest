@@ -169,6 +169,39 @@ class RegrasDeNegocioIntegrationTest {
         return productRepository.findById(produto.getId()).orElseThrow().getStorage();
     }
 
+    // ================================ CEP ================================
+
+    @Test
+    @DisplayName("CEP é gravado só com os dígitos e devolvido ao editar; CEP incompleto é recusado")
+    void cepGravado() throws Exception {
+        String nomeCliente = "Cliente CEP " + sufixo();
+        mockMvc.perform(json(post("/person"), Map.of("name", nomeCliente, "street", "Rua A", "number", "10", "nbhd", "Centro",
+                        "city", "Paranavaí", "uf", "PR", "cep", "87705-000")).with(como(admin)))
+                .andExpect(status().isOk());
+        JsonNode pessoas = objectMapper.readTree(mockMvc.perform(get("/person").with(como(admin)))
+                .andReturn().getResponse().getContentAsString());
+        JsonNode cliente = null;
+        for (JsonNode pessoa : pessoas) {
+            if (nomeCliente.equals(pessoa.get("name").asText())) {
+                cliente = pessoa;
+            }
+        }
+        assertThat(cliente).isNotNull();
+        assertThat(cliente.get("cep").asText()).isEqualTo("87705000");
+
+        mockMvc.perform(json(put("/person/" + cliente.get("id").asLong()), Map.of("name", nomeCliente, "street", "Rua A", "number", "10",
+                        "nbhd", "Centro", "city", "Paranavaí", "uf", "PR", "cep", "87700111")).with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cep").value("87700111"));
+
+        mockMvc.perform(json(post("/person"), Map.of("name", "Cliente CEP inválido", "cep", "123")).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-GEO-005"));
+        mockMvc.perform(json(post("/supplier"), Map.of("name", "Fornecedor CEP inválido", "cep", "123")).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-GEO-005"));
+    }
+
     // ================================ Vendas ================================
 
     @Test
@@ -225,7 +258,7 @@ class RegrasDeNegocioIntegrationTest {
         mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Cliente desistiu")).with(como(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REVERSED"))
-                .andExpect(jsonPath("$.reversalReason").value("Cliente desistiu"));
+                .andExpect(jsonPath("$.reversals[0].reason").value("Cliente desistiu"));
 
         assertThat(estoque(produto)).isEqualByComparingTo("5");
         assertThat(caixa(caixaId).get("currentBalance").decimalValue()).isEqualByComparingTo("100.00");
@@ -255,6 +288,76 @@ class RegrasDeNegocioIntegrationTest {
         assertThat(depois.get("todayRevenue").decimalValue()).isEqualByComparingTo(antes.get("todayRevenue").decimalValue());
     }
 
+    @Test
+    @DisplayName("Estorno parcial rateia o desconto, soma nos estornos seguintes e encerra sem sobrar centavos")
+    void estornoParcial() throws Exception {
+        long caixaId = abrirCaixa();
+        Product produto = produtoFinal("10");
+        // 4 x R$ 20,00 = R$ 80,00, com R$ 8,00 de desconto: cada unidade custou R$ 18,00 ao cliente.
+        JsonNode venda = vender(venda(produto, "DINHEIRO", 8, 4, "20.00"));
+        long vendaId = venda.get("id").asLong();
+        long itemId = venda.get("items").get(0).get("id").asLong();
+        assertThat(estoque(produto)).isEqualByComparingTo("6");
+        assertThat(caixa(caixaId).get("currentBalance").decimalValue()).isEqualByComparingTo("172.00");
+
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Devolveu uma",
+                        "items", List.of(Map.of("sellItemId", itemId, "quantity", 1)))).with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PARTIALLY_REVERSED"))
+                .andExpect(jsonPath("$.reversedAmount").value(18.00))
+                .andExpect(jsonPath("$.netTotal").value(54.00))
+                .andExpect(jsonPath("$.items[0].reversedQuantity").value(1))
+                .andExpect(jsonPath("$.reversals[0].amount").value(18.00))
+                .andExpect(jsonPath("$.reversals[0].items[0].quantity").value(1));
+        assertThat(estoque(produto)).isEqualByComparingTo("7");
+        assertThat(caixa(caixaId).get("currentBalance").decimalValue()).isEqualByComparingTo("154.00");
+
+        // Restam 3 unidades: pedir 4 ou um item de outra venda é recusado, sem alterar nada.
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Demais",
+                        "items", List.of(Map.of("sellItemId", itemId, "quantity", 4)))).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-SALE-005"));
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Outro item",
+                        "items", List.of(Map.of("sellItemId", -1, "quantity", 1)))).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-SALE-005"));
+        assertThat(estoque(produto)).isEqualByComparingTo("7");
+
+        // Sem itens, estorna o que sobrou.
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Devolveu o resto")).with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REVERSED"))
+                .andExpect(jsonPath("$.netTotal").value(0))
+                .andExpect(jsonPath("$.reversals.length()").value(2));
+        assertThat(estoque(produto)).isEqualByComparingTo("10");
+        assertThat(caixa(caixaId).get("currentBalance").decimalValue()).isEqualByComparingTo("100.00");
+
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "De novo")).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-SALE-004"));
+    }
+
+    @Test
+    @DisplayName("Estorno parcial tira do faturamento só a parte devolvida e mantém a venda na contagem")
+    void estornoParcialNoFaturamento() throws Exception {
+        long caixaId = abrirCaixa();
+        JsonNode antes = objectMapper.readTree(mockMvc.perform(get("/dashboard/summary").with(como(admin)))
+                .andReturn().getResponse().getContentAsString());
+        JsonNode venda = vender(venda(produtoFinal("5"), "PIX", 0, 2, "20.00"));
+        long itemId = venda.get("items").get(0).get("id").asLong();
+
+        mockMvc.perform(json(post("/sales/" + venda.get("id").asLong() + "/reversal"), Map.of("reason", "Devolveu uma",
+                        "items", List.of(Map.of("sellItemId", itemId, "quantity", 1)))).with(como(admin)))
+                .andExpect(status().isOk());
+
+        JsonNode depois = objectMapper.readTree(mockMvc.perform(get("/dashboard/summary").with(como(admin)))
+                .andReturn().getResponse().getContentAsString());
+        assertThat(depois.get("todayRevenue").decimalValue().subtract(antes.get("todayRevenue").decimalValue()))
+                .isEqualByComparingTo("20.00");
+        assertThat(depois.get("todaySalesCount").asLong()).isEqualTo(antes.get("todaySalesCount").asLong() + 1);
+        assertThat(caixa(caixaId).get("otherPaymentsTotal").decimalValue()).isEqualByComparingTo("20.00");
+    }
+
     // ================================ Caixa ================================
 
     @Test
@@ -281,7 +384,7 @@ class RegrasDeNegocioIntegrationTest {
         fornecedor = supplierRepository.save(fornecedor);
         Product produto = insumo(UnitOfMeasure.KG, "1", "10.00", "0");
         mockMvc.perform(json(post("/purchases"), Map.of(
-                        "date", LocalDate.now().toString(), "supplierId", fornecedor.getId(),
+                        "date", LocalDate.now().toString(), "supplierId", fornecedor.getId(), "paymentMethod", "DINHEIRO",
                         "items", List.of(Map.of("productId", produto.getId(), "quantity", new BigDecimal("2.5"), "unitPrice", new BigDecimal("10.00")))))
                         .with(como(admin)))
                 .andExpect(status().isCreated());
@@ -291,6 +394,36 @@ class RegrasDeNegocioIntegrationTest {
 
         long segundo = abrirCaixa();
         assertThat(caixa(segundo).get("purchasesTotal").decimalValue()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("Só a compra em dinheiro sai do saldo do caixa; a forma de pagamento é obrigatória")
+    void compraPorFormaDePagamento() throws Exception {
+        long caixaId = abrirCaixa();
+        Supplier fornecedor = new Supplier();
+        fornecedor.setName("Fornecedor pagamento " + sufixo());
+        fornecedor = supplierRepository.save(fornecedor);
+        Product produto = insumo(UnitOfMeasure.KG, "1", "10.00", "0");
+        List<Map<String, Object>> itens = List.of(Map.of("productId", produto.getId(), "quantity", 1, "unitPrice", new BigDecimal("30.00")));
+
+        for (String pagamento : List.of("DINHEIRO", "PIX", "BOLETO")) {
+            mockMvc.perform(json(post("/purchases"), Map.of("date", LocalDate.now().toString(), "supplierId", fornecedor.getId(),
+                            "paymentMethod", pagamento, "items", itens)).with(como(admin)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.paymentMethod").value(pagamento));
+        }
+
+        JsonNode dados = caixa(caixaId);
+        assertThat(dados.get("purchasesTotal").decimalValue()).isEqualByComparingTo("30.00");
+        assertThat(dados.get("otherPurchasesTotal").decimalValue()).isEqualByComparingTo("60.00");
+        assertThat(dados.get("currentBalance").decimalValue()).isEqualByComparingTo("70.00");
+
+        mockMvc.perform(json(post("/purchases"), Map.of("date", LocalDate.now().toString(), "supplierId", fornecedor.getId(),
+                        "items", itens)).with(como(admin)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(json(post("/purchases"), Map.of("date", LocalDate.now().toString(), "supplierId", fornecedor.getId(),
+                        "paymentMethod", "CHEQUE", "items", itens)).with(como(admin)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -179,6 +179,7 @@ public class ReportFormatter {
             case "CARTAO_DEBITO" -> "Cartão de débito";
             case "CARTAO_CREDITO" -> "Cartão de crédito";
             case "PIX" -> "PIX";
+            case "BOLETO" -> "Boleto";
             default -> forma;
         };
     }

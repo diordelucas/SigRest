@@ -24,6 +24,10 @@ public class Purchase {
 
     private BigDecimal total;
 
+    /** Só o que foi pago em DINHEIRO sai do saldo do caixa. */
+    @Column(nullable = false)
+    private String paymentMethod;
+
     @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;

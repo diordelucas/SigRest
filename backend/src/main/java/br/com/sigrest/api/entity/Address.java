@@ -21,6 +21,9 @@ public class Address {
     private String number;
     private String nbhd;
 
+    /** Só os 8 dígitos. */
+    private String cep;
+
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "city_id")
     private City city;

@@ -10,7 +10,7 @@ public record PersonRequestDTO(
         String cpf,
         String phone,
         @Email(message = "e-mail inválido") String email,
-        String street, String number, String nbhd, String city, String uf
+        String street, String number, String nbhd, String city, String uf, String cep
 ) {
     public PersonRequestDTO(Person person){
         this(
@@ -24,7 +24,8 @@ public record PersonRequestDTO(
                 person.getAddress() != null ? person.getAddress().getNbhd() : null,
                 person.getAddress() != null && person.getAddress().getCity() != null ? person.getAddress().getCity().getName() : null,
                 person.getAddress() != null && person.getAddress().getCity() != null && person.getAddress().getCity().getState() != null
-                        ? person.getAddress().getCity().getState().getUf() : null
+                        ? person.getAddress().getCity().getState().getUf() : null,
+                person.getAddress() != null ? person.getAddress().getCep() : null
         );
     }
 }
