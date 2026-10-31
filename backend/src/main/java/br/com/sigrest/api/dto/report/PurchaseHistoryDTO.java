@@ -14,6 +14,7 @@ public class PurchaseHistoryDTO {
     private Long purchaseId;
     private LocalDate date;
     private String supplierName;
+    private String paymentMethod;
     private Integer itemCount;
     private BigDecimal total;
 }

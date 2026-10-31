@@ -48,12 +48,14 @@ public enum ErrorCode {
     CITY_NAO_ENCONTRADA("SIGREST-GEO-002", "Cidade não encontrada.", HttpStatus.NOT_FOUND),
     STATE_NAO_ENCONTRADO("SIGREST-GEO-003", "Estado não encontrado.", HttpStatus.NOT_FOUND),
     GEO_UF_INVALIDA("SIGREST-GEO-004", "UF inválida. Informe a sigla de um estado brasileiro.", HttpStatus.BAD_REQUEST),
+    GEO_CEP_INVALIDO("SIGREST-GEO-005", "CEP inválido. Informe os 8 dígitos.", HttpStatus.BAD_REQUEST),
 
     // Vendas e itens
     SALE_NAO_ENCONTRADA("SIGREST-SALE-001", "Venda não encontrada.", HttpStatus.NOT_FOUND),
     SALE_DESCONTO_INVALIDO("SIGREST-SALE-002", "O desconto não pode ser maior que o subtotal da venda.", HttpStatus.BAD_REQUEST),
     SALE_PRODUTO_NAO_VENDAVEL("SIGREST-SALE-003", "Só produtos finais podem ser vendidos.", HttpStatus.BAD_REQUEST),
     SALE_JA_ESTORNADA("SIGREST-SALE-004", "Esta venda já foi estornada.", HttpStatus.BAD_REQUEST),
+    SALE_ESTORNO_INVALIDO("SIGREST-SALE-005", "Os itens informados não podem ser estornados.", HttpStatus.BAD_REQUEST),
     ITEM_VENDA_NAO_ENCONTRADO("SIGREST-ITEM-001", "Item de venda não encontrado.", HttpStatus.NOT_FOUND),
 
     // Compras e itens

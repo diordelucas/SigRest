@@ -31,6 +31,13 @@ public class PersonController {
         }
     }
 
+    /** CEP e opcional; quando informado, precisa ter os 8 digitos. */
+    private void validateCep(String cep) {
+        if (cep != null && !cep.isBlank() && !Documentos.isValidCep(cep)) {
+            throw new BusinessException(ErrorCode.GEO_CEP_INVALIDO);
+        }
+    }
+
     private void validateContact(String phone, String uf) {
         if (phone != null && !phone.isBlank() && !Documentos.isValidTelefone(phone)) {
             throw new BusinessException(ErrorCode.GEN_TELEFONE_INVALIDO);
@@ -45,6 +52,7 @@ public class PersonController {
     public void savePerson(@Valid @RequestBody PersonRequestDTO data){
         validateCpf(data.cpf());
         validateContact(data.phone(), data.uf());
+        validateCep(data.cep());
         Person personData = new Person(data);
 
         // Criar e associar o endereÃ§o se os dados estiverem presentes
@@ -65,6 +73,7 @@ public class PersonController {
             address.setStreet(data.street());
             address.setNumber(data.number());
             address.setNbhd(data.nbhd());
+            address.setCep(Documentos.normalizarCep(data.cep()));
             address.setCity(city);
 
             // Associar endereÃ§o Ã  pessoa
@@ -94,6 +103,7 @@ public class PersonController {
     public PersonResponseDTO updatePerson(@PathVariable Long id, @Valid @RequestBody PersonRequestDTO data) {
         validateCpf(data.cpf());
         validateContact(data.phone(), data.uf());
+        validateCep(data.cep());
         Person person = repository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.PERSON_NAO_ENCONTRADA));
         person.setName(data.name());
         person.setCpf(data.cpf());
@@ -107,6 +117,7 @@ public class PersonController {
         address.setStreet(data.street());
         address.setNumber(data.number());
         address.setNbhd(data.nbhd());
+        address.setCep(Documentos.normalizarCep(data.cep()));
 
         City city = address.getCity();
         if (city == null) {

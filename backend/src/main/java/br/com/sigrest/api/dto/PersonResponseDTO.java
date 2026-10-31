@@ -2,7 +2,7 @@ package br.com.sigrest.api.dto;
 
 import br.com.sigrest.api.entity.Person;
 
-public record PersonResponseDTO(Long id, String name, String cpf, String phone, String email, String street, String number, String nbhd, String city, String uf) {
+public record PersonResponseDTO(Long id, String name, String cpf, String phone, String email, String street, String number, String nbhd, String city, String uf, String cep) {
 
     public PersonResponseDTO(Person person) {
         this(
@@ -16,7 +16,8 @@ public record PersonResponseDTO(Long id, String name, String cpf, String phone, 
                 person.getAddress() != null ? person.getAddress().getNbhd() : null,
                 person.getAddress() != null && person.getAddress().getCity() != null ? person.getAddress().getCity().getName() : null,
                 person.getAddress() != null && person.getAddress().getCity() != null && person.getAddress().getCity().getState() != null
-                        ? person.getAddress().getCity().getState().getUf() : null
+                        ? person.getAddress().getCity().getState().getUf() : null,
+                person.getAddress() != null ? person.getAddress().getCep() : null
         );
     }
 }

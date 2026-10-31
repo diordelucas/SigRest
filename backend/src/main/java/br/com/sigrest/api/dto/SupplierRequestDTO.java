@@ -15,7 +15,8 @@ public record SupplierRequestDTO(
         String number,
         String nbhd,
         String city,
-        String uf
+        String uf,
+        String cep
 ) {
     public SupplierRequestDTO(Supplier supplier) {
         this(
@@ -32,7 +33,8 @@ public record SupplierRequestDTO(
                         ? supplier.getAddress().getCity().getName() : null,
                 supplier.getAddress() != null && supplier.getAddress().getCity() != null
                         && supplier.getAddress().getCity().getState() != null
-                        ? supplier.getAddress().getCity().getState().getUf() : null
+                        ? supplier.getAddress().getCity().getState().getUf() : null,
+                supplier.getAddress() != null ? supplier.getAddress().getCep() : null
         );
     }
 }

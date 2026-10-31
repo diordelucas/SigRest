@@ -28,6 +28,17 @@ public final class Documentos {
         return uf != null && UFS.contains(uf.trim().toUpperCase());
     }
 
+    /** CEP com 8 dígitos, com ou sem máscara. */
+    public static boolean isValidCep(String cep) {
+        return apenasDigitos(cep).length() == 8;
+    }
+
+    /** Dígitos do CEP, ou null quando não foi informado. */
+    public static String normalizarCep(String cep) {
+        String digitos = apenasDigitos(cep);
+        return digitos.isEmpty() ? null : digitos;
+    }
+
     /** Remove tudo que não for dígito. */
     public static String apenasDigitos(String valor) {
         return valor == null ? "" : valor.replaceAll("\\D", "");

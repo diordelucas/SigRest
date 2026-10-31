@@ -34,7 +34,7 @@ public class SaleController {
     public ResponseEntity<SaleResponseDTO> reverseSale(@PathVariable Long id,
                                                        @Valid @RequestBody SaleReversalRequestDTO data,
                                                        @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(saleService.reverseSale(id, data.reason().trim(), currentUser));
+        return ResponseEntity.ok(saleService.reverseSale(id, data, currentUser));
     }
 
     @GetMapping

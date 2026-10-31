@@ -57,6 +57,7 @@ public class PurchaseService {
 
         Purchase purchase = new Purchase();
         purchase.setDate(purchaseRequestDTO.getDate());
+        purchase.setPaymentMethod(purchaseRequestDTO.getPaymentMethod());
         purchase.setIdempotencyKey(idempotencyKey);
         cashRegisterRepository.findByIsOpenTrue().ifPresent(purchase::setCashRegister);
 
@@ -129,6 +130,7 @@ public class PurchaseService {
         dto.setId(purchase.getId());
         dto.setDate(purchase.getDate());
         dto.setTotal(purchase.getTotal());
+        dto.setPaymentMethod(purchase.getPaymentMethod());
         if (purchase.getSupplier() != null) {
             dto.setSupplier(new SupplierResponseDTO(purchase.getSupplier()));
         }

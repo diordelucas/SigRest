@@ -32,12 +32,13 @@ public class Sale {
     @Column(nullable = false)
     private SaleStatus status = SaleStatus.COMPLETED;
 
-    private Date reversalDate;
-    private String reversalReason;
+    /** Soma do que já foi devolvido em estornos. O que a venda rendeu de fato é total - reversedAmount. */
+    @Column(nullable = false)
+    private BigDecimal reversedAmount = BigDecimal.ZERO;
 
-    @ManyToOne
-    @JoinColumn(name = "reversed_by_user_id")
-    private User reversedBy;
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<SaleReversal> reversals = new ArrayList<>();
 
     /** Caixa aberto no momento da venda. É ele que recebe o valor das vendas em dinheiro. */
     @ManyToOne
@@ -65,6 +66,12 @@ public class Sale {
         this.discount = data.discount();
         this.paymentMethod = data.paymentMethod();
         this.idempotencyKey = data.idempotencyKey();
+    }
+
+    /** Valor que a venda rendeu depois dos estornos: é o que conta no faturamento. */
+    public BigDecimal getNetTotal() {
+        BigDecimal bruto = total != null ? total : BigDecimal.ZERO;
+        return bruto.subtract(reversedAmount != null ? reversedAmount : BigDecimal.ZERO);
     }
 }
 

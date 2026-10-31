@@ -3,7 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api, { getErrorMessage } from '../services/api';
 import { formatDate, formatMoney } from '../utils/format';
-import { getPaymentMethodLabel } from '../utils/payment';
+import { getPaymentMethodLabel, getSaleStatusClass, getSaleStatusLabel } from '../utils/payment';
 import { Sale } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -44,7 +44,7 @@ const SaleList = () => {
 
   const filtered = sales.filter((sale) => {
     const q = search.toLowerCase();
-    const statusLabel = sale.status === 'REVERSED' ? 'estornada' : 'concluída';
+    const statusLabel = getSaleStatusLabel(sale.status);
     return [sale.personName ?? 'Consumidor final', getPaymentMethodLabel(sale.paymentMethod), formatDate(sale.date), statusLabel].some((v) =>
       v.toLowerCase().includes(q)
     );
@@ -93,6 +93,7 @@ const SaleList = () => {
               <tbody className="divide-y divide-line">
                 {filtered.map((sale) => {
                   const reversed = sale.status === 'REVERSED';
+                  const partial = sale.status === 'PARTIALLY_REVERSED';
                   return (
                     <tr key={sale.id} className="hover:bg-surface-2 transition-colors">
                       <td className="px-4 py-3 text-sm text-ink">{sale.id}</td>
@@ -104,12 +105,8 @@ const SaleList = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            reversed ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
-                          }`}
-                        >
-                          {reversed ? 'ESTORNADA' : 'CONCLUÍDA'}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSaleStatusClass(sale.status)}`}>
+                          {getSaleStatusLabel(sale.status)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(sale.discount)}</td>
@@ -118,7 +115,8 @@ const SaleList = () => {
                           reversed ? 'text-ink-muted line-through' : 'text-ink'
                         }`}
                       >
-                        {formatMoney(sale.total)}
+                        {formatMoney(partial ? sale.netTotal : sale.total)}
+                        {partial && <span className="block text-xs font-normal text-ink-muted">de {formatMoney(sale.total)}</span>}
                       </td>
                       <td className="px-4 py-3">
                         <button

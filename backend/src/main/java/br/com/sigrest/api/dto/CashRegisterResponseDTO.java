@@ -17,7 +17,8 @@ public class CashRegisterResponseDTO {
     private BigDecimal difference;       // contado - saldo final (null se não houve contagem)
     private BigDecimal salesTotal;       // vendas em dinheiro deste caixa
     private BigDecimal otherPaymentsTotal; // vendas em PIX e cartão (informativo: não passam pelo caixa)
-    private BigDecimal purchasesTotal;   // compras registradas com este caixa aberto
+    private BigDecimal purchasesTotal;   // compras em dinheiro registradas com este caixa aberto
+    private BigDecimal otherPurchasesTotal; // compras em PIX, cartão e boleto (informativo: não saem do caixa)
     private BigDecimal movementsTotal;   // soma líquida das movimentações manuais
     private UserResponseDTO openedBy;
     private UserResponseDTO closedBy;

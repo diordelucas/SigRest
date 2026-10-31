@@ -23,6 +23,10 @@ public class SellItem {
     private BigDecimal unitPrice;
     private BigDecimal quantity;
 
+    /** Quantidade já devolvida em estornos desta venda. */
+    @Column(nullable = false)
+    private BigDecimal reversedQuantity = BigDecimal.ZERO;
+
     @ManyToOne
     @JoinColumn(name = "sale_id")
     private Sale sale;
@@ -34,6 +38,11 @@ public class SellItem {
     public SellItem(SellItemRequestDTO data){
         this.unitPrice = data.unitPrice();
         this.quantity = data.quantity();
+    }
+
+    /** Quantidade que continua vendida, descontados os estornos. */
+    public BigDecimal getNetQuantity() {
+        return quantity.subtract(reversedQuantity != null ? reversedQuantity : BigDecimal.ZERO);
     }
 
 }

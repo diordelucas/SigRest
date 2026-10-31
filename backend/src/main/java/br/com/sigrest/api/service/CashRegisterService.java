@@ -84,10 +84,10 @@ public class CashRegisterService {
         cashRegister.setClosedBy(closedBy);
         cashRegister.setOpen(false);
 
-        // Saldo final = abertura + movimentações manuais + vendas em dinheiro - compras
+        // Saldo final = abertura + movimentações manuais + vendas em dinheiro - compras em dinheiro
         BigDecimal movements = cashMovementService.getTotalMovementsForCashRegister(cashRegisterId);
         BigDecimal sales = nullSafe(saleRepository.sumCashSalesByCashRegister(cashRegisterId));
-        BigDecimal purchases = nullSafe(purchaseRepository.sumTotalByCashRegister(cashRegisterId));
+        BigDecimal purchases = nullSafe(purchaseRepository.sumCashByCashRegister(cashRegisterId));
         cashRegister.setClosingBalance(
                 nullSafe(cashRegister.getOpeningBalance())
                         .add(movements)
@@ -132,10 +132,12 @@ public class CashRegisterService {
         BigDecimal sales = BigDecimal.ZERO;
         BigDecimal otherPayments = BigDecimal.ZERO;
         BigDecimal purchases = BigDecimal.ZERO;
+        BigDecimal otherPurchases = BigDecimal.ZERO;
         if (cashRegister.getId() != null) {
             sales = nullSafe(saleRepository.sumCashSalesByCashRegister(cashRegister.getId()));
             otherPayments = nullSafe(saleRepository.sumOtherPaymentsByCashRegister(cashRegister.getId()));
-            purchases = nullSafe(purchaseRepository.sumTotalByCashRegister(cashRegister.getId()));
+            purchases = nullSafe(purchaseRepository.sumCashByCashRegister(cashRegister.getId()));
+            otherPurchases = nullSafe(purchaseRepository.sumOtherPaymentsByCashRegister(cashRegister.getId()));
         }
 
         CashRegisterResponseDTO dto = new CashRegisterResponseDTO();
@@ -152,6 +154,7 @@ public class CashRegisterService {
         dto.setSalesTotal(sales);
         dto.setOtherPaymentsTotal(otherPayments);
         dto.setPurchasesTotal(purchases);
+        dto.setOtherPurchasesTotal(otherPurchases);
         dto.setMovementsTotal(movements);
         dto.setCurrentBalance(opening.add(movements).add(sales).subtract(purchases));
 

@@ -5,11 +5,13 @@ import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDateTime, formatMoney, formatQuantity } from '../utils/format';
-import { getPaymentMethodLabel } from '../utils/payment';
-import { Sale } from '../types';
+import { getPaymentMethodLabel, getSaleStatusClass, getSaleStatusLabel } from '../utils/payment';
+import { Sale, SellItem } from '../types';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
+
+const remaining = (item: SellItem) => Number(item.quantity) - Number(item.reversedQuantity);
 
 const SaleDetails = () => {
   const { id } = useParams();
@@ -20,7 +22,8 @@ const SaleDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reason, setReason] = useState('');
-  const [reasonError, setReasonError] = useState('');
+  const [quantities, setQuantities] = useState<Record<number, string>>({});
+  const [formError, setFormError] = useState('');
   const [reversing, setReversing] = useState(false);
 
   const fetchSale = useCallback(async () => {
@@ -38,22 +41,57 @@ const SaleDetails = () => {
     fetchSale();
   }, [fetchSale]);
 
+  /** Abre com tudo o que ainda pode ser devolvido: basta reduzir as quantidades para um estorno parcial. */
+  const openReversal = (current: Sale) => {
+    const initial: Record<number, string> = {};
+    current.items.forEach((item) => {
+      initial[item.id] = String(remaining(item));
+    });
+    setQuantities(initial);
+    setReason('');
+    setFormError('');
+    setConfirmOpen(true);
+  };
+
+  const refundPreview = (current: Sale) => {
+    const reversesAll = current.items.every((item) => Number(quantities[item.id] || 0) === remaining(item));
+    if (reversesAll) return Number(current.netTotal);
+    const subtotal = current.items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0);
+    if (subtotal <= 0) return 0;
+    const gross = current.items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(quantities[item.id] || 0), 0);
+    return Math.min(Math.round((gross * Number(current.total) * 100) / subtotal) / 100, Number(current.netTotal));
+  };
+
   const handleReverse = async () => {
-    if (reversing) return;
+    if (reversing || !sale) return;
+    const items = sale.items
+      .map((item) => ({ sellItemId: item.id, quantity: Number(quantities[item.id] || 0) }))
+      .filter((item) => item.quantity !== 0);
+    const invalid = sale.items.find((item) => {
+      const quantity = Number(quantities[item.id] || 0);
+      return Number.isNaN(quantity) || quantity < 0 || quantity > remaining(item);
+    });
+    if (invalid) {
+      setFormError(`Só é possível estornar ${formatQuantity(remaining(invalid))} de ${invalid.productName}.`);
+      return;
+    }
+    if (items.length === 0) {
+      setFormError('Informe a quantidade de ao menos um item.');
+      return;
+    }
     if (!reason.trim()) {
-      setReasonError('Informe o motivo do estorno.');
+      setFormError('Informe o motivo do estorno.');
       return;
     }
     setReversing(true);
-    setReasonError('');
+    setFormError('');
     try {
-      const response = await api.post<Sale>(`/sales/${id}/reversal`, { reason: reason.trim() });
+      const response = await api.post<Sale>(`/sales/${id}/reversal`, { reason: reason.trim(), items });
       setSale(response.data);
       setConfirmOpen(false);
-      setReason('');
-      toast.success('Venda estornada. Os itens voltaram ao estoque.');
+      toast.success('Estorno registrado. Os itens voltaram ao estoque.');
     } catch (err) {
-      setReasonError(getErrorMessage(err, 'Erro ao estornar a venda.'));
+      setFormError(getErrorMessage(err, 'Erro ao estornar a venda.'));
     } finally {
       setReversing(false);
     }
@@ -75,9 +113,11 @@ const SaleDetails = () => {
     );
   }
 
-  const reversed = sale.status === 'REVERSED';
+  const fullyReversed = sale.status === 'REVERSED';
+  const hasReversals = sale.reversals.length > 0;
   const subtotal = sale.items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0);
   const cashSale = sale.paymentMethod === 'DINHEIRO';
+  const refund = refundPreview(sale);
 
   return (
     <div className="card p-6 mb-6">
@@ -93,30 +133,23 @@ const SaleDetails = () => {
           </button>
           <h2 className="text-lg font-semibold text-ink">Venda #{sale.id}</h2>
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              reversed ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
-            }`}
+            data-testid="sale-status"
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSaleStatusClass(sale.status)}`}
           >
-            {reversed ? 'ESTORNADA' : 'CONCLUÍDA'}
+            {getSaleStatusLabel(sale.status)}
           </span>
         </div>
-        {!reversed && currentUser?.role === 'ADMIN' && (
+        {!fullyReversed && currentUser?.role === 'ADMIN' && (
           <button
             type="button"
+            data-testid="sale-reverse-open"
             className="px-4 py-2 bg-rose-500 text-white text-sm font-semibold rounded-xl hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
-            onClick={() => setConfirmOpen(true)}
+            onClick={() => openReversal(sale)}
           >
             <Undo2 size={14} /> Estornar Venda
           </button>
         )}
       </div>
-
-      {reversed && (
-        <div className="mb-5 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-600 text-sm">
-          Estornada em {formatDateTime(sale.reversalDate)}
-          {sale.reversedByName ? ` por ${sale.reversedByName}` : ''}. Motivo: {sale.reversalReason || 'não informado'}.
-        </div>
-      )}
 
       <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-sm">
         <div>
@@ -138,6 +171,7 @@ const SaleDetails = () => {
           <tr>
             <Th>Produto</Th>
             <Th className="text-right">Quantidade</Th>
+            {hasReversals && <Th className="text-right">Estornado</Th>}
             <Th className="text-right">Preço Unit.</Th>
             <Th className="text-right">Subtotal</Th>
           </tr>
@@ -147,6 +181,7 @@ const SaleDetails = () => {
             <tr key={item.id}>
               <td className="px-4 py-3 text-sm text-ink">{item.productName}</td>
               <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(item.quantity)}</td>
+              {hasReversals && <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(item.reversedQuantity)}</td>}
               <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(item.unitPrice)}</td>
               <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">
                 {formatMoney(Number(item.unitPrice) * Number(item.quantity))}
@@ -164,10 +199,36 @@ const SaleDetails = () => {
           Desconto: <strong className="text-ink">{formatMoney(sale.discount)}</strong>
         </p>
         <div className="w-48 border-t border-line my-1" />
-        <p className={`text-base font-bold ${reversed ? 'text-ink-muted line-through' : 'text-primary-600 dark:text-primary-400'}`}>
+        <p className={`text-base font-bold ${hasReversals ? 'text-ink-muted' : 'text-primary-600 dark:text-primary-400'}`}>
           Total: {formatMoney(sale.total)}
         </p>
+        {hasReversals && (
+          <>
+            <p className="text-sm text-rose-600">Estornado: -{formatMoney(sale.reversedAmount)}</p>
+            <p className="text-base font-bold text-primary-600 dark:text-primary-400">Líquido: {formatMoney(sale.netTotal)}</p>
+          </>
+        )}
       </div>
+
+      {hasReversals && (
+        <div className="mt-5">
+          <h3 className="text-sm font-semibold text-ink mb-2">Estornos</h3>
+          <ul className="space-y-2">
+            {sale.reversals.map((reversal) => (
+              <li key={reversal.id} className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-sm text-ink">
+                <p className="font-semibold">
+                  {formatDateTime(reversal.date)}: {formatMoney(reversal.amount)}
+                  {reversal.userName ? ` por ${reversal.userName}` : ''}
+                </p>
+                <p className="text-ink-muted">
+                  {reversal.items.map((item) => `${formatQuantity(item.quantity)} × ${item.productName}`).join(', ')}
+                </p>
+                <p className="text-ink-muted">Motivo: {reversal.reason}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Modal
         open={confirmOpen}
@@ -176,19 +237,46 @@ const SaleDetails = () => {
         confirmLabel={reversing ? 'Estornando...' : 'Estornar'}
         onCancel={() => {
           setConfirmOpen(false);
-          setReasonError('');
+          setFormError('');
         }}
         onConfirm={handleReverse}
       >
         <p className="text-sm text-ink-muted mb-4">
-          Os itens voltam ao estoque e a venda sai do faturamento.{' '}
-          {cashSale
-            ? `${formatMoney(sale.total)} sairão do caixa aberto.`
-            : 'Devolva o valor ao cliente pelo mesmo meio de pagamento.'}
+          Para um estorno parcial, reduza as quantidades. O desconto é rateado entre os itens.
         </p>
-        {reasonError && (
+        <div className="space-y-2 mb-4">
+          {sale.items.map((item, index) =>
+            remaining(item) > 0 ? (
+              <div key={item.id} className="flex items-center justify-between gap-3">
+                <label htmlFor={`sale-reversal-qty-${index}`} className="text-sm text-ink">
+                  {item.productName}
+                  <span className="block text-xs text-ink-muted">até {formatQuantity(remaining(item))}</span>
+                </label>
+                <Field
+                  id={`sale-reversal-qty-${index}`}
+                  data-testid={`sale-reversal-qty-${index}`}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  max={remaining(item)}
+                  className="w-24 text-right"
+                  value={quantities[item.id] ?? ''}
+                  onChange={(e) => {
+                    setQuantities({ ...quantities, [item.id]: e.target.value });
+                    setFormError('');
+                  }}
+                />
+              </div>
+            ) : null
+          )}
+        </div>
+        <p className="text-sm font-semibold text-ink mb-1">Valor a devolver: {formatMoney(refund)}</p>
+        <p className="text-xs text-ink-muted mb-4">
+          {cashSale ? 'O valor sai do caixa aberto.' : 'Devolva o valor ao cliente pelo mesmo meio de pagamento.'}
+        </p>
+        {formError && (
           <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-sm">
-            {reasonError}
+            {formError}
           </div>
         )}
         <label htmlFor="sale-reversal-reason" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
@@ -197,11 +285,12 @@ const SaleDetails = () => {
         <Field
           as="textarea"
           id="sale-reversal-reason"
+          data-testid="sale-reversal-reason"
           rows={3}
           maxLength={255}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Ex: cliente desistiu da compra."
+          placeholder="Ex: cliente devolveu um item."
         />
       </Modal>
     </div>

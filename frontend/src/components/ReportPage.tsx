@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BarChart3, Download, FileText } from 'lucide-react';
 import api, { fetchPdf, getErrorMessage } from '../services/api';
+import { getPaymentMethodLabel } from '../utils/payment';
 import {
   LineChart,
   Line,
@@ -327,6 +328,7 @@ const ReportPage = () => {
                 <tr>
                   <Th>Data</Th>
                   <Th>Fornecedor</Th>
+                  <Th>Pagamento</Th>
                   <Th className="text-right">Itens</Th>
                   <Th className="text-right">Total</Th>
                 </tr>
@@ -336,6 +338,7 @@ const ReportPage = () => {
                   <tr key={purchase.purchaseId} className="hover:bg-surface-2">
                     <td className="px-4 py-3 text-sm text-ink">{purchase.date}</td>
                     <td className="px-4 py-3 text-sm text-ink">{purchase.supplierName}</td>
+                    <td className="px-4 py-3 text-sm text-ink">{getPaymentMethodLabel(purchase.paymentMethod)}</td>
                     <td className="px-4 py-3 text-sm text-ink text-right">{purchase.itemCount}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-ink text-right">
                       R$ {formatBRL(purchase.total)}

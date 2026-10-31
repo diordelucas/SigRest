@@ -192,7 +192,8 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <groups>e2e</groups>
-                            <excludedGroups></excludedGroups>
+                            <!-- combine.self: sem isso, o e2e herdado do build principal continua excluído e nada roda -->
+                            <excludedGroups combine.self="override"></excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>

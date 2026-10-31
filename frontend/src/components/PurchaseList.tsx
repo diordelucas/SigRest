@@ -3,6 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api, { getErrorMessage } from '../services/api';
 import { formatDate, formatMoney } from '../utils/format';
+import { getPaymentMethodLabel } from '../utils/payment';
 import { Purchase } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -43,7 +44,7 @@ const PurchaseList = () => {
 
   const filtered = purchases.filter((purchase) => {
     const q = search.toLowerCase();
-    return [purchase.supplier?.name, formatDate(purchase.date)].some((v) => (v ?? '').toLowerCase().includes(q));
+    return [purchase.supplier?.name, formatDate(purchase.date), getPaymentMethodLabel(purchase.paymentMethod)].some((v) => (v ?? '').toLowerCase().includes(q));
   });
 
   return (
@@ -79,6 +80,7 @@ const PurchaseList = () => {
                   <Th>ID</Th>
                   <Th>Data</Th>
                   <Th>Fornecedor</Th>
+                  <Th>Pagamento</Th>
                   <Th className="text-right">Total</Th>
                   <Th>Ações</Th>
                 </tr>
@@ -89,6 +91,11 @@ const PurchaseList = () => {
                     <td className="px-4 py-3 text-sm text-ink">{purchase.id}</td>
                     <td className="px-4 py-3 text-sm text-ink">{formatDate(purchase.date)}</td>
                     <td className="px-4 py-3 text-sm text-ink">{purchase.supplier ? purchase.supplier.name : 'Não informado'}</td>
+                    <td className="px-4 py-3 text-sm text-ink">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-2 text-ink-muted">
+                        {getPaymentMethodLabel(purchase.paymentMethod)}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(purchase.total)}</td>
                     <td className="px-4 py-3">
                       <button

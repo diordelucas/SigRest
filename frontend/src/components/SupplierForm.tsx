@@ -37,7 +37,7 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
       setPhone(editingSupplier.phone || '');
       setEmail(editingSupplier.email || '');
       setRegistration(editingSupplier.registration || '');
-      setCep('');
+      setCep(editingSupplier.cep || '');
       setStreet(editingSupplier.street || '');
       setNumber(editingSupplier.number || '');
       setNbhd(editingSupplier.nbhd || '');
@@ -92,6 +92,10 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
       toast.error('UF inválida. Informe a sigla de um estado brasileiro.');
       return;
     }
+    if (cep && cep.replace(/\D/g, '').length !== 8) {
+      toast.error('CEP inválido. Informe os 8 dígitos.');
+      return;
+    }
     const data = {
       name,
       cnpj: cnpj.replace(/\D/g, ''),
@@ -103,6 +107,7 @@ const SupplierForm = ({ onSupplierAdded, editingSupplier, onEditComplete }: Supp
       nbhd,
       city,
       uf,
+      cep: cep.replace(/\D/g, ''),
     };
     try {
       if (editingSupplier) {

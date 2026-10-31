@@ -31,6 +31,13 @@ public class SupplierController {
         }
     }
 
+    /** CEP e opcional; quando informado, precisa ter os 8 digitos. */
+    private void validateCep(String cep) {
+        if (cep != null && !cep.isBlank() && !Documentos.isValidCep(cep)) {
+            throw new BusinessException(ErrorCode.GEO_CEP_INVALIDO);
+        }
+    }
+
     private void validateContact(String phone, String uf) {
         if (phone != null && !phone.isBlank() && !Documentos.isValidTelefone(phone)) {
             throw new BusinessException(ErrorCode.GEN_TELEFONE_INVALIDO);
@@ -45,6 +52,7 @@ public class SupplierController {
     public void saveSupplier(@Valid @RequestBody SupplierRequestDTO data) {
         validateCnpj(data.cnpj());
         validateContact(data.phone(), data.uf());
+        validateCep(data.cep());
         Supplier supplier = new Supplier(data);
 
         if (data.street() != null || data.city() != null || data.uf() != null) {
@@ -59,6 +67,7 @@ public class SupplierController {
             address.setStreet(data.street());
             address.setNumber(data.number());
             address.setNbhd(data.nbhd());
+            address.setCep(Documentos.normalizarCep(data.cep()));
             address.setCity(city);
 
             supplier.setAddress(address);
@@ -84,6 +93,7 @@ public class SupplierController {
     public SupplierResponseDTO updateSupplier(@PathVariable Long id, @Valid @RequestBody SupplierRequestDTO data) {
         validateCnpj(data.cnpj());
         validateContact(data.phone(), data.uf());
+        validateCep(data.cep());
         Supplier supplier = repository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUPP_NAO_ENCONTRADO));
 
@@ -98,6 +108,7 @@ public class SupplierController {
         address.setStreet(data.street());
         address.setNumber(data.number());
         address.setNbhd(data.nbhd());
+        address.setCep(Documentos.normalizarCep(data.cep()));
 
         City city = address.getCity();
         if (city == null) city = new City();

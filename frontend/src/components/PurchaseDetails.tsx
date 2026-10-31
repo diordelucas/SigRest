@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api, { getErrorMessage } from '../services/api';
 import { formatDate, formatMoney, formatQuantity } from '../utils/format';
+import { getPaymentMethodLabel } from '../utils/payment';
 import { Purchase } from '../types';
 import { Table, Th } from './ui/Table';
 
@@ -57,7 +58,7 @@ const PurchaseDetails = () => {
         <h2 className="text-lg font-semibold text-ink">Compra #{purchase.id}</h2>
       </div>
 
-      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm">
+      <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-sm">
         <div>
           <dt className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Data da compra</dt>
           <dd className="text-ink">{formatDate(purchase.date)}</dd>
@@ -65,6 +66,10 @@ const PurchaseDetails = () => {
         <div>
           <dt className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Fornecedor</dt>
           <dd className="text-ink">{purchase.supplier?.name || 'Não informado'}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">Forma de pagamento</dt>
+          <dd className="text-ink">{getPaymentMethodLabel(purchase.paymentMethod)}</dd>
         </div>
       </dl>
 

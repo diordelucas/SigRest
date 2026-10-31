@@ -163,6 +163,7 @@ public class ReportPdfService {
         dados.put("compras", compras);
         dados.put("porFornecedor", agrupar(compras, c -> c.getSupplierName() != null ? c.getSupplierName() : "Sem fornecedor",
                 PurchaseHistoryDTO::getTotal));
+        dados.put("porFormaPagamento", agrupar(compras, c -> fmt.formaPagamento(c.getPaymentMethod()), PurchaseHistoryDTO::getTotal));
         dados.put("total", total);
         dados.put("mediaPorCompra", media(total, compras.size()));
         return gerar("compras", "Histórico de Compras", startDate, endDate, dados);

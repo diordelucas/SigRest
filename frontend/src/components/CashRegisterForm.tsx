@@ -174,7 +174,7 @@ const CashRegisterForm = () => {
                 <p className="text-base font-bold text-emerald-600">{formatMoney(currentCashRegister.salesTotal)}</p>
               </div>
               <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl">
-                <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">− Compras</p>
+                <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">− Compras em dinheiro</p>
                 <p className="text-base font-bold text-rose-600">{formatMoney(currentCashRegister.purchasesTotal)}</p>
               </div>
               <div className="p-3 bg-sky-500/10 border border-sky-500/30 rounded-xl">
@@ -194,7 +194,7 @@ const CashRegisterForm = () => {
               <p className="text-2xl font-extrabold">{formatMoney(currentCashRegister.currentBalance)}</p>
             </div>
             <p className="text-xs text-ink-muted mb-5">
-              PIX e cartão deste caixa: {formatMoney(currentCashRegister.otherPaymentsTotal)} (não entram no saldo, esse dinheiro não passa pela gaveta).
+              Fora do saldo, pois não passam pela gaveta: vendas em PIX e cartão ({formatMoney(currentCashRegister.otherPaymentsTotal)}) e compras em PIX, cartão e boleto ({formatMoney(currentCashRegister.otherPurchasesTotal)}).
             </p>
 
             <div className="border-t border-line pt-5 mb-5">
@@ -330,6 +330,7 @@ const CashRegisterForm = () => {
               </div>
             </div>
             <Button
+              data-testid="cash-open-submit"
               onClick={handleOpenCashRegister}
               disabled={openingBalance === '' || openingBalance === null}
             >
@@ -365,7 +366,7 @@ const CashRegisterForm = () => {
                 <dd className="text-ink">{formatMoney(currentCashRegister.salesTotal)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-ink-muted">Compras</dt>
+                <dt className="text-ink-muted">Compras em dinheiro</dt>
                 <dd className="text-ink">-{formatMoney(currentCashRegister.purchasesTotal)}</dd>
               </div>
               <div className="flex justify-between">

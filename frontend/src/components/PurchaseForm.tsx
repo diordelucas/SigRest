@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { formatMoney, formatQuantity, todayISO } from '../utils/format';
+import { getPaymentMethodLabel, PURCHASE_PAYMENT_METHODS } from '../utils/payment';
 import { Supplier, Product } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -17,6 +18,7 @@ interface PurchaseItemForm {
 interface PurchaseFormState {
   date: string;
   supplierId: string;
+  paymentMethod: string;
   items: PurchaseItemForm[];
 }
 
@@ -25,6 +27,7 @@ const PurchaseForm = () => {
   const [purchase, setPurchase] = useState<PurchaseFormState>({
     date: todayISO(),
     supplierId: '',
+    paymentMethod: '',
     items: [],
   });
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -141,7 +144,7 @@ const PurchaseForm = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="flex flex-col gap-1">
               <label htmlFor="purchaseform-data-da-compra" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
                 Data da Compra
@@ -172,6 +175,26 @@ const PurchaseForm = () => {
                   </option>
                 ))}
               </Field>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="purchaseform-forma-de-pagamento" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                Forma de Pagamento
+              </label>
+              <Field id="purchaseform-forma-de-pagamento"
+                as="select"
+                name="paymentMethod"
+                value={purchase.paymentMethod}
+                onChange={handlePurchaseChange}
+                required
+              >
+                <option value="">Selecione...</option>
+                {PURCHASE_PAYMENT_METHODS.map((method) => (
+                  <option key={method} value={method}>
+                    {getPaymentMethodLabel(method)}
+                  </option>
+                ))}
+              </Field>
+              <p className="text-xs text-ink-muted mt-1">Só compras em dinheiro saem do saldo do caixa.</p>
             </div>
           </div>
 

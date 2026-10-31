@@ -35,6 +35,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
       setCpf(editingPerson.cpf || '');
       setPhone(editingPerson.phone || '');
       setEmail(editingPerson.email || '');
+      setCep(editingPerson.cep || '');
       setStreet(editingPerson.street || '');
       setNumber(editingPerson.number || '');
       setNbhd(editingPerson.nbhd || '');
@@ -83,6 +84,10 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
       toast.error('UF inválida. Informe a sigla de um estado brasileiro.');
       return false;
     }
+    if (cep && cep.replace(/\D/g, '').length !== 8) {
+      toast.error('CEP inválido. Informe os 8 dígitos.');
+      return false;
+    }
     if (!/\S+@\S+\.\S+/.test(email)) {
       toast.error('E-mail inválido.');
       return false;
@@ -117,6 +122,7 @@ const PersonForm = ({ onUserAdded, editingPerson, onEditComplete }: PersonFormPr
       nbhd,
       city,
       uf,
+      cep: cep.replace(/\D/g, ''),
     };
 
     try {

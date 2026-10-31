@@ -31,23 +31,39 @@
     </tbody>
   </table>
 
+  <h2>Por forma de pagamento</h2>
+  <table class="dados">
+    <thead>
+      <tr><th>Forma de pagamento</th><th class="num">Compras</th><th class="num">Total</th><th class="num">Participação</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="g : ${porFormaPagamento}">
+        <td th:text="${g.label}">PIX</td>
+        <td class="num" th:text="${g.count}">0</td>
+        <td class="num" th:text="${fmt.moeda(g.total)}">R$ 0,00</td>
+        <td class="num" th:text="${fmt.participacao(g.total, total)}">0%</td>
+      </tr>
+    </tbody>
+  </table>
+
   <h2>Compras do período</h2>
   <table class="dados">
     <thead>
-      <tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th class="num">Itens</th><th class="num">Total</th></tr>
+      <tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th>Pagamento</th><th class="num">Itens</th><th class="num">Total</th></tr>
     </thead>
     <tbody>
       <tr th:each="c : ${compras}">
         <td th:text="${c.purchaseId}">1</td>
         <td th:text="${fmt.data(c.date)}">01/01/2026</td>
         <td th:text="${fmt.texto(c.supplierName)}">Fornecedor</td>
+        <td th:text="${fmt.formaPagamento(c.paymentMethod)}">PIX</td>
         <td class="num" th:text="${c.itemCount}">0</td>
         <td class="num" th:text="${fmt.moeda(c.total)}">R$ 0,00</td>
       </tr>
     </tbody>
     <tfoot>
       <tr>
-        <td colspan="4">Total do período</td>
+        <td colspan="5">Total do período</td>
         <td class="num" th:text="${fmt.moeda(total)}">R$ 0,00</td>
       </tr>
     </tfoot>
