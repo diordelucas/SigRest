@@ -27,6 +27,6 @@ public class SaleReversalItem {
     @JoinColumn(name = "sell_item_id")
     private SellItem sellItem;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 38, scale = 3)
     private BigDecimal quantity;
 }

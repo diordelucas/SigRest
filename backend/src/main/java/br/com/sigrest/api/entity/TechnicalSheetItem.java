@@ -26,6 +26,7 @@ public class TechnicalSheetItem {
     @JoinColumn(name = "raw_material_id")
     private Product rawMaterial;
 
+    @Column(precision = 38, scale = 3)
     private BigDecimal quantity;
 
     @Enumerated(EnumType.STRING)

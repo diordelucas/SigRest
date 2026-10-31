@@ -3,7 +3,7 @@ import { ArrowLeft, Save, Plus, Trash2, Calculator } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { formatBRL } from '../utils/currency';
-import { formatQuantity, formatUnitCost } from '../utils/format';
+import { baseUnit, formatQuantity, formatUnitCost, quantityStep } from '../utils/format';
 import { Product, TechnicalSheet, CostCalculation } from '../types';
 import Button from './ui/Button';
 import Field from './ui/Field';
@@ -105,7 +105,11 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
   const purchaseUnitOf = (rawMaterialId: string) =>
     products.find((p) => String(p.id) === String(rawMaterialId))?.purchaseUnit ?? null;
 
-  const updateItem = (index: number, field: keyof TechnicalSheetItemForm, value: string) => {
+  // Só insumos entram na lista; o item já salvo fica para a ficha antiga não abrir com o campo em branco.
+  const ingredientOptions = (rawMaterialId: string) =>
+    products.filter((p) => p.tipo === 'INSUMO' || String(p.id) === String(rawMaterialId));
+
+  const updateItem =(index: number, field: keyof TechnicalSheetItemForm, value: string) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     if (field === 'rawMaterialId') {
@@ -122,6 +126,9 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
     newItems.splice(index, 1);
     setItems(newItems);
   };
+
+  const finalProduct = products.find((p) => String(p.id) === String(finalProductId));
+  const weighed = baseUnit(finalProduct) === 'kg';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -174,7 +181,7 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
     const data = {
       name,
       finalProductId,
-      rendimento: rendimento !== '' ? parseInt(rendimento, 10) : null,
+      rendimento: rendimento !== '' ? parseFloat(rendimento) : null,
       labourCostPercent: labourCostPercent !== '' ? parseFloat(labourCostPercent) : null,
       variableExpensesPercent: variableExpensesPercent !== '' ? parseFloat(variableExpensesPercent) : null,
       desiredMarginPercent: desiredMarginPercent !== '' ? parseFloat(desiredMarginPercent) : null,
@@ -254,19 +261,21 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
             </Field>
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="technicalsheetform-rendimento-porcoes" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-              Rendimento (Porções)
+            <label htmlFor="technicalsheetform-rendimento" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+              Rendimento ({weighed ? 'kg' : 'unidades'})
             </label>
-            <Field id="technicalsheetform-rendimento-porcoes"
+            <Field id="technicalsheetform-rendimento"
               type="number"
-              min="1"
-              step="1"
+              min={quantityStep(finalProduct)}
+              step={quantityStep(finalProduct)}
               value={rendimento}
               onChange={(e) => setRendimento(e.target.value)}
               placeholder="Ex: 10"
               required
             />
-            <p className="text-xs text-ink-muted mt-1">Quantas porções as quantidades abaixo produzem.</p>
+            <p className="text-xs text-ink-muted mt-1">
+              {weighed ? 'Quantos quilos as quantidades abaixo produzem.' : 'Quantas marmitas ou bandejas as quantidades abaixo produzem.'}
+            </p>
           </div>
         </div>
 
@@ -303,14 +312,12 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                         required
                       >
                         <option value="">Selecione o insumo...</option>
-                        {products
-                          .filter((p) => String(p.id) !== String(finalProductId))
-                          .map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                              {p.purchaseUnit ? ` (${p.purchaseUnit})` : ''}
-                            </option>
-                          ))}
+                        {ingredientOptions(item.rawMaterialId).map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                            {p.purchaseUnit ? ` (${p.purchaseUnit})` : ''}
+                          </option>
+                        ))}
                       </Field>
                     </td>
                     <td className="px-4 py-3">
@@ -472,13 +479,13 @@ const TechnicalSheetForm = ({ sheetToEdit, onSaveSuccess, onCancel }: TechnicalS
                     <p className="font-semibold text-ink text-sm">R$ {formatBRL(costResult.totalCostWithLabour)}</p>
                   </div>
                   <div className="p-2 bg-surface rounded-lg border border-line">
-                    <p className="text-xs text-ink-muted mb-0.5">Custo por Porção</p>
+                    <p className="text-xs text-ink-muted mb-0.5">Custo por {costResult.unit === 'kg' ? 'kg' : 'Unidade'}</p>
                     <p className="font-semibold text-ink text-sm">
                       R$ {formatBRL(costResult.servingCostWithLabour)}
                     </p>
                   </div>
                   <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <p className="text-xs text-emerald-600 font-semibold mb-0.5">Preço Sugerido por Porção</p>
+                    <p className="text-xs text-emerald-600 font-semibold mb-0.5">Preço Sugerido por {costResult.unit === 'kg' ? 'kg' : 'Unidade'}</p>
                     <p className="font-extrabold text-emerald-700 text-lg">
                       R$ {formatBRL(costResult.suggestedSellPrice)}
                     </p>

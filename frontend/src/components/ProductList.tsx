@@ -10,14 +10,7 @@ import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
-import { formatQuantity } from '../utils/format';
-
-const baseUnitOf = (purchaseUnit: string | null): string => {
-  if (!purchaseUnit) return 'un';
-  if (['G', 'KG'].includes(purchaseUnit)) return 'g';
-  if (['ML', 'L'].includes(purchaseUnit)) return 'ml';
-  return 'un';
-};
+import { baseUnit, formatStock } from '../utils/format';
 
 interface ProductListProps {
   refreshTrigger: number;
@@ -134,7 +127,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
                   </td>
                   <td className="px-4 py-3 text-sm text-ink">{product.code}</td>
                   <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">R$ {formatBRL(product.price ?? 0)}</td>
-                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">R$ {formatBRL(product.sellPrice ?? 0)}</td>
+                  <td className="px-4 py-3 text-sm text-ink whitespace-nowrap">R$ {formatBRL(product.sellPrice ?? 0)}{baseUnit(product) === 'kg' ? '/kg' : ''}</td>
                   <td className="px-4 py-3 text-sm text-ink">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -143,7 +136,7 @@ const ProductList = ({ refreshTrigger, onEditPerson, isReadOnly }: ProductListPr
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
                     >
-                      {formatQuantity(product.storage)} {baseUnitOf(product.purchaseUnit)}
+                      {formatStock(product.storage, product)}
                     </span>
                   </td>
                   {!isReadOnly && (

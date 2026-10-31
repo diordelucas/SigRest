@@ -31,6 +31,9 @@ public class TechnicalSheetService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private StockMovementService stockMovementService;
+
     @Transactional(readOnly = true)
     public List<TechnicalSheetResponseDTO> findAll() {
         return repository.findAll().stream().map(TechnicalSheetResponseDTO::new).toList();
@@ -63,6 +66,7 @@ public class TechnicalSheetService {
         if (finalProduct.getTipo() == ProductType.INSUMO) {
             throw new BusinessException(ErrorCode.TECH_PRODUTO_FINAL_INVALIDO);
         }
+        stockMovementService.validateQuantity(finalProduct, dto.rendimento());
         sheet.setFinalProduct(finalProduct);
 
         if (sheet.getItems() == null) {
@@ -166,10 +170,11 @@ public class TechnicalSheetService {
                 .subtract(varExp.add(margin))
                 .divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP);
 
-        // A ficha descreve a receita inteira; o preço sugerido é o de uma porção, que é o que se vende.
-        int portions = sheet.getRendimento() != null && sheet.getRendimento() > 0 ? sheet.getRendimento() : 1;
+        // A ficha descreve a receita inteira; o preço sugerido é o do que se vende: uma unidade ou um quilo.
+        BigDecimal rendimento = sheet.getRendimento() != null && sheet.getRendimento().signum() > 0
+                ? sheet.getRendimento() : BigDecimal.ONE;
         BigDecimal servingCostWithLabour = totalCostWithLabour
-                .divide(new BigDecimal(portions), 4, RoundingMode.HALF_UP);
+                .divide(rendimento, 4, RoundingMode.HALF_UP);
 
         BigDecimal suggestedSellPrice = BigDecimal.ZERO;
         if (markupIndex.compareTo(BigDecimal.ZERO) > 0) {
@@ -177,9 +182,9 @@ public class TechnicalSheetService {
         }
 
         BigDecimal perServingCost = BigDecimal.ZERO;
-        if (sheet.getRendimento() != null && sheet.getRendimento() > 0) {
+        if (sheet.getRendimento() != null && sheet.getRendimento().signum() > 0) {
             perServingCost = ingredientsTotalCost
-                    .divide(new BigDecimal(sheet.getRendimento()), 4, RoundingMode.HALF_UP);
+                    .divide(sheet.getRendimento(), 4, RoundingMode.HALF_UP);
         }
 
         return new CostCalculationResponseDTO(
@@ -194,7 +199,8 @@ public class TechnicalSheetService {
                 suggestedSellPrice,
                 sheet.getRendimento(),
                 perServingCost,
-                servingCostWithLabour
+                servingCostWithLabour,
+                sheet.getFinalProduct() != null ? sheet.getFinalProduct().getStockUnit() : "un"
         );
     }
 }

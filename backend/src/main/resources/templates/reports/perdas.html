@@ -21,13 +21,12 @@
   <h2>Por motivo</h2>
   <table class="dados">
     <thead>
-      <tr><th>Motivo</th><th class="num">Ocorrências</th><th class="num">Quantidade perdida</th></tr>
+      <tr><th>Motivo</th><th class="num">Ocorrências</th></tr>
     </thead>
     <tbody>
       <tr th:each="g : ${porMotivo}">
         <td th:text="${g.label}">Vencimento</td>
         <td class="num" th:text="${g.count}">0</td>
-        <td class="num" th:text="${fmt.quantidade(g.total)}">0</td>
       </tr>
     </tbody>
   </table>
@@ -46,13 +45,13 @@
         </td>
         <td th:text="${fmt.texto(p.productName)}">Produto</td>
         <td th:text="${fmt.motivoPerda(p.reason)}">Vencimento</td>
-        <td class="num" th:text="${fmt.quantidade(p.quantity)}">0</td>
+        <td class="num" th:text="|${fmt.quantidade(p.quantity)} ${p.unit}|">0 un</td>
         <td th:text="${fmt.texto(p.description)}">Descrição</td>
       </tr>
     </tbody>
   </table>
-  <p class="nota">Produção: diferença entre a quantidade planejada e a produzida na ordem (em unidades do produto final).
-    Estoque: baixas registradas como perda (em unidade base do produto).</p>
+  <p class="nota">Produção: diferença entre a quantidade planejada e a produzida na ordem.
+    Estoque: baixas registradas como perda.</p>
 </th:block>
 </body>
 </html>

@@ -4,6 +4,7 @@ import api, { getErrorMessage } from '../services/api';
 import moment from 'moment';
 import { LossReason, ProductionOrder, ProductionOrderStatus } from '../types';
 import { lossReasonLabel, LOSS_REASON_LABELS } from '../utils/lossReason';
+import { formatStock, quantityStep } from '../utils/format';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
@@ -59,6 +60,9 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
   const [finishing, setFinishing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
+  // Produto pesado: o peso só é conhecido na balança, e pesar menos só é quebra se houver motivo.
+  const finishWeighed = finishOrder?.finalProduct?.saleUnit === 'KG';
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -86,11 +90,11 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
       setFinishError('A quantidade real deve ser um número maior ou igual a zero.');
       return;
     }
-    if (actual > finishOrder.quantity) {
+    if (!finishWeighed && actual > finishOrder.quantity) {
       setFinishError('A quantidade real não pode ser maior que a planejada. Se produziu a mais, abra outra ordem.');
       return;
     }
-    if (actual < finishOrder.quantity && !finishLossReason) {
+    if (!finishWeighed && actual < finishOrder.quantity && !finishLossReason) {
       setFinishError('Informe o motivo, já que a quantidade real ficou abaixo do planejado.');
       return;
     }
@@ -99,7 +103,7 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
     try {
       await api.post(`/production-order/${finishOrder.id}/finish`, {
         actualQuantity: actual,
-        lossReason: actual < finishOrder.quantity ? finishLossReason : null,
+        lossReason: actual < finishOrder.quantity && finishLossReason ? finishLossReason : null,
       });
       setSuccessMessage('Ordem de Produção finalizada com sucesso!');
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -199,19 +203,19 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
                   <td className="px-4 py-3 text-sm font-medium text-ink">
                     {order.finalProduct?.name || 'Produto não identificado'}
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-ink text-center">{order.quantity}</td>
+                  <td className="px-4 py-3 text-sm font-bold text-ink text-center whitespace-nowrap">{formatStock(order.quantity, order.finalProduct)}</td>
                   <td className="px-4 py-3 text-sm text-center">
                     {order.actualQuantity == null ? (
                       <span className="text-ink-muted">-</span>
-                    ) : order.actualQuantity < order.quantity ? (
+                    ) : order.lossReason ? (
                       <span
-                        className="font-bold text-amber-600"
+                        className="font-bold text-amber-600 whitespace-nowrap"
                         title={`Quebra de produção: ${lossReasonLabel(order.lossReason)}`}
                       >
-                        {order.actualQuantity}
+                        {formatStock(order.actualQuantity, order.finalProduct)}
                       </span>
                     ) : (
-                      <span className="font-bold text-ink">{order.actualQuantity}</span>
+                      <span className="font-bold text-ink whitespace-nowrap">{formatStock(order.actualQuantity, order.finalProduct)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-ink">
@@ -259,8 +263,10 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
         {finishOrder && (
           <>
             <p className="text-sm text-ink-muted mb-4">
-              Os insumos da ficha técnica serão debitados pela quantidade planejada ({finishOrder.quantity}). Informe
-              quanto realmente saiu bom — se for menos que o planejado, é a quebra de produção.
+              Os insumos da ficha técnica serão debitados pela quantidade planejada ({formatStock(finishOrder.quantity, finishOrder.finalProduct)}).{' '}
+              {finishWeighed
+                ? 'Informe o peso na balança: é ele que entra no estoque, mesmo acima do previsto.'
+                : 'Informe quanto realmente saiu bom — se for menos que o planejado, é a quebra de produção.'}
             </p>
             {finishError && (
               <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-sm">
@@ -270,13 +276,13 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <label htmlFor="productionorderlist-quantidade-real-produzida-planejado" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
-                  Quantidade real produzida (planejado: {finishOrder.quantity})
+                  {finishWeighed ? 'Peso real' : 'Quantidade real produzida'} (planejado: {formatStock(finishOrder.quantity, finishOrder.finalProduct)})
                 </label>
                 <Field id="productionorderlist-quantidade-real-produzida-planejado"
                   type="number"
                   min="0"
-                  max={finishOrder.quantity}
-                  step="1"
+                  max={finishWeighed ? undefined : finishOrder.quantity}
+                  step={quantityStep(finishOrder.finalProduct)}
                   value={finishActualQuantity}
                   onChange={(e) => setFinishActualQuantity(e.target.value)}
                 />
@@ -284,7 +290,7 @@ const ProductionOrderList = ({ refreshTrigger, onNewOrder }: ProductionOrderList
               {Number(finishActualQuantity) < finishOrder.quantity && (
                 <div className="flex flex-col gap-1">
                   <label htmlFor="productionorderlist-motivo-da-quebra" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider">
-                    Motivo da quebra
+                    {finishWeighed ? 'Motivo da quebra (opcional: sem motivo, é só diferença de peso)' : 'Motivo da quebra'}
                   </label>
                   <Field id="productionorderlist-motivo-da-quebra"
                     as="select"

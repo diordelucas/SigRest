@@ -3,6 +3,7 @@ package br.com.sigrest.api;
 import br.com.sigrest.api.entity.Category;
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.ProductType;
+import br.com.sigrest.api.entity.SaleUnit;
 import br.com.sigrest.api.entity.StockMovement;
 import br.com.sigrest.api.entity.Supplier;
 import br.com.sigrest.api.entity.UnitOfMeasure;
@@ -26,6 +27,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
@@ -33,6 +35,8 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -465,7 +469,7 @@ class RegrasDeNegocioIntegrationTest {
 
     // ================================ Ficha técnica e produção ================================
 
-    private long criarFicha(Product produtoFinal, Product ingrediente, String quantidade, String unidade, int rendimento) throws Exception {
+    private long criarFicha(Product produtoFinal, Product ingrediente, String quantidade, String unidade, Number rendimento) throws Exception {
         String resposta = mockMvc.perform(json(post("/technical-sheet"), Map.of(
                         "name", "Ficha " + sufixo(), "finalProductId", produtoFinal.getId(), "rendimento", rendimento,
                         "labourCostPercent", 30, "variableExpensesPercent", 10, "desiredMarginPercent", 20,
@@ -476,7 +480,7 @@ class RegrasDeNegocioIntegrationTest {
         return objectMapper.readTree(resposta).get("id").asLong();
     }
 
-    private long abrirOrdem(Product produtoFinal, int quantidade) throws Exception {
+    private long abrirOrdem(Product produtoFinal, Number quantidade) throws Exception {
         String resposta = mockMvc.perform(json(post("/production-order"), Map.of("finalProductId", produtoFinal.getId(), "quantity", quantidade))
                         .with(como(admin)))
                 .andExpect(status().isOk())
@@ -512,10 +516,10 @@ class RegrasDeNegocioIntegrationTest {
     }
 
     @Test
-    @DisplayName("Preço sugerido é por porção, e não da receita inteira")
-    void precoSugeridoPorPorcao() throws Exception {
+    @DisplayName("Preço sugerido é o da unidade vendida, e não o da receita inteira")
+    void precoSugeridoPorUnidade() throws Exception {
         long ficha = criarFicha(produtoFinal("0"), insumo(UnitOfMeasure.KG, "1", "20.00", "0"), "1", "KG", 10);
-        // Receita: R$ 20,00 + 30% de mão de obra = R$ 26,00. Porção: R$ 2,60. Markup: 2,60 / (1 - 0,30) = R$ 3,71.
+        // Receita: R$ 20,00 + 30% de mão de obra = R$ 26,00. Unidade: R$ 2,60. Markup: 2,60 / (1 - 0,30) = R$ 3,71.
         mockMvc.perform(get("/technical-sheet/" + ficha + "/calculate-cost").with(como(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.servingCostWithLabour").value(2.6))
@@ -689,5 +693,176 @@ class RegrasDeNegocioIntegrationTest {
                 assertThat(sql).contains("'" + tipo.name() + "'");
             }
         }
+    }
+    // ================================ Venda por peso ================================
+
+    private Product produtoPorQuilo(String estoque) {
+        Product p = produtoFinal(estoque);
+        p.setSaleUnit(SaleUnit.KG);
+        p.setSellPrice(new BigDecimal("39.90"));
+        return productRepository.save(p);
+    }
+
+    private Map<String, Object> vendaPorPeso(Product produto, String peso, Object desconto) {
+        return Map.of("paymentMethod", "PIX", "discount", desconto,
+                "items", List.of(Map.of("productId", produto.getId(), "quantity", new BigDecimal(peso), "unitPrice", new BigDecimal("39.90"))));
+    }
+
+    private ResultActions finalizar(long ordem, Map<String, Object> corpo) throws Exception {
+        return mockMvc.perform(json(post("/production-order/" + ordem + "/finish"), corpo).with(como(admin)));
+    }
+
+    @Test
+    @DisplayName("Venda por quilo aceita o peso até o grama e fecha o item em centavos")
+    void vendaPorQuilo() throws Exception {
+        abrirCaixa();
+        Product lasanha = produtoPorQuilo("5");
+
+        JsonNode venda = vender(vendaPorPeso(lasanha, "1.355", 0));
+
+        // 1,355 kg x R$ 39,90 = R$ 54,0645, que vira R$ 54,06.
+        assertThat(venda.get("total").decimalValue()).isEqualByComparingTo("54.06");
+        assertThat(venda.at("/items/0/unit").asText()).isEqualTo("kg");
+        assertThat(estoque(lasanha)).isEqualByComparingTo("3.645");
+    }
+
+    @Test
+    @DisplayName("Produto por unidade recusa quantidade fracionada; por quilo, recusa mais de 3 casas")
+    void quantidadeFracionada() throws Exception {
+        abrirCaixa();
+        Product marmita = produtoFinal("5");
+        Product frango = insumo(UnitOfMeasure.KG, "1", "22.00", "1000");
+
+        mockMvc.perform(json(post("/sales"), vendaPorPeso(marmita, "1.5", 0)).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-PROD-007"));
+        mockMvc.perform(json(post("/sales"), vendaPorPeso(produtoPorQuilo("5"), "1.2345", 0)).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-PROD-007"));
+        mockMvc.perform(json(post("/production-order"), Map.of("finalProductId", marmita.getId(), "quantity", new BigDecimal("1.5"))).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-PROD-007"));
+        mockMvc.perform(json(post("/technical-sheet"), Map.of("name", "Fracionada", "finalProductId", marmita.getId(), "rendimento", new BigDecimal("2.5"),
+                        "items", List.of(Map.of("rawMaterialId", frango.getId(), "quantity", 1, "unit", "KG")))).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-PROD-007"));
+        mockMvc.perform(json(post("/stock-movements/loss"), Map.of("productId", marmita.getId(), "quantity", new BigDecimal("0.5"), "reason", "VENCIMENTO")).with(como(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-PROD-007"));
+        assertThat(estoque(marmita)).isEqualByComparingTo("5");
+    }
+
+    @Test
+    @DisplayName("Estorno por peso devolve a fração ao estoque, com a parte proporcional do desconto")
+    void estornoPorPeso() throws Exception {
+        abrirCaixa();
+        Product lasanha = produtoPorQuilo("5");
+        // 2 kg x R$ 39,90 = R$ 79,80, com R$ 9,80 de desconto.
+        JsonNode venda = vender(vendaPorPeso(lasanha, "2", new BigDecimal("9.80")));
+        long vendaId = venda.get("id").asLong();
+        long itemId = venda.at("/items/0/id").asLong();
+        assertThat(venda.get("total").decimalValue()).isEqualByComparingTo("70.00");
+
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Devolveu parte",
+                        "items", List.of(Map.of("sellItemId", itemId, "quantity", new BigDecimal("0.5"))))).with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PARTIALLY_REVERSED"))
+                .andExpect(jsonPath("$.reversedAmount").value(17.5))
+                .andExpect(jsonPath("$.reversals[0].items[0].unit").value("kg"));
+        assertThat(estoque(lasanha)).isEqualByComparingTo("3.5");
+
+        mockMvc.perform(json(post("/sales/" + vendaId + "/reversal"), Map.of("reason", "Devolveu o resto")).with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REVERSED"))
+                .andExpect(jsonPath("$.netTotal").value(0.0));
+        assertThat(estoque(lasanha)).isEqualByComparingTo("5");
+    }
+
+    @Test
+    @DisplayName("Receita por quilo: rendimento decimal, consumo proporcional e peso real acima do previsto")
+    void producaoPorQuilo() throws Exception {
+        Product frango = insumo(UnitOfMeasure.KG, "1", "22.00", "2000");
+        Product lasanha = produtoPorQuilo("0");
+        // 1 kg de frango rende 2,5 kg: a ordem de 1,25 kg é meia receita.
+        long ficha = criarFicha(lasanha, frango, "1", "KG", new BigDecimal("2.5"));
+        mockMvc.perform(get("/technical-sheet/" + ficha + "/calculate-cost").with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unit").value("kg"))
+                .andExpect(jsonPath("$.servingCostWithLabour").value(11.44));
+
+        finalizar(abrirOrdem(lasanha, new BigDecimal("1.25")), Map.of("actualQuantity", new BigDecimal("1.31")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lossReason").doesNotExist());
+
+        assertThat(estoque(frango)).isEqualByComparingTo("1500");
+        assertThat(estoque(lasanha)).isEqualByComparingTo("1.31");
+    }
+
+    @Test
+    @DisplayName("Pesar menos que o previsto só é quebra se houver motivo")
+    void quebraPorPeso() throws Exception {
+        Product lasanha = produtoPorQuilo("0");
+        criarFicha(lasanha, insumo(UnitOfMeasure.KG, "1", "22.00", "9000"), "1", "KG", 1);
+
+        finalizar(abrirOrdem(lasanha, 2), Map.of("actualQuantity", new BigDecimal("1.9"))).andExpect(status().isOk());
+        long comMotivo = abrirOrdem(lasanha, 2);
+        finalizar(comMotivo, Map.of("actualQuantity", new BigDecimal("1.5"), "lossReason", "ERRO_PREPARO")).andExpect(status().isOk());
+        assertThat(estoque(lasanha)).isEqualByComparingTo("3.4");
+
+        String hoje = LocalDate.now().toString();
+        JsonNode perdas = objectMapper.readTree(mockMvc.perform(get("/reports/loss").param("startDate", hoje).param("endDate", hoje).with(como(admin)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        List<JsonNode> doProduto = new ArrayList<>();
+        perdas.forEach(perda -> {
+            if (lasanha.getName().equals(perda.get("productName").asText())) {
+                doProduto.add(perda);
+            }
+        });
+        assertThat(doProduto).hasSize(1);
+        assertThat(doProduto.get(0).get("quantity").decimalValue()).isEqualByComparingTo("0.5");
+        assertThat(doProduto.get(0).get("unit").asText()).isEqualTo("kg");
+    }
+
+    @Test
+    @DisplayName("Produtos mais vendidos mostram os quilos sem truncar")
+    void rankingComQuilos() throws Exception {
+        abrirCaixa();
+        Product lasanha = produtoPorQuilo("5");
+        vender(vendaPorPeso(lasanha, "1.355", 0));
+
+        JsonNode ranking = objectMapper.readTree(mockMvc.perform(get("/reports/top-selling-products").param("limit", "500").with(como(admin)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        JsonNode linha = null;
+        for (JsonNode item : ranking) {
+            if (lasanha.getId().equals(item.get("productId").asLong())) {
+                linha = item;
+            }
+        }
+        assertThat(linha).isNotNull();
+        assertThat(linha.get("totalQuantitySold").decimalValue()).isEqualByComparingTo("1.355");
+        assertThat(linha.get("unit").asText()).isEqualTo("kg");
+        assertThat(linha.get("totalRevenue").decimalValue()).isEqualByComparingTo("54.06");
+    }
+
+    @Test
+    @DisplayName("A unidade de venda não muda depois que o produto tem movimentação de estoque")
+    void unidadeDeVendaTravada() throws Exception {
+        Product produto = produtoFinal("0");
+        Map<String, Object> dados = new HashMap<>(Map.of("name", produto.getName(), "code", produto.getCode(), "price", 5, "sellPrice", 20,
+                "categoryId", categoria.getId(), "tipo", "PRODUTO_FINAL", "storage", 0, "saleUnit", "KG"));
+
+        mockMvc.perform(json(put("/product/" + produto.getId()), dados).with(como(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saleUnit").value("KG"));
+
+        dados.put("storage", new BigDecimal("2.5"));
+        mockMvc.perform(json(put("/product/" + produto.getId()), dados).with(como(admin))).andExpect(status().isOk());
+
+        dados.put("saleUnit", "UN");
+        mockMvc.perform(json(put("/product/" + produto.getId()), dados).with(como(admin)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("SIGREST-PROD-008"));
     }
 }

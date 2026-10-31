@@ -6,6 +6,7 @@
 
 export type ProductType = 'INSUMO' | 'PRODUTO_FINAL' | 'PRODUTO_INTERMEDIARIO';
 export type UnitOfMeasure = 'G' | 'KG' | 'ML' | 'L' | 'UN' | 'DUZIA';
+export type SaleUnit = 'UN' | 'KG';
 export type UserRole = 'ADMIN' | 'OPERADOR';
 export type MovementType = 'ENTRY' | 'EXIT' | 'LOSS';
 export type LossReason = 'VENCIMENTO' | 'ERRO_PREPARO' | 'DESCARTE_QUALIDADE' | 'OUTRO';
@@ -42,6 +43,7 @@ export interface Product {
   tipo: ProductType | null;
   purchaseUnit: UnitOfMeasure | null;
   packageQuantity: number | null;
+  saleUnit: SaleUnit;
 }
 
 export interface ProductFormData {
@@ -98,6 +100,7 @@ export interface SellItem {
   reversedQuantity: number;
   productId: number;
   productName: string;
+  unit: string;
 }
 
 export interface Sale {
@@ -120,7 +123,7 @@ export interface SaleReversal {
   reason: string;
   amount: number;
   userName: string | null;
-  items: { productName: string | null; quantity: number }[];
+  items: { productName: string | null; quantity: number; unit: string }[];
 }
 
 export interface PurchaseItem {
@@ -189,6 +192,7 @@ export interface CostCalculation {
   rendimento: number;
   perServingCost: number | null;
   servingCostWithLabour: number;
+  unit: string;
 }
 
 export interface ProductionOrder {

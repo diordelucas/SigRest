@@ -5,6 +5,7 @@ import br.com.sigrest.api.dto.StockMovementRequestDTO;
 import br.com.sigrest.api.dto.StockMovementResponseDTO;
 import br.com.sigrest.api.dto.ProductResponseDTO;
 import br.com.sigrest.api.entity.Product;
+import br.com.sigrest.api.entity.SaleUnit;
 import br.com.sigrest.api.entity.StockMovement;
 import br.com.sigrest.api.exception.BusinessException;
 import br.com.sigrest.api.exception.ErrorCode;
@@ -32,10 +33,20 @@ public class StockMovementService {
     @Autowired
     private LogAtividadeService logAtividadeService;
 
+    /** Recusa a quantidade que a unidade de venda do produto não permite. */
+    public void validateQuantity(Product product, BigDecimal quantity) {
+        if (!product.acceptsQuantity(quantity)) {
+            throw new BusinessException(ErrorCode.PROD_QUANTIDADE_FRACIONADA, product.getSaleUnit() == SaleUnit.KG
+                    ? product.getName() + " é vendido por quilo: informe o peso com até 3 casas decimais."
+                    : product.getName() + " é vendido por unidade: informe uma quantidade inteira.");
+        }
+    }
+
     @Transactional
     public StockMovementResponseDTO createStockMovement(StockMovementRequestDTO requestDTO) {
         Product product = productRepository.findById(requestDTO.getProductId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO));
+        validateQuantity(product, requestDTO.getQuantity());
 
         StockMovement stockMovement = new StockMovement();
         stockMovement.setProduct(product);
@@ -94,6 +105,7 @@ public class StockMovementService {
     public StockMovementResponseDTO createStockLoss(StockLossRequestDTO requestDTO) {
         Product product = productRepository.findById(requestDTO.getProductId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NAO_ENCONTRADO));
+        validateQuantity(product, requestDTO.getQuantity());
 
         StockMovement stockMovement = new StockMovement();
         stockMovement.setProduct(product);

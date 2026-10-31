@@ -4,14 +4,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { getErrorMessage } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { formatDateTime, formatMoney, formatQuantity } from '../utils/format';
+import { formatDateTime, formatMoney, formatQuantity, lineTotal } from '../utils/format';
 import { getPaymentMethodLabel, getSaleStatusClass, getSaleStatusLabel } from '../utils/payment';
 import { Sale, SellItem } from '../types';
 import Field from './ui/Field';
 import Modal from './ui/Modal';
 import { Table, Th } from './ui/Table';
 
-const remaining = (item: SellItem) => Number(item.quantity) - Number(item.reversedQuantity);
+const remaining = (item: SellItem) => Math.round((Number(item.quantity) - Number(item.reversedQuantity)) * 1000) / 1000;
 
 const SaleDetails = () => {
   const { id } = useParams();
@@ -56,7 +56,7 @@ const SaleDetails = () => {
   const refundPreview = (current: Sale) => {
     const reversesAll = current.items.every((item) => Number(quantities[item.id] || 0) === remaining(item));
     if (reversesAll) return Number(current.netTotal);
-    const subtotal = current.items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0);
+    const subtotal = current.items.reduce((sum, item) => sum + lineTotal(item.unitPrice, item.quantity), 0);
     if (subtotal <= 0) return 0;
     const gross = current.items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(quantities[item.id] || 0), 0);
     return Math.min(Math.round((gross * Number(current.total) * 100) / subtotal) / 100, Number(current.netTotal));
@@ -72,7 +72,7 @@ const SaleDetails = () => {
       return Number.isNaN(quantity) || quantity < 0 || quantity > remaining(item);
     });
     if (invalid) {
-      setFormError(`Só é possível estornar ${formatQuantity(remaining(invalid))} de ${invalid.productName}.`);
+      setFormError(`Só é possível estornar ${formatQuantity(remaining(invalid))} ${invalid.unit} de ${invalid.productName}.`);
       return;
     }
     if (items.length === 0) {
@@ -115,7 +115,7 @@ const SaleDetails = () => {
 
   const fullyReversed = sale.status === 'REVERSED';
   const hasReversals = sale.reversals.length > 0;
-  const subtotal = sale.items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0);
+  const subtotal = sale.items.reduce((sum, item) => sum + lineTotal(item.unitPrice, item.quantity), 0);
   const cashSale = sale.paymentMethod === 'DINHEIRO';
   const refund = refundPreview(sale);
 
@@ -180,11 +180,11 @@ const SaleDetails = () => {
           {sale.items.map((item) => (
             <tr key={item.id}>
               <td className="px-4 py-3 text-sm text-ink">{item.productName}</td>
-              <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(item.quantity)}</td>
-              {hasReversals && <td className="px-4 py-3 text-sm text-ink text-right">{formatQuantity(item.reversedQuantity)}</td>}
-              <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(item.unitPrice)}</td>
+              <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatQuantity(item.quantity)} {item.unit}</td>
+              {hasReversals && <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatQuantity(item.reversedQuantity)} {item.unit}</td>}
+              <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">{formatMoney(item.unitPrice)}{item.unit === 'kg' ? '/kg' : ''}</td>
               <td className="px-4 py-3 text-sm text-ink text-right whitespace-nowrap">
-                {formatMoney(Number(item.unitPrice) * Number(item.quantity))}
+                {formatMoney(lineTotal(item.unitPrice, item.quantity))}
               </td>
             </tr>
           ))}
@@ -221,7 +221,7 @@ const SaleDetails = () => {
                   {reversal.userName ? ` por ${reversal.userName}` : ''}
                 </p>
                 <p className="text-ink-muted">
-                  {reversal.items.map((item) => `${formatQuantity(item.quantity)} × ${item.productName}`).join(', ')}
+                  {reversal.items.map((item) => `${formatQuantity(item.quantity)} ${item.unit} de ${item.productName}`).join(', ')}
                 </p>
                 <p className="text-ink-muted">Motivo: {reversal.reason}</p>
               </li>
@@ -250,14 +250,14 @@ const SaleDetails = () => {
               <div key={item.id} className="flex items-center justify-between gap-3">
                 <label htmlFor={`sale-reversal-qty-${index}`} className="text-sm text-ink">
                   {item.productName}
-                  <span className="block text-xs text-ink-muted">até {formatQuantity(remaining(item))}</span>
+                  <span className="block text-xs text-ink-muted">até {formatQuantity(remaining(item))} {item.unit}</span>
                 </label>
                 <Field
                   id={`sale-reversal-qty-${index}`}
                   data-testid={`sale-reversal-qty-${index}`}
                   type="number"
                   min="0"
-                  step="0.01"
+                  step={item.unit === 'kg' ? '0.001' : '1'}
                   max={remaining(item)}
                   className="w-24 text-right"
                   value={quantities[item.id] ?? ''}

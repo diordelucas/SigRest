@@ -2,6 +2,7 @@ import React, { useState, useEffect, FormEvent } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import api, { getErrorMessage } from '../services/api';
 import { TechnicalSheet } from '../types';
+import { baseUnit, quantityStep } from '../utils/format';
 import Button from './ui/Button';
 import Field from './ui/Field';
 import toast from 'react-hot-toast';
@@ -32,14 +33,16 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
     }
   };
 
+  const selectedProduct = sheets.find((s) => String(s.finalProduct?.id) === finalProductId)?.finalProduct;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const parsedQty = parseInt(quantity, 10);
+    const parsedQty = parseFloat(quantity);
     if (isNaN(parsedQty) || parsedQty <= 0) {
-      setError('A quantidade a produzir deve ser um número inteiro maior que zero.');
+      setError('A quantidade a produzir deve ser maior que zero.');
       setLoading(false);
       return;
     }
@@ -97,12 +100,12 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="productionorderform-quantidade-a-produzir" className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
-              Quantidade a Produzir
+              Quantidade a Produzir{selectedProduct ? ` (${baseUnit(selectedProduct)})` : ''}
             </label>
             <Field id="productionorderform-quantidade-a-produzir"
               type="number"
-              min="1"
-              step="1"
+              min={quantityStep(selectedProduct)}
+              step={quantityStep(selectedProduct)}
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               required
@@ -120,7 +123,7 @@ const ProductionOrderForm = ({ onSaveSuccess, onCancel }: ProductionOrderFormPro
             rows={4}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Insira detalhes adicionais sobre o lote de produção..."
+            placeholder="Lote de produção ou encomenda: cliente, forma, data de entrega..."
           />
         </div>
 

@@ -14,7 +14,7 @@ public record SaleReversalResponseDTO(
         String userName,
         List<Item> items
 ) {
-    public record Item(String productName, BigDecimal quantity) {
+    public record Item(String productName, BigDecimal quantity, String unit) {
     }
 
     public SaleReversalResponseDTO(SaleReversal reversal) {
@@ -23,7 +23,8 @@ public record SaleReversalResponseDTO(
              reversal.getItems().stream()
                      .map(item -> new Item(
                              item.getSellItem().getProduct() != null ? item.getSellItem().getProduct().getName() : null,
-                             item.getQuantity()))
+                             item.getQuantity(),
+                             item.getSellItem().getProduct() != null ? item.getSellItem().getProduct().getStockUnit() : "un"))
                      .toList());
     }
 }

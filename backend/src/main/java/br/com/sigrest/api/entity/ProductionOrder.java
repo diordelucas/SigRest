@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,7 +28,8 @@ public class ProductionOrder {
     @JoinColumn(name = "final_product_id")
     private Product finalProduct;
 
-    private Integer quantity;
+    @Column(precision = 38, scale = 3)
+    private BigDecimal quantity;
 
     private LocalDateTime date;
 
@@ -37,9 +39,10 @@ public class ProductionOrder {
     private String notes;
 
     /** Quantidade que realmente saiu boa, preenchida ao finalizar. Nulo enquanto OPEN/CANCELLED. */
-    private Integer actualQuantity;
+    @Column(precision = 38, scale = 3)
+    private BigDecimal actualQuantity;
 
-    /** Motivo da quebra, preenchido apenas quando actualQuantity < quantity. */
+    /** Motivo da quebra, preenchido apenas quando actualQuantity < quantity. Opcional em produto pesado. */
     @Enumerated(EnumType.STRING)
     private LossReason lossReason;
 }

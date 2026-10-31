@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public record SellItemRequestDTO(
         Long id,
         @NotNull(message = "informe o preço unitário") @DecimalMin(value = "0.01", message = "o preço unitário deve ser maior que zero") BigDecimal unitPrice,
-        @NotNull(message = "informe a quantidade") @DecimalMin(value = "0.01", message = "a quantidade deve ser maior que zero") BigDecimal quantity,
+        @NotNull(message = "informe a quantidade") @DecimalMin(value = "0.001", message = "a quantidade deve ser maior que zero") BigDecimal quantity,
         @NotNull(message = "selecione o produto") Long productId
 ) {
     public SellItemRequestDTO(SellItem item){

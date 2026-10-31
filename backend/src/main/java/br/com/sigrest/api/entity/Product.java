@@ -24,7 +24,9 @@ public class Product implements SoftDeletable {
     private String code;
     private BigDecimal price;
     private BigDecimal sellPrice;
+    @Column(precision = 38, scale = 3)
     private BigDecimal storage;
+    @Column(precision = 38, scale = 3)
     private BigDecimal minStorage;
 
     @ManyToOne
@@ -38,6 +40,11 @@ public class Product implements SoftDeletable {
     private UnitOfMeasure purchaseUnit;
 
     private BigDecimal packageQuantity;
+
+    /** Só vale para produto final; os demais têm a unidade de compra. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SaleUnit saleUnit = SaleUnit.UN;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -60,10 +67,24 @@ public class Product implements SoftDeletable {
         this.tipo = data.tipo();
         this.purchaseUnit = data.purchaseUnit();
         this.packageQuantity = data.packageQuantity();
+        this.saleUnit = data.effectiveSaleUnit();
         if (data.categoryId() != null) {
             this.category = new Category();
             this.category.setId(data.categoryId());
         }
+    }
+
+    /** Unidade em que o estoque é guardado: produto final na unidade de venda, os demais na unidade base. */
+    public String getStockUnit() {
+        if (tipo == ProductType.PRODUTO_FINAL) {
+            return saleUnit.getLabel();
+        }
+        return purchaseUnit != null ? purchaseUnit.getBaseUnitLabel() : "un";
+    }
+
+    /** Não existe 1,5 marmita: produto final por unidade só movimenta quantidade inteira. */
+    public boolean acceptsQuantity(BigDecimal quantity) {
+        return tipo != ProductType.PRODUTO_FINAL || saleUnit.accepts(quantity);
     }
 }
 

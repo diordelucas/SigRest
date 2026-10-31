@@ -29,7 +29,9 @@ public class TechnicalSheet {
     @JsonManagedReference
     private List<TechnicalSheetItem> items;
 
-    private Integer rendimento;
+    /** Quantas unidades, ou quilos se o produto final é vendido por peso, a receita inteira rende. */
+    @Column(precision = 38, scale = 3)
+    private BigDecimal rendimento;
     private BigDecimal labourCostPercent;
     private BigDecimal variableExpensesPercent;
     private BigDecimal desiredMarginPercent;

@@ -76,9 +76,11 @@ public class ReportPdfService {
 
         Map<String, Object> dados = new HashMap<>();
         dados.put("produtos", produtos);
-        dados.put("maiorQuantidade", produtos.stream().map(ProductSalesDTO::getTotalQuantitySold).max(Long::compare).orElse(0L));
+        dados.put("maiorQuantidade", produtos.stream().map(ProductSalesDTO::getTotalQuantitySold).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
         dados.put("receitaTotal", soma(produtos, ProductSalesDTO::getTotalRevenue));
-        dados.put("quantidadeTotal", produtos.stream().mapToLong(ProductSalesDTO::getTotalQuantitySold).sum());
+        // Quilos e unidades não se somam.
+        dados.put("unidadesVendidas", soma(produtos.stream().filter(p -> !"kg".equals(p.getUnit())).toList(), ProductSalesDTO::getTotalQuantitySold));
+        dados.put("quilosVendidos", soma(produtos.stream().filter(p -> "kg".equals(p.getUnit())).toList(), ProductSalesDTO::getTotalQuantitySold));
         return gerar("produtos-mais-vendidos", "Produtos Mais Vendidos", startDate, endDate, dados);
     }
 

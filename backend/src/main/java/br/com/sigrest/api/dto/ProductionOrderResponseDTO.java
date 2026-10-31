@@ -1,16 +1,17 @@
 package br.com.sigrest.api.dto;
 
 import br.com.sigrest.api.entity.ProductionOrder;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record ProductionOrderResponseDTO(
     Long id,
     ProductResponseDTO finalProduct,
-    Integer quantity,
+    BigDecimal quantity,
     LocalDateTime date,
     String status,
     String notes,
-    Integer actualQuantity,
+    BigDecimal actualQuantity,
     String lossReason
 ) {
     public ProductionOrderResponseDTO(ProductionOrder order) {

@@ -2,6 +2,7 @@ package br.com.sigrest.api.dto;
 
 import br.com.sigrest.api.entity.Product;
 import br.com.sigrest.api.entity.ProductType;
+import br.com.sigrest.api.entity.SaleUnit;
 import br.com.sigrest.api.entity.UnitOfMeasure;
 
 import java.math.BigDecimal;
@@ -13,7 +14,8 @@ public record ProductResponseDTO(
         Long categoryId, String categoryName,
         ProductType tipo,
         UnitOfMeasure purchaseUnit,
-        BigDecimal packageQuantity
+        BigDecimal packageQuantity,
+        SaleUnit saleUnit
 ) {
     public ProductResponseDTO(Product product) {
         this(product.getId(), product.getName(), product.getCode(),
@@ -23,6 +25,7 @@ public record ProductResponseDTO(
                 product.getCategory() != null ? product.getCategory().getName() : null,
                 product.getTipo(),
                 product.getPurchaseUnit(),
-                product.getPackageQuantity());
+                product.getPackageQuantity(),
+                product.getSaleUnit());
     }
 }

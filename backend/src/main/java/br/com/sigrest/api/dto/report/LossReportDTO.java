@@ -17,5 +17,6 @@ public class LossReportDTO {
     private String productName;
     private String reason;
     private BigDecimal quantity;
+    private String unit;
     private String description;
 }

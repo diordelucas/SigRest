@@ -22,7 +22,7 @@
   <table class="dados compacta">
     <thead>
       <tr>
-        <th>Ficha técnica</th><th>Produto final</th><th class="num">Custo por porção</th>
+        <th>Ficha técnica</th><th>Produto final</th><th class="num">Custo por unidade de venda</th>
         <th class="num">Preço sugerido</th><th class="num">Preço atual</th><th class="num">Margem desejada</th><th class="num">Margem real</th>
       </tr>
     </thead>
@@ -40,8 +40,9 @@
       </tr>
     </tbody>
   </table>
-  <p class="nota">Custo por porção = custo da receita com mão de obra ÷ rendimento. Preço sugerido pelo markup divisor:
-    custo por porção ÷ (1 - (despesas variáveis + margem desejada)). Margem real = 100% - despesas variáveis - custo por porção ÷ preço atual.</p>
+  <p class="nota">A unidade de venda é a do produto final: uma marmita, uma bandeja ou um quilo. Custo por unidade de venda =
+    custo da receita com mão de obra ÷ rendimento. Preço sugerido pelo markup divisor: custo por unidade de venda ÷
+    (1 - (despesas variáveis + margem desejada)). Margem real = 100% - despesas variáveis - custo por unidade de venda ÷ preço atual.</p>
 
   <h2>Composição de custo</h2>
   <div class="bloco" th:each="f : ${fichas}">
@@ -50,7 +51,7 @@
       <span class="muted" th:if="${f.finalProductName}" th:text="|» ${f.finalProductName}|">» Produto</span>
     </h3>
     <p class="nota">
-      Rendimento: <span th:text="${f.cost.rendimento() != null ? f.cost.rendimento() : '—'}">1</span> ·
+      Rendimento: <span th:text="|${fmt.quantidade(f.cost.rendimento())} ${f.cost.unit()}|">1 un</span> ·
       Mão de obra: <span th:text="${fmt.percentual(f.cost.labourCostPercent())}">0%</span> ·
       Despesas variáveis: <span th:text="${fmt.percentual(f.cost.variableExpensesPercent())}">0%</span> ·
       Margem desejada: <span th:text="${fmt.percentual(f.cost.desiredMarginPercent())}">0%</span>
@@ -80,11 +81,11 @@
           <td class="num" th:text="${fmt.moeda(f.cost.totalCostWithLabour())}">R$ 0,00</td>
         </tr>
         <tr>
-          <td colspan="3">Custo por porção (com mão de obra)</td>
+          <td colspan="3" th:text="|Custo por ${f.cost.unit()} (com mão de obra)|">Custo por un (com mão de obra)</td>
           <td class="num" th:text="${fmt.moeda(f.cost.servingCostWithLabour())}">R$ 0,00</td>
         </tr>
         <tr>
-          <td colspan="3">Preço de venda sugerido por porção</td>
+          <td colspan="3" th:text="|Preço de venda sugerido por ${f.cost.unit()}|">Preço de venda sugerido por un</td>
           <td class="num" th:text="${fmt.moeda(f.cost.suggestedSellPrice())}">R$ 0,00</td>
         </tr>
       </tfoot>
